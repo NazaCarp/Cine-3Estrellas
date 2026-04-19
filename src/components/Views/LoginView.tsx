@@ -64,6 +64,14 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
 
   return (
     <div className="login-container">
+      {/* Cinematic Lighting Setup */}
+      <div className="ambient-lighting">
+        <div className="light light-tl" />
+        <div className="light light-tr" />
+        <div className="light light-bl" />
+        <div className="light light-br" />
+      </div>
+
       <div className="login-backdrop">
         <div className="film-grain" />
         <div className="vignette" />
@@ -85,31 +93,37 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
             Inicia sesión con Telegram para continuar
           </p>
 
-          <div className="hyper-glass-box">
+          <div className={`hyper-glass-box ${loading ? 'scanning' : ''}`}>
+            {/* Master Specular Shine Effect */}
+            <div className="glass-shine" />
+            <div className="glass-noise" />
+            
             <div className="widget-wrapper">
               <div ref={containerRef} className="telegram-widget-container">
                 {/* Widget is injected here */}
               </div>
             </div>
+
+            {loading && <div className="scanning-border" />}
           </div>
 
           {loading && (
             <div className="status-indicator">
               <div className="pulse-dot" />
-              <span>Verificando acceso</span>
+              <span>Verificando Identidad</span>
             </div>
           )}
 
           {error && (
             <div className="error-indicator">
-              <span className="material-symbols-outlined">info</span>
+              <span className="material-symbols-outlined">warning</span>
               <p>{error}</p>
             </div>
           )}
         </div>
 
         <div className="footer-section">
-          <p>EXCLUSIVO PARA LA COMUNIDAD DE @CINE_3ESTRELLAS</p>
+          <p>PLATAFORMA EXCLUSIVA • CINE 3 ESTRELLAS • 2026</p>
         </div>
       </div>
 
@@ -117,7 +131,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
         .login-container {
           position: fixed;
           inset: 0;
-          background: #000;
+          background: #001;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -127,32 +141,53 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           font-family: 'Outfit', sans-serif;
         }
 
+        /* 4-Corner Studio Lighting */
+        .ambient-lighting {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          z-index: 2;
+        }
+
+        .light {
+          position: absolute;
+          width: 80vw;
+          height: 80vh;
+          filter: blur(120px);
+          opacity: 0.15;
+        }
+
+        .light-tl { top: -20%; left: -20%; background: radial-gradient(circle, #ffd70033 0%, transparent 70%); }
+        .light-tr { top: -20%; right: -20%; background: radial-gradient(circle, #0033ff22 0%, transparent 70%); }
+        .light-bl { bottom: -20%; left: -20%; background: radial-gradient(circle, #222 0%, transparent 70%); }
+        .light-br { bottom: -20%; right: -20%; background: radial-gradient(circle, #ffd70011 0%, transparent 70%); }
+
         .login-backdrop {
           position: absolute;
           inset: 0;
           background: url('https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&q=80&w=2000') no-repeat center center;
           background-size: cover;
-          filter: brightness(0.18) contrast(1.1);
+          filter: brightness(0.15) contrast(1.1);
           animation: backgroundZoom 120s infinite alternate linear;
         }
 
         @keyframes backgroundZoom {
           from { transform: scale(1); }
-          to { transform: scale(1.15); }
+          to { transform: scale(1.12); }
         }
 
         .film-grain {
           position: absolute;
           inset: 0;
-          opacity: 0.12;
+          opacity: 0.1;
           pointer-events: none;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
         .vignette {
           position: absolute;
           inset: 0;
-          background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 60%, #000 100%);
+          background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.7) 70%, #000 100%);
         }
 
         .dynamic-halo {
@@ -160,10 +195,10 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          width: 800px;
-          height: 800px;
-          background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
-          animation: haloPulse 8s infinite ease-in-out;
+          width: 1000px;
+          height: 1000px;
+          background: radial-gradient(circle, rgba(255, 215, 0, 0.04) 0%, transparent 75%);
+          animation: haloPulse 10s infinite ease-in-out;
         }
 
         @keyframes haloPulse {
@@ -182,13 +217,19 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           text-align: center;
         }
 
+        /* Pulse of Life Branding */
         .brand-section {
           position: relative;
-          margin-bottom: 80px;
+          margin-bottom: 70px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          animation: revealDown 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation: revealDown 1.8s cubic-bezier(0.16, 1, 0.3, 1) both, lifePulse 6s infinite ease-in-out;
+        }
+
+        @keyframes lifePulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.02); }
         }
 
         .logo-halo {
@@ -196,33 +237,32 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          width: 200px;
-          height: 200px;
-          background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+          width: 250px;
+          height: 250px;
+          background: radial-gradient(circle, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
           z-index: -1;
         }
 
         .portal-logo {
           width: 110px;
           margin-bottom: 24px;
-          filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.25));
+          filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.3));
         }
 
         .portal-brand-text {
           width: 500px;
           margin-bottom: 20px;
-          filter: drop-shadow(0 0 20px rgba(0,0,0,0.5));
+          filter: drop-shadow(0 0 25px rgba(0,0,0,0.8));
           display: block;
-          margin-left: auto;
-          margin-right: auto;
         }
 
         .prestige-divider {
           width: 500px;
           height: 1px;
-          background: linear-gradient(90deg, transparent, #ffd700, transparent);
+          background: linear-gradient(90deg, transparent 0%, #ffd700 50%, transparent 100%);
           margin: 0 auto;
           position: relative;
+          opacity: 0.8;
         }
 
         .glow-point {
@@ -230,42 +270,84 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          width: 4px;
-          height: 4px;
-          background: #ffd700;
+          width: 2px;
+          height: 2px;
+          background: #fff;
           border-radius: 50%;
-          box-shadow: 0 0 12px #ffd700;
+          box-shadow: 0 0 15px 2px #ffd700;
         }
 
         .auth-section {
-          animation: revealUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-          animation-delay: 0.4s;
+          animation: revealUp 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation-delay: 0.3s;
         }
 
         .portal-instruction {
-          font-size: 18px;
+          font-size: 17px;
           font-weight: 300;
-          color: rgba(255, 255, 255, 0.6);
-          margin-bottom: 50px;
-          letter-spacing: 2px;
+          color: rgba(255, 255, 255, 0.5);
+          margin-bottom: 40px;
+          letter-spacing: 4px;
           text-transform: uppercase;
         }
 
+        /* Master Glass Box */
         .hyper-glass-box {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
-          backdrop-filter: blur(40px);
+          position: relative;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+          backdrop-filter: blur(40px) saturate(1.8);
           padding: 40px 60px;
           border-radius: 40px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           box-shadow: 
-            0 40px 100px rgba(0, 0, 0, 0.6), 
-            inset 0 0 30px rgba(255, 215, 0, 0.03),
-            inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            0 50px 100px rgba(0, 0, 0, 0.6), 
+            inset 0 0 40px rgba(255, 215, 0, 0.02);
           width: fit-content;
           margin: 0 auto;
+          overflow: hidden;
+        }
+
+        /* Specular Reality Shine */
+        .glass-shine {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.08) 55%, transparent 70%);
+          background-size: 200% 100%;
+          animation: specularMove 12s infinite linear;
+          pointer-events: none;
+        }
+
+        @keyframes specularMove {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+
+        .glass-noise {
+          position: absolute;
+          inset: 0;
+          opacity: 0.03;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+          pointer-events: none;
+        }
+
+        /* Shimmering Perimeter for Loading */
+        .scanning-border {
+          position: absolute;
+          inset: 0;
+          border: 1px solid #ffd700;
+          border-radius: 40px;
+          animation: scanPerimeter 4s infinite linear;
+          mask: linear-gradient(90deg, #fff, transparent, transparent);
+        }
+
+        @keyframes scanPerimeter {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         .widget-wrapper {
+          position: relative;
+          z-index: 5;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -286,10 +368,10 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           margin-top: 35px;
           color: #ffd700;
           font-size: 13px;
-          font-weight: 900;
-          letter-spacing: 3px;
+          font-weight: 800;
+          letter-spacing: 4px;
           text-transform: uppercase;
-          opacity: 0.8;
+          opacity: 0.7;
         }
 
         .pulse-dot {
@@ -297,44 +379,46 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           height: 5px;
           background: #ffd700;
           border-radius: 50%;
+          box-shadow: 0 0 10px #ffd700;
           animation: dotPulse 2s infinite ease-in-out;
         }
 
         @keyframes dotPulse {
           0%, 100% { transform: scale(1); opacity: 0.5; }
-          50% { transform: scale(2); opacity: 1; }
+          50% { transform: scale(2.5); opacity: 1; }
         }
 
         .error-indicator {
           margin-top: 35px;
-          padding: 16px 28px;
-          background: rgba(255, 69, 58, 0.1);
-          border: 1px solid rgba(255, 69, 58, 0.15);
-          border-radius: 14px;
+          padding: 18px 30px;
+          background: rgba(255, 69, 58, 0.08);
+          border: 1px solid rgba(255, 69, 58, 0.2);
+          border-radius: 12px;
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 14px;
           color: #ff453a;
           font-size: 14px;
+          font-weight: 500;
         }
 
         .footer-section {
           margin-top: 100px;
-          opacity: 0.3;
-          font-size: 12px;
-          letter-spacing: 2px;
+          opacity: 0.2;
+          font-size: 11px;
+          letter-spacing: 4px;
           font-weight: 600;
-          animation: revealUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-          animation-delay: 0.8s;
+          animation: revealUp 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation-delay: 0.6s;
         }
 
         @keyframes revealDown {
-          from { opacity: 0; transform: translateY(-40px); filter: blur(15px); }
+          from { opacity: 0; transform: translateY(-40px); filter: blur(20px); }
           to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
 
         @keyframes revealUp {
-          from { opacity: 0; transform: translateY(40px); filter: blur(15px); }
+          from { opacity: 0; transform: translateY(40px); filter: blur(20px); }
           to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
       `}</style>
