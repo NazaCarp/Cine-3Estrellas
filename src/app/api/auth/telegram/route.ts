@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { verifyTelegramHash, checkGroupMembership, sendWelcomeMessage } from '@/lib/telegram';
 import { supabase } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const userData = await req.json();
