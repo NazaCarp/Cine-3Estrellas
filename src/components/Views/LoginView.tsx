@@ -72,21 +72,17 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
       
       <div className="login-card">
         <div className="login-header">
-          <div className="logo-glow">
-            <img src="/assets/brand/logo.png" alt="Logo" className="login-logo" />
-          </div>
+          <img src="/assets/brand/logo.png" alt="Logo" className="login-logo" />
           <h1>Cine 3 Estrellas</h1>
-          <p className="subtitle">LA EXPERIENCIA CINEMATOGRÁFICA DEFINITIVA</p>
+          <p>La experiencia cinematográfica premium en Telegram</p>
         </div>
 
         <div className="login-content">
-          <div className="instruction-box">
-            <p className="login-instruction">
-              Inicia sesión con tu cuenta de Telegram para acceder a nuestro catálogo exclusivo.
-            </p>
-          </div>
+          <p className="login-instruction">
+            Inicia sesión con tu cuenta de Telegram para acceder al catálogo completo.
+          </p>
 
-          <div ref={containerRef} className="telegram-widget-wrapper">
+          <div ref={containerRef} className="telegram-widget-container">
             {/* Widget is injected here */}
           </div>
 
@@ -106,10 +102,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
         </div>
 
         <div className="login-footer">
-          <div className="requirement-badge">
-            <span className="material-symbols-outlined">group</span>
-            <p>Requisito: Estar unido al grupo oficial <strong>@Cine_3Estrellas</strong></p>
-          </div>
+          <p>Requisito: Estar unido al grupo oficial <strong>@Cine_3Estrellas</strong></p>
         </div>
       </div>
 
@@ -129,131 +122,95 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
         .login-backdrop {
           position: absolute;
           inset: 0;
-          background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=2000') no-repeat center center;
+          background: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=2000') no-repeat center center;
           background-size: cover;
-          filter: blur(15px);
-          transform: scale(1.2);
+          filter: brightness(0.3) blur(10px);
+          transform: scale(1.1);
         }
 
         .login-card {
           position: relative;
-          width: 540px;
-          background: rgba(15, 15, 15, 0.7);
-          backdrop-filter: blur(40px) saturate(180%);
-          -webkit-backdrop-filter: blur(40px) saturate(180%);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 40px;
-          padding: 60px 50px;
+          width: 500px;
+          background: rgba(20, 20, 20, 0.85);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 32px;
+          padding: 60px 40px;
           text-align: center;
-          box-shadow: 
-            0 30px 60px rgba(0, 0, 0, 0.8),
-            inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-          animation: cardEntrance 1s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+          animation: cardSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes cardEntrance {
-          from { opacity: 0; transform: scale(0.95) translateY(30px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        .logo-glow {
-          position: relative;
-          display: inline-block;
-          margin-bottom: 30px;
-        }
-
-        .logo-glow::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 120px;
-          height: 120px;
-          background: radial-gradient(circle, rgba(255, 215, 0, 0.2) 0%, transparent 70%);
-          transform: translate(-50%, -50%);
-          z-index: -1;
+        @keyframes cardSlideUp {
+          from { opacity: 0; transform: translateY(40px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .login-logo {
-          width: 120px;
-          height: auto;
-          filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));
+          width: 100px;
+          margin-bottom: 24px;
         }
 
         h1 {
-          font-size: 42px;
+          font-size: 36px;
           color: #fff;
-          margin-bottom: 12px;
-          font-weight: 800;
-          letter-spacing: -0.5px;
+          margin-bottom: 8px;
+          font-weight: 700;
         }
 
-        .subtitle {
-          color: #ffd700;
-          font-size: 13px;
-          font-weight: 800;
-          letter-spacing: 3px;
-          margin-bottom: 45px;
-          opacity: 0.8;
-        }
-
-        .instruction-box {
-          margin-bottom: 35px;
+        .login-header p {
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 16px;
+          margin-bottom: 40px;
         }
 
         .login-instruction {
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 19px;
-          line-height: 1.6;
-          font-weight: 400;
+          color: #fff;
+          font-size: 18px;
+          margin-bottom: 30px;
+          line-height: 1.5;
         }
 
-        .telegram-widget-wrapper {
+        .telegram-widget-container {
           display: flex;
           justify-content: center;
-          align-items: center;
-          min-height: 50px;
-          margin-bottom: 10px;
-          padding: 20px;
-          background: rgba(255, 255, 255, 0.03);
-          border-radius: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          min-height: 44px;
+          margin-bottom: 24px;
         }
 
         .login-error-message {
-          margin-top: 25px;
-          padding: 18px;
-          background: rgba(255, 69, 58, 0.1);
+          margin-top: 24px;
+          padding: 16px;
+          background: rgba(255, 69, 58, 0.15);
           border: 1px solid rgba(255, 69, 58, 0.3);
-          border-radius: 20px;
+          border-radius: 16px;
           display: flex;
           align-items: center;
-          gap: 15px;
+          gap: 12px;
           color: #ff453a;
           text-align: left;
         }
 
         .login-error-message p {
           margin: 0;
-          font-size: 15px;
+          font-size: 14px;
           line-height: 1.4;
-          font-weight: 500;
         }
 
         .login-loading {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 15px;
-          margin-top: 25px;
-          color: #ffd700;
+          gap: 12px;
+          margin-top: 20px;
+          color: rgba(255, 255, 255, 0.8);
         }
 
         .spinner {
-          width: 28px;
-          height: 28px;
-          border: 3px solid rgba(255, 215, 0, 0.1);
-          border-top-color: #ffd700;
+          width: 24px;
+          height: 24px;
+          border: 3px solid rgba(255, 255, 255, 0.1);
+          border-top-color: #fff;
           border-radius: 50%;
           animation: spin 1s linear infinite;
         }
@@ -263,34 +220,19 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
         }
 
         .login-footer {
-          margin-top: 50px;
+          margin-top: 40px;
           padding-top: 30px;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .requirement-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 20px;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 100px;
-          color: rgba(255, 255, 255, 0.5);
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.4);
           font-size: 14px;
         }
 
-        .requirement-badge strong {
-          color: #ffd700;
-          margin-left: 2px;
-        }
-
-        .requirement-badge .material-symbols-outlined {
-          font-size: 18px;
+        .login-footer strong {
+          color: rgba(255, 255, 255, 0.7);
         }
       `}</style>
     </div>
   );
-
 };
 
 export default LoginView;
