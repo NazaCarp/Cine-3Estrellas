@@ -73,17 +73,19 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
       <div className="login-card">
         <div className="login-header">
           <img src="/assets/brand/logo.png" alt="Logo" className="login-logo" />
-          <h1>Cine 3 Estrellas</h1>
+          <h1>CINE 3 ESTRELLAS</h1>
           <p>La experiencia cinematográfica premium en Telegram</p>
         </div>
 
         <div className="login-content">
           <p className="login-instruction">
-            Inicia sesión con tu cuenta de Telegram para acceder al catálogo completo.
+            Inicia sesión con tu cuenta de Telegram <br/> para acceder al catálogo completo
           </p>
 
-          <div ref={containerRef} className="telegram-widget-container">
-            {/* Widget is injected here */}
+          <div className="widget-wrapper">
+            <div ref={containerRef} className="telegram-widget-container">
+              {/* Widget is injected here */}
+            </div>
           </div>
 
           {loading && (
@@ -124,69 +126,85 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           inset: 0;
           background: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=2000') no-repeat center center;
           background-size: cover;
-          filter: brightness(0.3) blur(10px);
+          filter: brightness(0.25) blur(10px);
           transform: scale(1.1);
         }
 
         .login-card {
           position: relative;
-          width: 500px;
-          background: rgba(20, 20, 20, 0.85);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 32px;
-          padding: 60px 40px;
+          width: 540px;
+          background: linear-gradient(135deg, rgba(25, 25, 25, 0.9) 0%, rgba(15, 15, 15, 0.95) 100%);
+          backdrop-filter: blur(30px);
+          border: 1px solid rgba(255, 215, 0, 0.15);
+          border-radius: 40px;
+          padding: 70px 50px;
           text-align: center;
-          box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
-          animation: cardSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 50px 120px rgba(0, 0, 0, 0.8), 
+                      inset 0 0 40px rgba(255, 215, 0, 0.02);
+          animation: cardSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes cardSlideUp {
-          from { opacity: 0; transform: translateY(40px); }
+          from { opacity: 0; transform: translateY(60px); }
           to { opacity: 1; transform: translateY(0); }
         }
 
         .login-logo {
-          width: 100px;
+          width: 110px;
           margin-bottom: 24px;
+          filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));
         }
 
         h1 {
-          font-size: 36px;
+          font-family: var(--font-roboto-condensed), sans-serif;
+          font-size: 42px;
+          letter-spacing: 2px;
           color: #fff;
-          margin-bottom: 8px;
-          font-weight: 700;
+          margin-bottom: 12px;
+          font-weight: 800;
         }
 
         .login-header p {
-          color: rgba(255, 255, 255, 0.6);
-          font-size: 16px;
+          color: rgba(255, 215, 0, 0.6);
+          font-size: 15px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
           margin-bottom: 40px;
+          font-weight: 600;
         }
 
         .login-instruction {
           color: #fff;
-          font-size: 18px;
+          font-size: 20px;
+          font-weight: 400;
+          margin-bottom: 35px;
+          line-height: 1.4;
+          opacity: 0.9;
+        }
+
+        .widget-wrapper {
+          display: flex;
+          justify-content: center;
+          width: 100%;
           margin-bottom: 30px;
-          line-height: 1.5;
         }
 
         .telegram-widget-container {
-          display: flex;
-          justify-content: center;
           min-height: 44px;
-          margin-bottom: 24px;
+          /* Critical for centering externally injected iframes */
+          display: inline-block;
+          text-align: center;
         }
 
         .login-error-message {
           margin-top: 24px;
-          padding: 16px;
-          background: rgba(255, 69, 58, 0.15);
-          border: 1px solid rgba(255, 69, 58, 0.3);
+          padding: 16px 20px;
+          background: rgba(255, 69, 58, 0.1);
+          border: 1px solid rgba(255, 69, 58, 0.2);
           border-radius: 16px;
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 14px;
           color: #ff453a;
           text-align: left;
         }
