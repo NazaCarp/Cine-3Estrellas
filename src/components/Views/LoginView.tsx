@@ -73,8 +73,8 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
       <div className="login-card">
         <div className="login-header">
           <img src="/assets/brand/logo.png" alt="Logo" className="login-logo" />
-          <h1>CINE 3 ESTRELLAS</h1>
-          <p>La experiencia cinematográfica premium en Telegram</p>
+          <h1 className="main-title">CINE 3 ESTRELLAS</h1>
+          <p className="subtitle">La experiencia cinematográfica premium en Telegram</p>
         </div>
 
         <div className="login-content">
@@ -126,74 +126,80 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           inset: 0;
           background: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=2000') no-repeat center center;
           background-size: cover;
-          filter: brightness(0.25) blur(10px);
+          filter: brightness(0.2) blur(15px);
           transform: scale(1.1);
         }
 
         .login-card {
           position: relative;
-          width: 540px;
-          background: linear-gradient(135deg, rgba(25, 25, 25, 0.9) 0%, rgba(15, 15, 15, 0.95) 100%);
-          backdrop-filter: blur(30px);
-          border: 1px solid rgba(255, 215, 0, 0.15);
-          border-radius: 40px;
-          padding: 70px 50px;
+          width: 580px;
+          background: linear-gradient(145deg, rgba(20, 20, 20, 0.95) 0%, rgba(10, 10, 10, 0.98) 100%);
+          backdrop-filter: blur(40px);
+          border: 1px solid rgba(212, 175, 55, 0.15);
+          border-radius: 48px;
+          padding: 80px 60px;
           text-align: center;
-          box-shadow: 0 50px 120px rgba(0, 0, 0, 0.8), 
-                      inset 0 0 40px rgba(255, 215, 0, 0.02);
-          animation: cardSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 60px 150px rgba(0, 0, 0, 0.9), 
+                      inset 0 0 60px rgba(212, 175, 55, 0.03);
+          animation: cardSlideUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes cardSlideUp {
-          from { opacity: 0; transform: translateY(60px); }
+          from { opacity: 0; transform: translateY(80px); }
           to { opacity: 1; transform: translateY(0); }
         }
 
         .login-logo {
-          width: 110px;
-          margin-bottom: 24px;
-          filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));
+          width: 120px;
+          margin-bottom: 30px;
+          filter: drop-shadow(0 0 25px rgba(212, 175, 55, 0.25));
         }
 
-        h1 {
+        .main-title {
           font-family: var(--font-roboto-condensed), sans-serif;
-          font-size: 42px;
-          letter-spacing: 2px;
+          font-size: 46px;
+          letter-spacing: 3px;
           color: #fff;
           margin-bottom: 12px;
           font-weight: 800;
+          text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
-        .login-header p {
-          color: rgba(255, 215, 0, 0.6);
-          font-size: 15px;
+        .subtitle {
+          color: #c5a044;
+          font-size: 14px;
           text-transform: uppercase;
-          letter-spacing: 1px;
-          margin-bottom: 40px;
-          font-weight: 600;
-        }
-
-        .login-instruction {
-          color: #fff;
-          font-size: 20px;
-          font-weight: 400;
-          margin-bottom: 35px;
-          line-height: 1.4;
+          letter-spacing: 2.5px;
+          margin-bottom: 50px;
+          font-weight: 700;
           opacity: 0.9;
         }
 
+        .login-instruction {
+          color: #ffffff;
+          font-size: 19px;
+          font-weight: 300;
+          margin-bottom: 40px;
+          line-height: 1.6;
+          opacity: 0.8;
+          letter-spacing: 0.3px;
+        }
+
         .widget-wrapper {
+          width: 100%;
           display: flex;
           justify-content: center;
-          width: 100%;
-          margin-bottom: 30px;
+          align-items: center;
+          margin-bottom: 40px;
+          /* Ensure the external widget sits perfectly in the middle */
+          min-height: 80px;
         }
 
         .telegram-widget-container {
-          min-height: 44px;
-          /* Critical for centering externally injected iframes */
           display: inline-block;
+          margin: 0 auto;
           text-align: center;
+          /* Reset any potential inherited alignment */
         }
 
         .login-error-message {
