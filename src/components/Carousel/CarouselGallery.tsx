@@ -51,102 +51,111 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
   }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    const key = e.key;
-    const keyCode = e.keyCode;
-
-    // Normalización de teclas para controles remotos de TV
-    const isUp = key === 'ArrowUp' || key === 'Up' || keyCode === 38;
-    const isDown = key === 'ArrowDown' || key === 'Down' || keyCode === 40;
-    const isLeft = key === 'ArrowLeft' || key === 'Left' || keyCode === 37;
-    const isRight = key === 'ArrowRight' || key === 'Right' || keyCode === 39;
-    const isEnter = key === 'Enter' || key === 'Select' || key === 'Ok' || keyCode === 13;
-    const isBack = key === 'Backspace' || key === 'Escape' || key === 'Back' || keyCode === 8 || keyCode === 27 || keyCode === 461;
-
     // Si hay una categoría expandida o película seleccionada, ignorar TODO inmediatamente
     if (selectedMovie || expandedCategory) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Backspace'].includes(e.key)) {
+        // We let the Grid or Detail handle their own events, but we prevent bubbling/default here if necessary
+        // Actually, Detail handles its own, so we only return early.
+      }
       return;
     }
 
     if (isSidebarActive) {
-      if (isDown) {
-        setSidebarFocusedIndex(prev => Math.min(prev + 1, 3));
-      } else if (isUp) {
-        setSidebarFocusedIndex(prev => Math.max(prev - 1, 0));
-      } else if (isRight || isEnter) {
-        setIsSidebarActive(false);
-        // Al salir del sidebar, aseguramos que estamos en la vista de tab correcta
-        const tabIds: ('buscar' | 'inicio' | 'explorar' | 'favoritos')[] = ['buscar', 'inicio', 'explorar', 'favoritos'];
-        setActiveTab(tabIds[sidebarFocusedIndex]);
+      switch (e.key) {
+        case 'ArrowDown':
+          setSidebarFocusedIndex(prev => Math.min(prev + 1, 3));
+          break;
+        case 'ArrowUp':
+          setSidebarFocusedIndex(prev => Math.max(prev - 1, 0));
+          break;
+        case 'ArrowRight':
+          setIsSidebarActive(false);
+          // When leaving sidebar, ensure we are in the correct tab view
+          const tabIds: ('buscar' | 'inicio' | 'explorar' | 'favoritos')[] = ['buscar', 'inicio', 'explorar', 'favoritos'];
+          setActiveTab(tabIds[sidebarFocusedIndex]);
 
-        if (tabIds[sidebarFocusedIndex] === 'inicio') {
-          setCurrentRow(lastRowBeforeSidebar);
-          setCurrentCol(lastColBeforeSidebar);
-        }
+          if (tabIds[sidebarFocusedIndex] === 'inicio') {
+            setCurrentRow(lastRowBeforeSidebar);
+            setCurrentCol(lastColBeforeSidebar);
+          }
+          break;
+        case 'Enter':
+          const tabs: ('buscar' | 'inicio' | 'explorar' | 'favoritos')[] = ['buscar', 'inicio', 'explorar', 'favoritos'];
+          setActiveTab(tabs[sidebarFocusedIndex]);
+          setIsSidebarActive(false);
+          break;
       }
-
-      if (isUp || isDown || isLeft || isRight || isEnter || isBack) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
         e.preventDefault();
       }
       return;
     }
 
-    // Solo manejar navegación de Inicio si activeTab es 'inicio'
+    // Only handle Home navigation if activeTab is 'inicio'
     if (activeTab === 'inicio') {
       const totalRows = displayCategories.length + 2;
       let nextRow = currentRow;
       let nextCol = currentCol;
 
-      if (isRight) {
-        if (currentRow === 0) {
-          nextCol = Math.min(currentCol + 1, 1);
-        } else if (currentRow === 1) {
-          nextCol = Math.min(currentCol + 1, heroMovies.length - 1);
-        } else {
-          const catIndex = currentRow - 2;
-          const movieCount = displayCategories[catIndex]?.movies?.length || 0;
-          const maxCol = Math.min(movieCount, 20);
-          nextCol = Math.min(currentCol + 1, maxCol);
-        }
-      } else if (isLeft) {
-        if (currentCol === 0) {
-          const now = Date.now();
-          if (now - lastTimeAtColZero.current > 500) {
-            setLastRowBeforeSidebar(currentRow);
-            setLastColBeforeSidebar(currentCol);
-            setIsSidebarActive(true);
+      switch (e.key) {
+        case 'ArrowRight':
+          if (currentRow === 0) {
+            nextCol = Math.min(currentCol + 1, 1);
+          } else if (currentRow === 1) {
+            nextCol = Math.min(currentCol + 1, heroMovies.length - 1);
+          } else {
+            const catIndex = currentRow - 2;
+            const movieCount = displayCategories[catIndex]?.movies?.length || 0;
+            // Limit navigation to the first 20 movies + the "See More" card
+            const maxCol = Math.min(movieCount, 20);
+            nextCol = Math.min(currentCol + 1, maxCol);
           }
-          return;
-        }
-        nextCol = currentCol - 1;
-        if (nextCol === 0) {
-          lastTimeAtColZero.current = Date.now();
-        }
-      } else if (isDown) {
-        if (currentRow < totalRows - 1) {
-          nextRow = currentRow + 1;
-          nextCol = lastColPerRow[nextRow] || 0;
-        }
-      } else if (isUp) {
-        if (currentRow > 0) {
-          nextRow = currentRow - 1;
-          nextCol = lastColPerRow[nextRow] || 0;
-        }
-      } else if (isEnter) {
-        if (currentRow === 1) {
-          setSelectedMovie(heroMovies[currentCol]);
-        } else if (currentRow >= 2) {
-          const catIndex = currentRow - 2;
-          const category = displayCategories[catIndex];
-          const movieCount = category?.movies?.length || 0;
-          const maxVisible = Math.min(movieCount, 20);
+          break;
+        case 'ArrowLeft':
+          if (currentCol === 0) {
+            const now = Date.now();
+            if (now - lastTimeAtColZero.current > 500) {
+              setLastRowBeforeSidebar(currentRow);
+              setLastColBeforeSidebar(currentCol);
+              setIsSidebarActive(true);
+            }
+            return;
+          }
+          nextCol = currentCol - 1;
+          if (nextCol === 0) {
+            lastTimeAtColZero.current = Date.now();
+          }
+          break;
+        case 'ArrowDown':
+          if (currentRow < totalRows - 1) {
+            nextRow = currentRow + 1;
+            nextCol = lastColPerRow[nextRow] || 0;
+          }
+          break;
+        case 'ArrowUp':
+          if (currentRow > 0) {
+            nextRow = currentRow - 1;
+            nextCol = lastColPerRow[nextRow] || 0;
+          }
+          break;
+        case 'Enter':
+          if (currentRow === 1) {
+            setSelectedMovie(heroMovies[currentCol]);
+          } else if (currentRow >= 2) {
+            const catIndex = currentRow - 2;
+            const category = displayCategories[catIndex];
+            const movieCount = category?.movies?.length || 0;
+            const maxVisible = Math.min(movieCount, 20);
 
-          if (currentCol < maxVisible) {
-            const movie = category?.movies?.[currentCol];
-            if (movie) setSelectedMovie(movie);
-          } else if (currentCol === maxVisible && category) {
-            handleOpenGrid(category);
+            if (currentCol < maxVisible) {
+              const movie = category?.movies?.[currentCol];
+              if (movie) setSelectedMovie(movie);
+            } else if (currentCol === maxVisible && category) {
+              // Si estamos en la columna "Ver Más"
+              handleOpenGrid(category);
+            }
           }
-        }
+          break;
       }
 
       if (nextRow !== currentRow || nextCol !== currentCol) {
@@ -166,7 +175,7 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
         }
       }
 
-      if (isUp || isDown || isLeft || isRight || isEnter || isBack) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Backspace'].includes(e.key)) {
         e.preventDefault();
       }
     }

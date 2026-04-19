@@ -157,161 +157,176 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isActive) return;
 
-    const key = e.key;
-    const keyCode = e.keyCode;
-
-    // Normalización de teclas para controles remotos de TV
-    const isUp = key === 'ArrowUp' || key === 'Up' || keyCode === 38;
-    const isDown = key === 'ArrowDown' || key === 'Down' || keyCode === 40;
-    const isLeft = key === 'ArrowLeft' || key === 'Left' || keyCode === 37;
-    const isRight = key === 'ArrowRight' || key === 'Right' || keyCode === 39;
-    const isEnter = key === 'Enter' || key === 'Select' || key === 'Ok' || keyCode === 13;
-    const isBack = key === 'Backspace' || key === 'Escape' || key === 'Back' || keyCode === 8 || keyCode === 27 || keyCode === 461;
-
     // Overlay Interception
     if (focusArea === 'menu') {
       const options = activeMenu === 'sort' ? sortOptions : activeMenu === 'stars' ? starsOptions : yearOptions;
       
-      if (isDown) {
-        if (activeMenu !== 'stars') setMenuFocusIndex(prev => Math.min(prev + 1, options.length - 1));
-      } else if (isUp) {
-        if (activeMenu !== 'stars') {
-          setMenuFocusIndex(prev => {
-            if (prev === 0) {
-              setActiveMenu('none');
-              setFocusArea('filters');
-              return 0;
-            }
-            return prev - 1;
-          });
-        } else {
+      switch (e.key) {
+        case 'ArrowDown':
+          if (activeMenu !== 'stars') setMenuFocusIndex(prev => Math.min(prev + 1, options.length - 1));
+          break;
+        case 'ArrowUp':
+          if (activeMenu !== 'stars') {
+            setMenuFocusIndex(prev => {
+              if (prev === 0) {
+                setActiveMenu('none');
+                setFocusArea('filters');
+                return 0;
+              }
+              return prev - 1;
+            });
+          } else {
+            setActiveMenu('none');
+            setFocusArea('filters');
+          }
+          break;
+        case 'ArrowLeft':
+          if (activeMenu === 'stars') {
+             setMenuFocusIndex(prev => Math.max(prev - 1, 0));
+          } else {
+             setActiveMenu('none');
+             setFocusArea('filters');
+          }
+          break;
+        case 'ArrowRight':
+          if (activeMenu === 'stars') {
+             setMenuFocusIndex(prev => Math.min(prev + 1, options.length - 1));
+          } else {
+             setActiveMenu('none');
+             setFocusArea('filters');
+          }
+          break;
+        case 'Escape':
+        case 'Backspace':
           setActiveMenu('none');
           setFocusArea('filters');
-        }
-      } else if (isLeft) {
-        if (activeMenu === 'stars') {
-           setMenuFocusIndex(prev => Math.max(prev - 1, 0));
-        } else {
-           setActiveMenu('none');
-           setFocusArea('filters');
-        }
-      } else if (isRight) {
-        if (activeMenu === 'stars') {
-           setMenuFocusIndex(prev => Math.min(prev + 1, options.length - 1));
-        } else {
-           setActiveMenu('none');
-           setFocusArea('filters');
-        }
-      } else if (isBack) {
-        setActiveMenu('none');
-        setFocusArea('filters');
-      } else if (isEnter) {
-        if (activeMenu === 'sort') {
-          setActiveSort(options[menuFocusIndex].id);
-        } else if (activeMenu === 'stars') {
-          setActiveStars(options[menuFocusIndex].id);
-        } else {
-          setActiveYear(options[menuFocusIndex].id);
-        }
-        setActiveMenu('none');
-        setFocusArea('filters');
+          break;
+        case 'Enter':
+          if (activeMenu === 'sort') {
+            setActiveSort(options[menuFocusIndex].id);
+          } else if (activeMenu === 'stars') {
+            setActiveStars(options[menuFocusIndex].id);
+          } else {
+            setActiveYear(options[menuFocusIndex].id);
+          }
+          setActiveMenu('none');
+          setFocusArea('filters');
+          break;
       }
       
-      if (isUp || isDown || isLeft || isRight || isEnter || isBack) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Backspace'].includes(e.key)) {
         e.preventDefault();
       }
       return;
     }
 
     if (focusArea === 'genres') {
-      if (isDown) {
-        setGenreFocusIndex(prev => {
-          const next = Math.min(prev + 1, genres.length - 1);
-          setSelectedGenreIndex(next);
-          return next;
-        });
-      } else if (isUp) {
-        setGenreFocusIndex(prev => {
-          const next = Math.max(prev - 1, 0);
-          setSelectedGenreIndex(next);
-          return next;
-        });
-      } else if (isRight) {
-        if (movies.length > 0) {
-          setFocusArea('results');
-          setResultFocusIndex(0);
-        }
-      } else if (isLeft) {
-          const now = Date.now();
-          if (now - lastTimeAtLeftEdge.current > 500) {
-            onReturnToSidebar?.();
+      switch (e.key) {
+        case 'ArrowDown':
+          setGenreFocusIndex(prev => {
+            const next = Math.min(prev + 1, genres.length - 1);
+            setSelectedGenreIndex(next);
+            return next;
+          });
+          break;
+        case 'ArrowUp':
+          setGenreFocusIndex(prev => {
+            const next = Math.max(prev - 1, 0);
+            setSelectedGenreIndex(next);
+            return next;
+          });
+          break;
+        case 'ArrowRight':
+          if (movies.length > 0) {
+            setFocusArea('results');
+            setResultFocusIndex(0);
           }
+          break;
+        case 'ArrowLeft':
+            const now = Date.now();
+            if (now - lastTimeAtLeftEdge.current > 500) {
+              onReturnToSidebar?.();
+            }
+          break;
       }
     } else if (focusArea === 'results') {
       const cols = 6;
-      if (isRight) {
-        setResultFocusIndex(prev => Math.min(prev + 1, movies.length - 1));
-      } else if (isLeft) {
-        if (resultFocusIndex % cols === 0) {
-          setFocusArea('genres');
-        } else {
-          setResultFocusIndex(prev => Math.max(prev - 1, 0));
-        }
-      } else if (isDown) {
-        if (resultFocusIndex + cols < movies.length) {
-          setResultFocusIndex(prev => prev + cols);
-          const nextRow = Math.floor((resultFocusIndex + cols) / cols);
-          const totalRows = Math.ceil(movies.length / cols);
-          if (hasMore && !isLoadingMore && (nextRow >= totalRows - 2)) {
-             setPage(p => p + 1);
+      switch (e.key) {
+        case 'ArrowRight':
+          setResultFocusIndex(prev => Math.min(prev + 1, movies.length - 1));
+          break;
+        case 'ArrowLeft':
+          if (resultFocusIndex % cols === 0) {
+            setFocusArea('genres');
+          } else {
+            setResultFocusIndex(prev => Math.max(prev - 1, 0));
           }
-        } else {
-          const currentRow = Math.floor(resultFocusIndex / cols);
-          const lastRow = Math.floor((movies.length - 1) / cols);
-          if (currentRow < lastRow) {
-            setResultFocusIndex(movies.length - 1);
+          break;
+        case 'ArrowDown':
+          if (resultFocusIndex + cols < movies.length) {
+            setResultFocusIndex(prev => prev + cols);
+            const nextRow = Math.floor((resultFocusIndex + cols) / cols);
+            const totalRows = Math.ceil(movies.length / cols);
+            // Infinite scroll trigger: load next page when 2 rows away from the bottom
+            if (hasMore && !isLoadingMore && (nextRow >= totalRows - 2)) {
+               setPage(p => p + 1);
+            }
+          } else {
+            const currentRow = Math.floor(resultFocusIndex / cols);
+            const lastRow = Math.floor((movies.length - 1) / cols);
+            if (currentRow < lastRow) {
+              setResultFocusIndex(movies.length - 1);
+            }
+            // If already at the bottom and more exists, try forcing load
+            if (hasMore && !isLoadingMore) {
+               setPage(p => p + 1);
+            }
           }
-          if (hasMore && !isLoadingMore) {
-             setPage(p => p + 1);
+          break;
+        case 'ArrowUp':
+          if (resultFocusIndex >= cols) {
+            setResultFocusIndex(prev => prev - cols);
+          } else {
+            setFocusArea('filters');
+            setFilterFocusIndex(0);
           }
-        }
-      } else if (isUp) {
-        if (resultFocusIndex >= cols) {
-          setResultFocusIndex(prev => prev - cols);
-        } else {
-          setFocusArea('filters');
-          setFilterFocusIndex(0);
-        }
-      } else if (isEnter) {
-        onMovieSelect(movies[resultFocusIndex]);
+          break;
+        case 'Enter':
+          onMovieSelect(movies[resultFocusIndex]);
+          break;
       }
     } else if (focusArea === 'filters') {
-      if (isRight) {
-        if (filterFocusIndex < 2) setFilterFocusIndex(prev => prev + 1);
-      } else if (isLeft) {
-        if (filterFocusIndex > 0) {
-          setFilterFocusIndex(prev => prev - 1);
-        } else {
-          setFocusArea('genres');
-        }
-      } else if (isDown) {
-        if (movies.length > 0) {
-          setFocusArea('results');
-          setResultFocusIndex(0);
-        }
-      } else if (isEnter) {
-        const menuToOpen = filterFocusIndex === 0 ? 'stars' : filterFocusIndex === 1 ? 'year' : 'sort';
-        setActiveMenu(menuToOpen);
-        let currentOption = activeSort;
-        let optionsList = sortOptions;
-        if (menuToOpen === 'stars') { currentOption = activeStars; optionsList = starsOptions; }
-        else if (menuToOpen === 'year') { currentOption = activeYear; optionsList = yearOptions; }
-        setMenuFocusIndex(Math.max(0, optionsList.findIndex(o => o.id === currentOption)));
-        setFocusArea('menu');
+      switch (e.key) {
+        case 'ArrowRight':
+          if (filterFocusIndex < 2) setFilterFocusIndex(prev => prev + 1);
+          break;
+        case 'ArrowLeft':
+          if (filterFocusIndex > 0) {
+            setFilterFocusIndex(prev => prev - 1);
+          } else {
+            setFocusArea('genres');
+          }
+          break;
+        case 'ArrowDown':
+          if (movies.length > 0) {
+            setFocusArea('results');
+            setResultFocusIndex(0);
+          }
+          break;
+        case 'Enter':
+          const menuToOpen = filterFocusIndex === 0 ? 'stars' : filterFocusIndex === 1 ? 'year' : 'sort';
+          setActiveMenu(menuToOpen);
+          let currentOption = activeSort;
+          let optionsList = sortOptions;
+          if (menuToOpen === 'stars') { currentOption = activeStars; optionsList = starsOptions; }
+          else if (menuToOpen === 'year') { currentOption = activeYear; optionsList = yearOptions; }
+          setMenuFocusIndex(Math.max(0, optionsList.findIndex(o => o.id === currentOption)));
+          setFocusArea('menu');
+          break;
       }
     }
 
-    if (isUp || isDown || isLeft || isRight || isEnter || isBack) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
       e.preventDefault();
     }
   }, [isActive, focusArea, genreFocusIndex, resultFocusIndex, filterFocusIndex, movies, selectedGenreIndex, onReturnToSidebar, onMovieSelect, activeMenu, menuFocusIndex, activeSort, activeStars, activeYear, hasMore, isLoadingMore]);
