@@ -5,16 +5,12 @@ import { fetchHomeData } from '@/lib/data';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import LoginGate from '@/components/Auth/LoginGate';
-
 export default async function Home() {
   const categories = await fetchHomeData();
 
   return (
     <main>
-      <LoginGate>
-        <CarouselGallery initialCategories={categories} />
-      </LoginGate>
+      <CarouselGallery initialCategories={categories} />
     </main>
   );
 }

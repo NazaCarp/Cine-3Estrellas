@@ -21,8 +21,6 @@ export const metadata: Metadata = {
   description: "Navega por nuestra colección usando las flechas del teclado.",
 };
 
-import { AuthProvider } from "@/lib/AuthContext";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,9 +32,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
       </head>
       <body suppressHydrationWarning>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        {children}
       </body>
     </html>
   );

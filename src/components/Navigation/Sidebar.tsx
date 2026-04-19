@@ -6,11 +6,7 @@ interface SidebarProps {
   isSidebarActive: boolean;
 }
 
-import { useAuth } from '@/lib/AuthContext';
-
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarActive }) => {
-  const { user } = useAuth();
-  
   const menuItems = [
     {
       id: 'buscar',
@@ -73,22 +69,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarAct
           );
         })}
       </div>
-
-      {user && (
-        <div className={`sidebar-profile ${isSidebarActive ? 'visible' : ''}`.trim()}>
-          <div className="profile-avatar">
-            {user.photo_url ? (
-              <img src={user.photo_url} alt={user.first_name} />
-            ) : (
-              <span className="material-symbols-outlined">person</span>
-            )}
-          </div>
-          <div className="profile-info">
-            <span className="profile-name">{user.first_name}</span>
-            <span className="profile-status">Premium</span>
-          </div>
-        </div>
-      )}
     </aside>
   );
 };

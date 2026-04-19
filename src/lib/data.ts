@@ -68,7 +68,7 @@ export async function fetchHomeData(): Promise<Category[]> {
 
         // Calculate newest content date for this category
         const newestDate = movieData && movieData.length > 0
-          ? movieData.reduce((max: string, m: any) => (m.created_at > max ? m.created_at : max), movieData[0].created_at)
+          ? movieData.reduce((max, m) => (m.created_at > max ? m.created_at : max), movieData[0].created_at)
           : '';
 
         return {
@@ -220,7 +220,7 @@ export async function searchMovies(query: string): Promise<Movie[]> {
     if (!movieData) return [];
 
     // Enrich with quality info
-    const enrichedMovies = movieData.map((movie: Movie) => {
+    const enrichedMovies = movieData.map(movie => {
       let maxQuality = 'HD';
       if (movie.versions) {
         const allStr = Object.values(movie.versions).join(' ').toUpperCase();
@@ -302,8 +302,8 @@ export async function fetchMoviesByGenre(
     
     if (!movieData) return { movies: [], count: 0 };
 
-    // Enrich with quality info/metadata info
-    const enrichedMovies = movieData.map((movie: Movie) => {
+    // Enrich with quality/metadata info
+    const enrichedMovies = movieData.map(movie => {
       let maxQuality = 'HD';
       if (movie.versions) {
         const allStr = Object.values(movie.versions).join(' ').toUpperCase();
@@ -368,7 +368,7 @@ export async function fetchMoviesByCategory(
     if (!movieData) return { movies: [], count: 0 };
 
     // Enrich with quality info
-    const enrichedMovies = movieData.map((movie: Movie) => {
+    const enrichedMovies = movieData.map(movie => {
       let maxQuality = 'HD';
       if (movie.versions) {
         const allStr = Object.values(movie.versions).join(' ').toUpperCase();
