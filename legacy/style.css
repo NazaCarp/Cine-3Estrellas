@@ -1,0 +1,159 @@
+:root {
+    --bg-color: #0f1115;
+    --text-color: #ffffff;
+    --accent-color: #4f46e5;
+    --card-bg: #1e2128;
+    --card-bg-hover: #2a2d36;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --focus-ring: 0 0 0 4px rgba(79, 70, 229, 0.4), 0 0 20px rgba(79, 70, 229, 0.6);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Outfit', sans-serif;
+    overflow-x: hidden;
+    padding-bottom: 50px;
+}
+
+.header {
+    padding: 60px 40px 30px;
+    background: linear-gradient(180deg, rgba(15, 17, 21, 1) 0%, rgba(15, 17, 21, 0) 100%);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #fff, #a5b4fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header p {
+    color: #9ca3af;
+    font-size: 1.1rem;
+}
+
+.carousels-container {
+    padding: 0 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.carousel-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.carousel-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    scroll-margin-top: 150px; /* Para que al scrollear no quede tapado por el header */
+    transition: color 0.3s ease;
+}
+
+.carousel-section.active .carousel-title {
+    color: #a5b4fc;
+}
+
+.carousel-track-wrapper {
+    overflow: hidden;
+    margin: 0 -40px;
+    padding: 20px 40px;
+}
+
+.carousel-track {
+    display: flex;
+    gap: 20px;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.carousel-item {
+    flex: 0 0 250px;
+    height: 150px;
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efecto hover/focus */
+.carousel-item.active {
+    background-color: var(--card-bg-hover);
+    color: #fff;
+    transform: scale(1.05);
+    border-color: var(--accent-color);
+    box-shadow: var(--focus-ring);
+    z-index: 10;
+}
+
+/* Decoración dentro del item */
+.carousel-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+    pointer-events: none;
+}
+
+.item-number {
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    font-size: 3rem;
+    font-weight: 800;
+    opacity: 0.4;
+    z-index: 2;
+    transition: opacity 0.3s ease;
+}
+
+.carousel-item.active .item-number {
+    opacity: 0.8;
+}
+
+.item-text {
+    position: relative;
+    z-index: 2;
+}
+
+.item-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    filter: brightness(0.35);
+    transition: all 0.3s ease;
+}
+
+.carousel-item.active .item-bg {
+    filter: brightness(0.7);
+    transform: scale(1.05); /* Efecto extra al seleccionar la imagen */
+}
