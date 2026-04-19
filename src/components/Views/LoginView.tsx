@@ -13,12 +13,10 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // We clean up previous widgets if any
     if (containerRef.current) {
       containerRef.current.innerHTML = '';
     }
 
-    // Initialize the Telegram Login Widget
     const script = document.createElement('script');
     script.src = "https://telegram.org/js/telegram-widget.js?22";
     script.setAttribute('data-telegram-login', 'Cine_3Estrellas_Bot');
@@ -28,7 +26,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
     script.setAttribute('data-onauth', 'onTelegramAuth(user)');
     script.async = true;
 
-    // Define the callback in the window object
     (window as any).onTelegramAuth = async (user: any) => {
       setLoading(true);
       setInternalError(null);
@@ -59,7 +56,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
     }
 
     return () => {
-      // Clean up the global function
       delete (window as any).onTelegramAuth;
     };
   }, [onLogin]);
@@ -68,65 +64,43 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
 
   return (
     <div className="login-container">
-      <div className="login-background">
-        <div className="poster-mosaic">
-          {[...Array(20)].map((_, i) => (
-            <div key={i} className="mosaic-item" style={{
-              backgroundImage: `url('https://febhxbpcorixullzsfgz.supabase.co/storage/v1/object/public/posters/poster-${(i % 10) + 1}.jpg?t=1')`,
-              animationDelay: `${i * 0.2}s`
-            }} />
-          ))}
+      <div className="login-backdrop" />
+      
+      <div className="login-card">
+        <div className="login-header">
+          <img src="/assets/brand/logo.png" alt="Logo" className="login-logo" />
+          <h1>CINE 3 ESTRELLAS</h1>
+          <p className="subtitle">LA EXPERIENCIA CINEMATOGRÁFICA PREMIUM EN TELEGRAM</p>
         </div>
-        <div className="vignette-overlay" />
-      </div>
 
-      <div className="portal-frame">
-        <div className="login-card">
-          <div className="card-glare" />
-          
-          <div className="login-header">
-            <div className="logo-wrapper">
-              <img src="/assets/brand/logo.png" alt="Logo" className="login-logo" />
-            </div>
-            <h1 className="main-title">CINE 3 ESTRELLAS</h1>
-            <div className="subtitle-container">
-              <div className="gold-line" />
-              <p className="subtitle">EXPERIENCIA PREMIUM EN TELEGRAM</p>
-              <div className="gold-line" />
+        <div className="login-content">
+          <p className="login-instruction">
+            Inicia sesión con tu cuenta de Telegram <br/> para acceder al catálogo completo
+          </p>
+
+          <div className="widget-wrapper">
+            <div ref={containerRef} className="telegram-widget-container">
+              {/* Widget is injected here */}
             </div>
           </div>
 
-          <div className="login-content">
-            <p className="login-instruction">
-              Inicia sesión con tu cuenta de Telegram <br/> para acceder al catálogo completo
-            </p>
-
-            <div className="auth-zone">
-              <div className="widget-wrapper">
-                <div ref={containerRef} className="telegram-widget-container">
-                  {/* Widget is injected here */}
-                </div>
-              </div>
+          {loading && (
+            <div className="login-loading">
+              <div className="spinner"></div>
+              <span>Verificando acceso...</span>
             </div>
+          )}
 
-            {loading && (
-              <div className="portal-loading">
-                <div className="shimmer-bar" />
-                <span>VERIFICANDO ACCESO</span>
-              </div>
-            )}
+          {error && (
+            <div className="login-error-message">
+              <span className="material-symbols-outlined">warning</span>
+              <p>{error}</p>
+            </div>
+          )}
+        </div>
 
-            {error && (
-              <div className="portal-error">
-                <span className="material-symbols-outlined">report</span>
-                <p>{error}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="login-footer">
-            <p>REQUISITO: ESTAR UNIDO AL GRUPO OFICIAL @CINE_3ESTRELLAS</p>
-          </div>
+        <div className="login-footer">
+          <p>Requisito: Estar unido al grupo oficial <strong>@Cine_3Estrellas</strong></p>
         </div>
       </div>
 
@@ -134,165 +108,75 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
         .login-container {
           position: fixed;
           inset: 0;
-          display: grid;
-          place-items: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           z-index: 10000;
           overflow: hidden;
           background: #000;
           font-family: 'Outfit', sans-serif;
         }
 
-        .login-background {
+        .login-backdrop {
           position: absolute;
           inset: 0;
-          z-index: 1;
-        }
-
-        .poster-mosaic {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          grid-template-rows: repeat(4, 1fr);
-          width: 120vw;
-          height: 120vh;
-          position: absolute;
-          top: -10vh;
-          left: -10vw;
-          gap: 10px;
-          filter: grayscale(1) brightness(0.15);
-          animation: kenBurns 60s infinite alternate ease-in-out;
-        }
-
-        .mosaic-item {
-          width: 100%;
-          height: 100%;
+          background: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=2000') no-repeat center center;
           background-size: cover;
-          background-position: center;
-          background-color: #111;
-        }
-
-        @keyframes kenBurns {
-          0% { transform: scale(1) translate(0, 0); }
-          100% { transform: scale(1.1) translate(-2%, -2%); }
-        }
-
-        .vignette-overlay {
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 40%, #000 85%);
-        }
-
-        .portal-frame {
-          position: relative;
-          z-index: 10;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
+          filter: brightness(0.25) blur(10px);
+          transform: scale(1.1);
         }
 
         .login-card {
-          width: 680px;
-          background: linear-gradient(135deg, rgba(20, 20, 22, 0.95) 0%, rgba(10, 10, 12, 0.98) 100%);
-          backdrop-filter: blur(60px);
-          border-radius: 60px;
-          padding: 80px 70px;
-          text-align: center;
           position: relative;
-          overflow: hidden;
-          box-shadow: 0 100px 200px rgba(0, 0, 0, 0.9);
+          width: 580px;
+          background: linear-gradient(135deg, rgba(25, 25, 25, 0.9) 0%, rgba(15, 15, 15, 0.95) 100%);
+          backdrop-filter: blur(40px);
           border: 1px solid rgba(255, 215, 0, 0.2);
-          animation: portalEnter 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+          border-radius: 40px;
+          padding: 80px 60px;
+          text-align: center;
+          box-shadow: 0 50px 120px rgba(0, 0, 0, 0.8), 
+                      inset 0 0 40px rgba(255, 215, 0, 0.02);
+          animation: cardSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .login-card::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          padding: 2px;
-          border-radius: 60px;
-          background: linear-gradient(90deg, transparent, #ffd700, transparent);
-          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          mask-composite: xor;
-          animation: borderGlow 6s linear infinite;
-        }
-
-        @keyframes borderGlow {
-          0% { transform: rotate(0deg); opacity: 0.3; }
-          50% { opacity: 0.6; }
-          100% { transform: rotate(360deg); opacity: 0.3; }
-        }
-
-        @keyframes portalEnter {
-          from { opacity: 0; transform: scale(0.9) translateY(40px); filter: blur(20px); }
-          to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
-        }
-
-        .logo-wrapper {
-          margin-bottom: 30px;
+        @keyframes cardSlideUp {
+          from { opacity: 0; transform: translateY(60px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .login-logo {
-          width: 140px;
-          filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.3));
-          animation: logoPulse 4s ease-in-out infinite;
+          width: 120px;
+          margin-bottom: 30px;
+          filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.2));
         }
 
-        @keyframes logoPulse {
-          0% { transform: scale(1); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.3)); }
-          50% { transform: scale(1.05); filter: drop-shadow(0 0 60px rgba(255, 215, 0, 0.5)); }
-          100% { transform: scale(1); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.3)); }
-        }
-
-        .main-title {
+        h1 {
           font-family: var(--font-roboto-condensed), sans-serif;
-          font-size: 58px;
-          letter-spacing: 6px;
+          font-size: 46px;
+          letter-spacing: 3px;
           color: #fff;
           margin-bottom: 12px;
-          font-weight: 900;
-          text-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-        }
-
-        .subtitle-container {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 20px;
-          margin-bottom: 60px;
-        }
-
-        .gold-line {
-          height: 1px;
-          flex: 1;
-          max-width: 40px;
-          background: linear-gradient(90deg, transparent, #ffd700, transparent);
+          font-weight: 800;
         }
 
         .subtitle {
-          color: #ffd700;
-          font-size: 16px;
+          color: #d4af37;
+          font-size: 15px;
           text-transform: uppercase;
-          letter-spacing: 4px;
-          font-weight: 800;
-          text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+          letter-spacing: 2px;
+          margin-bottom: 50px;
+          font-weight: 700;
+          opacity: 0.8;
         }
 
         .login-instruction {
-          color: #ffffff;
-          font-size: 24px;
+          color: #fff;
+          font-size: 20px;
           font-weight: 300;
-          margin-bottom: 50px;
-          line-height: 1.6;
-          opacity: 0.9;
-        }
-
-        .auth-zone {
-          background: rgba(255, 255, 255, 0.03);
-          border-radius: 30px;
-          padding: 40px;
           margin-bottom: 40px;
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          line-height: 1.5;
+          opacity: 0.9;
         }
 
         .widget-wrapper {
@@ -300,6 +184,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           display: flex;
           justify-content: center;
           align-items: center;
+          margin-bottom: 40px;
           min-height: 80px;
         }
 
@@ -307,54 +192,56 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           display: block;
           margin: 0 auto;
           text-align: center;
-          width: 100%;
+          width: 100%; /* Important for text-align inheritance */
         }
 
-        .portal-loading {
+        .login-loading {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
           margin-top: 20px;
-          color: #ffd700;
+          color: #d4af37;
           font-size: 14px;
-          font-weight: 700;
-          letter-spacing: 2px;
+          font-weight: 600;
         }
 
-        .shimmer-bar {
-          width: 100px;
-          height: 2px;
-          background: linear-gradient(90deg, transparent, #ffd700, transparent);
-          margin: 10px auto;
-          animation: shimmer 2s infinite linear;
+        .spinner {
+          width: 24px;
+          height: 24px;
+          border: 3px solid rgba(255, 215, 0, 0.2);
+          border-top-color: #d4af37;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
         }
 
-        @keyframes shimmer {
-          from { transform: translateX(-100px); }
-          to { transform: translateX(100px); }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
 
-        .portal-error {
-          margin-top: 30px;
-          padding: 20px 30px;
-          background: rgba(255, 0, 0, 0.1);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 0, 0, 0.2);
+        .login-error-message {
+          margin-top: 24px;
+          padding: 16px 20px;
+          background: rgba(255, 69, 58, 0.1);
+          border: 1px solid rgba(255, 69, 58, 0.2);
+          border-radius: 16px;
           display: flex;
           align-items: center;
-          gap: 15px;
-          color: #ff5555;
+          gap: 14px;
+          color: #ff453a;
           text-align: left;
         }
 
         .login-footer {
-          margin-top: 40px;
+          margin-top: 50px;
           border-top: 1px solid rgba(255, 255, 255, 0.05);
           padding-top: 30px;
         }
 
         .login-footer p {
-          color: rgba(255, 255, 255, 0.4);
-          font-size: 13px;
-          letter-spacing: 1px;
-          font-weight: 500;
+          color: rgba(255, 255, 255, 0.35);
+          font-size: 14px;
+          letter-spacing: 0.5px;
         }
       `}</style>
     </div>
