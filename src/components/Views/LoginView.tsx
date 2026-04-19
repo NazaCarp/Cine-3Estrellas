@@ -68,10 +68,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
 
   return (
     <div className="login-container">
-      <div className="login-backdrop"></div>
-      
-      <div className="login-card">
-    <div className="login-container">
       <div className="login-background">
         <div className="poster-mosaic">
           {[...Array(20)].map((_, i) => (
@@ -171,7 +167,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           height: 100%;
           background-size: cover;
           background-position: center;
-          /* Fallback image if posters fail */
           background-color: #111;
         }
 
@@ -210,7 +205,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           animation: portalEnter 1.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* Animated Glowing Border */
         .login-card::after {
           content: '';
           position: absolute;
@@ -245,8 +239,9 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
         }
 
         @keyframes logoPulse {
-          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.3)); }
+          0% { transform: scale(1); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.3)); }
           50% { transform: scale(1.05); filter: drop-shadow(0 0 60px rgba(255, 215, 0, 0.5)); }
+          100% { transform: scale(1); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.3)); }
         }
 
         .main-title {
@@ -305,7 +300,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           display: flex;
           justify-content: center;
           align-items: center;
-          /* Critical: Ensure zero side margin interference */
           min-height: 80px;
         }
 
@@ -361,59 +355,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           font-size: 13px;
           letter-spacing: 1px;
           font-weight: 500;
-        }
-
-        .login-error-message {
-          margin-top: 24px;
-          padding: 16px 20px;
-          background: rgba(255, 69, 58, 0.1);
-          border: 1px solid rgba(255, 69, 58, 0.2);
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          color: #ff453a;
-          text-align: left;
-        }
-
-        .login-error-message p {
-          margin: 0;
-          font-size: 14px;
-          line-height: 1.4;
-        }
-
-        .login-loading {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-          margin-top: 20px;
-          color: rgba(255, 255, 255, 0.8);
-        }
-
-        .spinner {
-          width: 24px;
-          height: 24px;
-          border: 3px solid rgba(255, 255, 255, 0.1);
-          border-top-color: #fff;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        .login-footer {
-          margin-top: 40px;
-          padding-top: 30px;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          color: rgba(255, 255, 255, 0.4);
-          font-size: 14px;
-        }
-
-        .login-footer strong {
-          color: rgba(255, 255, 255, 0.7);
         }
       `}</style>
     </div>
