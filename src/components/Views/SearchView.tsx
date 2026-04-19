@@ -90,125 +90,123 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isActive) return;
 
+    const key = e.key;
+    const keyCode = e.keyCode;
+
+    // Normalización de teclas para controles remotos de TV
+    const isUp = key === 'ArrowUp' || key === 'Up' || keyCode === 38;
+    const isDown = key === 'ArrowDown' || key === 'Down' || keyCode === 40;
+    const isLeft = key === 'ArrowLeft' || key === 'Left' || keyCode === 37;
+    const isRight = key === 'ArrowRight' || key === 'Right' || keyCode === 39;
+    const isEnter = key === 'Enter' || key === 'Select' || key === 'Ok' || keyCode === 13;
+    const isBack = key === 'Backspace' || key === 'Escape' || key === 'Back' || keyCode === 8 || keyCode === 27 || keyCode === 461;
+
     if (focusArea === 'keyboard') {
       const maxRow = keyboardRows.length - 1;
       const maxCol = keyboardRows[keyboardPos.row].length - 1;
 
-      switch (e.key) {
-        case 'ArrowRight':
-          if (keyboardPos.col < maxCol) {
-            setKeyboardPos(prev => ({ ...prev, col: prev.col + 1 }));
-          } else if (results.length > 0) {
-            setFocusArea('results');
-            // Try to set result target vertically relative to row (0..6 -> maybe proportional?) Just 0 is fine for now, or match row roughly.
-            // Let's just pick index 0.
-            setResultIndex(0);
-          }
-          break;
-        case 'ArrowLeft':
-          if (keyboardPos.col > 0) {
-            setKeyboardPos(prev => ({ ...prev, col: prev.col - 1 }));
-          } else if (onReturnToSidebar && Date.now() - lastTimeAtColZero.current > 500) {
-            onReturnToSidebar();
-          }
-          break;
-        case 'ArrowDown':
-          if (keyboardPos.row < maxRow) {
-            setKeyboardPos(prev => ({ 
-              row: prev.row + 1, 
-              col: Math.min(prev.col, keyboardRows[prev.row + 1].length - 1) 
-            }));
-          } else {
-            setFocusArea('filters');
-            setFilterIndex(0);
-          }
-          break;
-        case 'ArrowUp':
-          if (keyboardPos.row > 0) {
-            setKeyboardPos(prev => ({ 
-              row: prev.row - 1, 
-              col: Math.min(prev.col, keyboardRows[prev.row - 1].length - 1) 
-            }));
-          }
-          break;
-        case 'Enter':
-          handleKeyPress(keyboardRows[keyboardPos.row][keyboardPos.col]);
-          break;
+      if (isRight) {
+        if (keyboardPos.col < maxCol) {
+          setKeyboardPos(prev => ({ ...prev, col: prev.col + 1 }));
+        } else if (results.length > 0) {
+          setFocusArea('results');
+          setResultIndex(0);
+        }
+      } else if (isLeft) {
+        if (keyboardPos.col > 0) {
+          setKeyboardPos(prev => ({ ...prev, col: prev.col - 1 }));
+        } else if (onReturnToSidebar && Date.now() - lastTimeAtColZero.current > 500) {
+          onReturnToSidebar();
+        }
+      } else if (isDown) {
+        if (keyboardPos.row < maxRow) {
+          setKeyboardPos(prev => ({ 
+            row: prev.row + 1, 
+            col: Math.min(prev.col, keyboardRows[prev.row + 1].length - 1) 
+          }));
+        } else {
+          setFocusArea('filters');
+          setFilterIndex(0);
+        }
+      } else if (isUp) {
+        if (keyboardPos.row > 0) {
+          setKeyboardPos(prev => ({ 
+            row: prev.row - 1, 
+            col: Math.min(prev.col, keyboardRows[prev.row - 1].length - 1) 
+          }));
+        }
+      } else if (isEnter) {
+        handleKeyPress(keyboardRows[keyboardPos.row][keyboardPos.col]);
       }
     } else if (focusArea === 'filters') {
-      switch (e.key) {
-        case 'ArrowRight':
-          if (filterIndex % 3 < 2 && filterIndex + 1 < quickFilters.length) {
-            setFilterIndex(prev => prev + 1);
-          } else if (results.length > 0) {
-            setFocusArea('results');
-            setResultIndex(0);
-          }
-          break;
-        case 'ArrowLeft':
-          if (filterIndex % 3 > 0) {
-            setFilterIndex(prev => prev - 1);
-          } else if (onReturnToSidebar && Date.now() - lastTimeAtColZero.current > 500) {
-            onReturnToSidebar();
-          }
-          break;
-        case 'ArrowUp':
-          if (filterIndex >= 3) {
-            setFilterIndex(prev => prev - 3);
-          } else {
-            setFocusArea('keyboard');
-            setKeyboardPos({ row: keyboardRows.length - 1, col: filterIndex === 0 ? 1 : filterIndex === 1 ? 2 : 4 });
-          }
-          break;
-        case 'ArrowDown':
-          if (filterIndex + 3 < quickFilters.length) {
-            setFilterIndex(prev => prev + 3);
-          }
-          break;
+      if (isRight) {
+        if (filterIndex % 3 < 2 && filterIndex + 1 < quickFilters.length) {
+          setFilterIndex(prev => prev + 1);
+        } else if (results.length > 0) {
+          setFocusArea('results');
+          setResultIndex(0);
+        }
+      } else if (isLeft) {
+        if (filterIndex % 3 > 0) {
+          setFilterIndex(prev => prev - 1);
+        } else if (onReturnToSidebar && Date.now() - lastTimeAtColZero.current > 500) {
+          onReturnToSidebar();
+        }
+      } else if (isUp) {
+        if (filterIndex >= 3) {
+          setFilterIndex(prev => prev - 3);
+        } else {
+          setFocusArea('keyboard');
+          setKeyboardPos({ row: keyboardRows.length - 1, col: filterIndex === 0 ? 1 : filterIndex === 1 ? 2 : 4 });
+        }
+      } else if (isDown) {
+        if (filterIndex + 3 < quickFilters.length) {
+          setFilterIndex(prev => prev + 3);
+        }
+      } else if (isEnter) {
+        // Enviar filtro
+        const filterQuery = quickFilters[filterIndex];
+        setQuery(filterQuery);
+        handleSearch(filterQuery);
+        setFocusArea('results');
+        setResultIndex(0);
       }
     } else if (focusArea === 'results') {
       const cols = 4;
-      switch (e.key) {
-        case 'ArrowRight':
-          setResultIndex(prev => Math.min(prev + 1, results.length - 1));
-          break;
-        case 'ArrowLeft':
-          if (resultIndex % cols === 0) {
-            if (lastLeftPanelFocus.current === 'filters') {
-              setFocusArea('filters');
-              // Return to the rightmost column of the filter's current row
-              setFilterIndex(prev => Math.min(prev + (2 - (prev % 3)), quickFilters.length - 1));
-            } else {
-              setFocusArea('keyboard');
-              setKeyboardPos(prev => ({
-                ...prev,
-                col: keyboardRows[prev.row].length - 1
-              }));
-            }
+      if (isRight) {
+        setResultIndex(prev => Math.min(prev + 1, results.length - 1));
+      } else if (isLeft) {
+        if (resultIndex % cols === 0) {
+          if (lastLeftPanelFocus.current === 'filters') {
+            setFocusArea('filters');
+            setFilterIndex(prev => Math.min(prev + (2 - (prev % 3)), quickFilters.length - 1));
           } else {
-            setResultIndex(prev => Math.max(prev - 1, 0));
+            setFocusArea('keyboard');
+            setKeyboardPos(prev => ({
+              ...prev,
+              col: keyboardRows[prev.row].length - 1
+            }));
           }
-          break;
-        case 'ArrowUp':
-          if (resultIndex >= cols) {
-            setResultIndex(prev => prev - cols);
-          }
-          break;
-        case 'ArrowDown':
-          if (resultIndex + cols < results.length) {
-            setResultIndex(prev => prev + cols);
-          }
-          break;
-        case 'Enter':
-          onMovieSelect(results[resultIndex]);
-          break;
+        } else {
+          setResultIndex(prev => Math.max(prev - 1, 0));
+        }
+      } else if (isUp) {
+        if (resultIndex >= cols) {
+          setResultIndex(prev => prev - cols);
+        }
+      } else if (isDown) {
+        if (resultIndex + cols < results.length) {
+          setResultIndex(prev => prev + cols);
+        }
+      } else if (isEnter) {
+        onMovieSelect(results[resultIndex]);
       }
     }
 
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
+    if (isUp || isDown || isLeft || isRight || isEnter || isBack) {
       e.preventDefault();
     }
-  }, [isActive, focusArea, keyboardPos, filterIndex, resultIndex, results, query, handleKeyPress, onMovieSelect]);
+  }, [isActive, focusArea, keyboardPos, filterIndex, resultIndex, results, query, handleKeyPress, onMovieSelect, handleSearch, onReturnToSidebar]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);

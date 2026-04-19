@@ -56,8 +56,19 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
   }, [rowFocus]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    const key = e.key;
+    const keyCode = e.keyCode;
+
+    // Normalización de teclas para controles remotos de TV
+    const isUp = key === 'ArrowUp' || key === 'Up' || keyCode === 38;
+    const isDown = key === 'ArrowDown' || key === 'Down' || keyCode === 40;
+    const isLeft = key === 'ArrowLeft' || key === 'Left' || keyCode === 37;
+    const isRight = key === 'ArrowRight' || key === 'Right' || keyCode === 39;
+    const isEnter = key === 'Enter' || key === 'Select' || key === 'Ok' || keyCode === 13;
+    const isBack = key === 'Backspace' || key === 'Escape' || key === 'Back' || keyCode === 8 || keyCode === 27 || keyCode === 461;
+
     // Detener la propagación inmediatamente para que el fondo NO reciba nada
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Backspace'].includes(e.key)) {
+    if (isUp || isDown || isLeft || isRight || isEnter || isBack) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -67,54 +78,38 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
 
 
     if (rowFocus === 'actions') {
-      switch (e.key) {
-        case 'ArrowRight':
-          if (focusedIndex < 1) setFocusedIndex(prev => prev + 1);
-          break;
-        case 'ArrowLeft':
-          if (focusedIndex > 0 && focusedIndex !== 100) setFocusedIndex(prev => prev - 1);
-          break;
-        case 'ArrowUp':
-          setFocusedIndex(100); 
-          break;
-        case 'ArrowDown':
-          if (focusedIndex === 100) {
-            setFocusedIndex(0);
-          } else if (movie.similar && movie.similar.length > 0) {
-            setRowFocus('similar');
-            setSimilarFocusIndex(0);
-          }
-          break;
-        case 'Enter':
-          if (focusedIndex === 100) onClose();
-          else if (focusedIndex === 0) setIsPlaying(true);
-          break;
-
-        case 'Escape':
-        case 'Backspace':
-          onClose();
-          break;
+      if (isRight) {
+        if (focusedIndex < 1) setFocusedIndex(prev => prev + 1);
+      } else if (isLeft) {
+        if (focusedIndex > 0 && focusedIndex !== 100) setFocusedIndex(prev => prev - 1);
+      } else if (isUp) {
+        setFocusedIndex(100); 
+      } else if (isDown) {
+        if (focusedIndex === 100) {
+          setFocusedIndex(0);
+        } else if (movie.similar && movie.similar.length > 0) {
+          setRowFocus('similar');
+          setSimilarFocusIndex(0);
+        }
+      } else if (isEnter) {
+        if (focusedIndex === 100) onClose();
+        else if (focusedIndex === 0) setIsPlaying(true);
+      } else if (isBack) {
+        onClose();
       }
     } else if (rowFocus === 'similar') {
-      switch (e.key) {
-        case 'ArrowRight':
-          setSimilarFocusIndex(prev => Math.min(prev + 1, (movie.similar?.length || 1) - 1));
-          break;
-        case 'ArrowLeft':
-          setSimilarFocusIndex(prev => Math.max(prev - 1, 0));
-          break;
-        case 'ArrowUp':
-          setRowFocus('actions');
-          break;
-        case 'Enter':
-          if (movie.similar?.[similarFocusIndex]) {
-            console.log('Navegando a similar:', movie.similar[similarFocusIndex].title);
-          }
-          break;
-        case 'Escape':
-        case 'Backspace':
-          onClose();
-          break;
+      if (isRight) {
+        setSimilarFocusIndex(prev => Math.min(prev + 1, (movie.similar?.length || 1) - 1));
+      } else if (isLeft) {
+        setSimilarFocusIndex(prev => Math.max(prev - 1, 0));
+      } else if (isUp) {
+        setRowFocus('actions');
+      } else if (isEnter) {
+        if (movie.similar?.[similarFocusIndex]) {
+          console.log('Navegando a similar:', movie.similar[similarFocusIndex].title);
+        }
+      } else if (isBack) {
+        onClose();
       }
     }
   }, [focusedIndex, isPlaying, movie, onClose, rowFocus, similarFocusIndex]);

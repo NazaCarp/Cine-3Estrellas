@@ -192,7 +192,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   };
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' || e.key === 'Backspace') {
+    const key = e.key;
+    const keyCode = e.keyCode;
+
+    // Normalización de teclas para controles remotos de TV
+    const isUp = key === 'ArrowUp' || key === 'Up' || keyCode === 38;
+    const isDown = key === 'ArrowDown' || key === 'Down' || keyCode === 40;
+    const isLeft = key === 'ArrowLeft' || key === 'Left' || keyCode === 37;
+    const isRight = key === 'ArrowRight' || key === 'Right' || keyCode === 39;
+    const isEnter = key === 'Enter' || key === 'Select' || key === 'Ok' || keyCode === 13;
+    const isBack = key === 'Backspace' || key === 'Escape' || key === 'Back' || keyCode === 8 || keyCode === 27 || keyCode === 461;
+
+    if (isBack) {
       e.preventDefault();
       if (selectedUrl) setSelectedUrl(null);
       else onClose();
@@ -214,91 +225,79 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       const isTabs = focusIndex >= tabStartIdx && focusIndex < gridStartIdx;
       const isGrid = focusIndex >= gridStartIdx;
 
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          if (isRepro) {
-            if (focusIndex === vCount - 1) {
-              setFocusIndex(vCount);
-            } else {
-              setFocusIndex(prev => prev + 1);
-            }
-          } else if (isTabs) {
-            if (activeQualities.length > 0) setFocusIndex(gridStartIdx);
-          } else if (isGrid) {
-            // Jump to next row (+3) if it exists
-            const nextRowIdx = focusIndex + 3;
-            if (nextRowIdx < totalItems) setFocusIndex(nextRowIdx);
+      if (isDown) {
+        e.preventDefault();
+        if (isRepro) {
+          if (focusIndex === vCount - 1) {
+            setFocusIndex(vCount);
+          } else {
+            setFocusIndex(prev => prev + 1);
           }
-          break;
-
-        case 'ArrowUp':
-          e.preventDefault();
-          if (focusIndex === vCount) {
-            setFocusIndex(vCount - 1);
-          } else if (isRepro) {
-            setFocusIndex(prev => Math.max(0, prev - 1));
-          } else if (isTabs) {
-            setFocusIndex(vCount - 1);
-          } else if (isGrid) {
-            // Jump back to row above or to active tab
-            const prevRowIdx = focusIndex - 3;
-            if (prevRowIdx < gridStartIdx) {
-              const activeTabIdx = tabKeys.indexOf(activeDownloadTab || '');
-              setFocusIndex(tabStartIdx + (activeTabIdx >= 0 ? activeTabIdx : 0));
-            } else {
-              setFocusIndex(prevRowIdx);
-            }
+        } else if (isTabs) {
+          if (activeQualities.length > 0) setFocusIndex(gridStartIdx);
+        } else if (isGrid) {
+          const nextRowIdx = focusIndex + 3;
+          if (nextRowIdx < totalItems) setFocusIndex(nextRowIdx);
+        }
+      } else if (isUp) {
+        e.preventDefault();
+        if (focusIndex === vCount) {
+          setFocusIndex(vCount - 1);
+        } else if (isRepro) {
+          setFocusIndex(prev => Math.max(0, prev - 1));
+        } else if (isTabs) {
+          setFocusIndex(vCount - 1);
+        } else if (isGrid) {
+          const prevRowIdx = focusIndex - 3;
+          if (prevRowIdx < gridStartIdx) {
+            const activeTabIdx = tabKeys.indexOf(activeDownloadTab || '');
+            setFocusIndex(tabStartIdx + (activeTabIdx >= 0 ? activeTabIdx : 0));
+          } else {
+            setFocusIndex(prevRowIdx);
           }
-          break;
-
-        case 'ArrowRight':
-          e.preventDefault();
-          if (isTabs) {
-            const nextTabIdx = Math.min(tabKeys.length - 1, (focusIndex - tabStartIdx) + 1);
-            const newIdx = tabStartIdx + nextTabIdx;
-            setFocusIndex(newIdx);
-            setActiveDownloadTab(tabKeys[nextTabIdx]);
-          } else if (isGrid) {
-            const localIdx = focusIndex - gridStartIdx;
-            const col = localIdx % 3;
-            if (col < 2 && focusIndex + 1 < totalItems) {
-              setFocusIndex(prev => prev + 1);
-            }
+        }
+      } else if (isRight) {
+        e.preventDefault();
+        if (isTabs) {
+          const nextTabIdx = Math.min(tabKeys.length - 1, (focusIndex - tabStartIdx) + 1);
+          const newIdx = tabStartIdx + nextTabIdx;
+          setFocusIndex(newIdx);
+          setActiveDownloadTab(tabKeys[nextTabIdx]);
+        } else if (isGrid) {
+          const localIdx = focusIndex - gridStartIdx;
+          const col = localIdx % 3;
+          if (col < 2 && focusIndex + 1 < totalItems) {
+            setFocusIndex(prev => prev + 1);
           }
-          break;
-
-        case 'ArrowLeft':
-          e.preventDefault();
-          if (isTabs) {
-            const prevTabIdx = Math.max(0, (focusIndex - tabStartIdx) - 1);
-            const newIdx = tabStartIdx + prevTabIdx;
-            setFocusIndex(newIdx);
-            setActiveDownloadTab(tabKeys[prevTabIdx]);
-          } else if (isGrid) {
-            const localIdx = focusIndex - gridStartIdx;
-            const col = localIdx % 3;
-            if (col > 0) {
-              setFocusIndex(prev => prev - 1);
-            }
+        }
+      } else if (isLeft) {
+        e.preventDefault();
+        if (isTabs) {
+          const prevTabIdx = Math.max(0, (focusIndex - tabStartIdx) - 1);
+          const newIdx = tabStartIdx + prevTabIdx;
+          setFocusIndex(newIdx);
+          setActiveDownloadTab(tabKeys[prevTabIdx]);
+        } else if (isGrid) {
+          const localIdx = focusIndex - gridStartIdx;
+          const col = localIdx % 3;
+          if (col > 0) {
+            setFocusIndex(prev => prev - 1);
           }
-          break;
-
-        case 'Enter':
-          e.preventDefault();
-          if (isRepro) {
-            const key = versions[focusIndex];
-            const val = movie.versions![key];
-            handleSelect(typeof val === 'object' ? (val as any).url : val);
-          } else if (downloadQualities.length === 0 && focusIndex === vCount) {
-             handleExtractAll(versions);
-          } else if (isGrid) {
-            const qualityIdx = focusIndex - gridStartIdx;
-            if (activeQualities[qualityIdx]) {
-              window.open(activeQualities[qualityIdx].url, '_blank');
-            }
+        }
+      } else if (isEnter) {
+        e.preventDefault();
+        if (isRepro) {
+          const key = versions[focusIndex];
+          const val = movie.versions![key];
+          handleSelect(typeof val === 'object' ? (val as any).url : val);
+        } else if (downloadQualities.length === 0 && focusIndex === vCount) {
+           handleExtractAll(versions);
+        } else if (isGrid) {
+          const qualityIdx = focusIndex - gridStartIdx;
+          if (activeQualities[qualityIdx]) {
+            window.open(activeQualities[qualityIdx].url, '_blank');
           }
-          break;
+        }
       }
     }
   }, [selectedUrl, focusIndex, versions, downloadQualities, activeDownloadTab, movie.versions, onClose]);

@@ -54,64 +54,62 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isActive) return;
 
+    const key = e.key;
+    const keyCode = e.keyCode;
+
+    // Normalización de teclas para controles remotos de TV
+    const isUp = key === 'ArrowUp' || key === 'Up' || keyCode === 38;
+    const isDown = key === 'ArrowDown' || key === 'Down' || keyCode === 40;
+    const isLeft = key === 'ArrowLeft' || key === 'Left' || keyCode === 37;
+    const isRight = key === 'ArrowRight' || key === 'Right' || keyCode === 39;
+    const isEnter = key === 'Enter' || key === 'Select' || key === 'Ok' || keyCode === 13;
+    const isBack = key === 'Backspace' || key === 'Escape' || key === 'Back' || keyCode === 8 || keyCode === 27 || keyCode === 461;
+
     if (focusArea === 'header') {
-      switch (e.key) {
-        case 'ArrowDown':
-          setFocusArea('grid');
-          break;
-        case 'Enter':
-        case 'Backspace':
-        case 'Escape':
-          onClose();
-          break;
+      if (isDown) {
+        setFocusArea('grid');
+      } else if (isEnter || isBack) {
+        onClose();
       }
     } else {
       // Grid Navigation
       const rowCapacity = movies.length;
 
-      switch (e.key) {
-        case 'ArrowRight':
-          if (focusIndex + 1 < rowCapacity) {
-            setFocusIndex(prev => prev + 1);
-          } else {
-            loadMore();
-          }
-          break;
-        case 'ArrowLeft':
-          if (focusIndex > 0) {
-            setFocusIndex(prev => prev - 1);
-          }
-          break;
-        case 'ArrowDown':
-          if (focusIndex + COLS < rowCapacity) {
-            setFocusIndex(prev => prev + COLS);
-          } else {
-            loadMore();
-          }
-          break;
-        case 'ArrowUp':
-          if (focusIndex >= COLS) {
-            setFocusIndex(prev => prev - COLS);
-          } else {
-            setFocusArea('header');
-          }
-          break;
-        case 'Enter':
-          if (movies[focusIndex]) {
-            onMovieSelect(movies[focusIndex]);
-          }
-          break;
-        case 'Backspace':
-        case 'Escape':
-          onClose();
-          break;
+      if (isRight) {
+        if (focusIndex + 1 < rowCapacity) {
+          setFocusIndex(prev => prev + 1);
+        } else {
+          loadMore();
+        }
+      } else if (isLeft) {
+        if (focusIndex > 0) {
+          setFocusIndex(prev => prev - 1);
+        }
+      } else if (isDown) {
+        if (focusIndex + COLS < rowCapacity) {
+          setFocusIndex(prev => prev + COLS);
+        } else {
+          loadMore();
+        }
+      } else if (isUp) {
+        if (focusIndex >= COLS) {
+          setFocusIndex(prev => prev - COLS);
+        } else {
+          setFocusArea('header');
+        }
+      } else if (isEnter) {
+        if (movies[focusIndex]) {
+          onMovieSelect(movies[focusIndex]);
+        }
+      } else if (isBack) {
+        onClose();
       }
     }
 
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Backspace', 'Escape'].includes(e.key)) {
+    if (isUp || isDown || isLeft || isRight || isEnter || isBack) {
       e.preventDefault();
     }
-  }, [isActive, focusArea, focusIndex, movies, onMovieSelect, onClose, loadMore, hasMore, isLoading]);
+  }, [isActive, focusArea, focusIndex, movies, onMovieSelect, onClose, loadMore]);
 
   // Predictive Loading Observer: Loads more content when user is within 3 rows of the bottom
   useEffect(() => {
