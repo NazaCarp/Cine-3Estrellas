@@ -65,14 +65,19 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
   return (
     <div className="login-container">
       <div className="login-backdrop">
+        <div className="film-grain" />
         <div className="vignette" />
+        <div className="dynamic-halo" />
       </div>
 
       <div className="main-portal">
         <div className="brand-section">
+          <div className="logo-halo" />
           <img src="/assets/brand/logo.png" alt="Logo" className="portal-logo" />
-          <h1 className="portal-title">CINE 3 ESTRELLAS</h1>
-          <div className="divider" />
+          <img src="/assets/brand/brand-text.png" alt="Cine 3 Estrellas" className="portal-brand-text" />
+          <div className="prestige-divider">
+            <div className="glow-point" />
+          </div>
         </div>
 
         <div className="auth-section">
@@ -80,7 +85,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
             Inicia sesión con Telegram para continuar
           </p>
 
-          <div className="widget-box">
+          <div className="hyper-glass-box">
             <div className="widget-wrapper">
               <div ref={containerRef} className="telegram-widget-container">
                 {/* Widget is injected here */}
@@ -91,7 +96,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           {loading && (
             <div className="status-indicator">
               <div className="pulse-dot" />
-              <span>Verificando...</span>
+              <span>Verificando acceso</span>
             </div>
           )}
 
@@ -104,7 +109,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
         </div>
 
         <div className="footer-section">
-          <p>Exclusivo para la comunidad de @Cine_3Estrellas</p>
+          <p>EXCLUSIVO PARA LA COMUNIDAD DE @CINE_3ESTRELLAS</p>
         </div>
       </div>
 
@@ -127,19 +132,43 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           inset: 0;
           background: url('https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&q=80&w=2000') no-repeat center center;
           background-size: cover;
-          filter: brightness(0.2) contrast(1.2);
-          animation: backgroundZoom 60s infinite alternate ease-in-out;
+          filter: brightness(0.18) contrast(1.1);
+          animation: backgroundZoom 120s infinite alternate linear;
         }
 
         @keyframes backgroundZoom {
           from { transform: scale(1); }
-          to { transform: scale(1.1); }
+          to { transform: scale(1.15); }
+        }
+
+        .film-grain {
+          position: absolute;
+          inset: 0;
+          opacity: 0.12;
+          pointer-events: none;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
         .vignette {
           position: absolute;
           inset: 0;
-          background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.8) 100%);
+          background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 60%, #000 100%);
+        }
+
+        .dynamic-halo {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 800px;
+          height: 800px;
+          background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+          animation: haloPulse 8s infinite ease-in-out;
+        }
+
+        @keyframes haloPulse {
+          0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
         }
 
         .main-portal {
@@ -149,114 +178,160 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
           flex-direction: column;
           align-items: center;
           width: 100%;
-          max-width: 800px;
+          max-width: 900px;
           text-align: center;
         }
 
         .brand-section {
-          animation: revealDown 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+          position: relative;
+          margin-bottom: 80px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          animation: revealDown 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .logo-halo {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 200px;
+          height: 200px;
+          background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+          z-index: -1;
         }
 
         .portal-logo {
-          width: 100px;
+          width: 110px;
           margin-bottom: 24px;
-          filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.2));
+          filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.25));
         }
 
-        .portal-title {
-          font-family: var(--font-roboto-condensed), sans-serif;
-          font-size: 48px;
-          font-weight: 800;
-          letter-spacing: 8px;
+        .portal-brand-text {
+          width: 500px;
           margin-bottom: 20px;
-          text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+          filter: drop-shadow(0 0 20px rgba(0,0,0,0.5));
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
         }
 
-        .divider {
-          width: 40px;
-          height: 2px;
+        .prestige-divider {
+          width: 500px;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, #ffd700, transparent);
+          margin: 0 auto;
+          position: relative;
+        }
+
+        .glow-point {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 4px;
+          height: 4px;
           background: #ffd700;
-          margin: 0 auto 60px;
-          opacity: 0.6;
+          border-radius: 50%;
+          box-shadow: 0 0 12px #ffd700;
         }
 
         .auth-section {
-          animation: revealUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-          animation-delay: 0.3s;
+          animation: revealUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation-delay: 0.4s;
         }
 
         .portal-instruction {
-          font-size: 20px;
+          font-size: 18px;
           font-weight: 300;
-          color: rgba(255, 255, 255, 0.7);
-          margin-bottom: 40px;
-          letter-spacing: 1px;
+          color: rgba(255, 255, 255, 0.6);
+          margin-bottom: 50px;
+          letter-spacing: 2px;
+          text-transform: uppercase;
         }
 
-        .widget-box {
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(20px);
-          padding: 40px 80px;
-          border-radius: 30px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
-          transition: all 0.4s ease;
+        .hyper-glass-box {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+          backdrop-filter: blur(30px);
+          padding: 45px 90px;
+          border-radius: 35px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          border-left: 1px solid rgba(255, 255, 255, 0.05);
+          box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.02);
         }
 
         .widget-wrapper {
           display: flex;
           justify-content: center;
           align-items: center;
-          min-height: 44px;
+          min-height: 50px;
         }
 
         .telegram-widget-container {
           display: block;
           margin: 0 auto;
           text-align: center;
-          gap: 12px;
-          margin-top: 20px;
-          color: #d4af37;
-          font-size: 14px;
-          font-weight: 600;
         }
 
-        .spinner {
-          width: 24px;
-          height: 24px;
-          border: 3px solid rgba(255, 215, 0, 0.2);
-          border-top-color: #d4af37;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        .login-error-message {
-          margin-top: 24px;
-          padding: 16px 20px;
-          background: rgba(255, 69, 58, 0.1);
-          border: 1px solid rgba(255, 69, 58, 0.2);
-          border-radius: 16px;
+        .status-indicator {
           display: flex;
           align-items: center;
-          gap: 14px;
+          justify-content: center;
+          gap: 12px;
+          margin-top: 35px;
+          color: #ffd700;
+          font-size: 13px;
+          font-weight: 900;
+          letter-spacing: 3px;
+          text-transform: uppercase;
+          opacity: 0.8;
+        }
+
+        .pulse-dot {
+          width: 5px;
+          height: 5px;
+          background: #ffd700;
+          border-radius: 50%;
+          animation: dotPulse 2s infinite ease-in-out;
+        }
+
+        @keyframes dotPulse {
+          0%, 100% { transform: scale(1); opacity: 0.5; }
+          50% { transform: scale(2); opacity: 1; }
+        }
+
+        .error-indicator {
+          margin-top: 35px;
+          padding: 16px 28px;
+          background: rgba(255, 69, 58, 0.1);
+          border: 1px solid rgba(255, 69, 58, 0.15);
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
           color: #ff453a;
-          text-align: left;
-        }
-
-        .login-footer {
-          margin-top: 50px;
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
-          padding-top: 30px;
-        }
-
-        .login-footer p {
-          color: rgba(255, 255, 255, 0.35);
           font-size: 14px;
-          letter-spacing: 0.5px;
+        }
+
+        .footer-section {
+          margin-top: 100px;
+          opacity: 0.3;
+          font-size: 12px;
+          letter-spacing: 2px;
+          font-weight: 600;
+          animation: revealUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation-delay: 0.8s;
+        }
+
+        @keyframes revealDown {
+          from { opacity: 0; transform: translateY(-40px); filter: blur(15px); }
+          to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        @keyframes revealUp {
+          from { opacity: 0; transform: translateY(40px); filter: blur(15px); }
+          to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
       `}</style>
     </div>
