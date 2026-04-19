@@ -253,12 +253,16 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, error: externalError }) 
 
         .hyper-glass-box {
           background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
-          backdrop-filter: blur(30px);
-          padding: 45px 90px;
-          border-radius: 35px;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          border-left: 1px solid rgba(255, 255, 255, 0.05);
-          box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.02);
+          backdrop-filter: blur(40px);
+          padding: 40px 60px;
+          border-radius: 40px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 
+            0 40px 100px rgba(0, 0, 0, 0.6), 
+            inset 0 0 30px rgba(255, 215, 0, 0.03),
+            inset 0 1px 1px rgba(255, 255, 255, 0.1);
+          width: fit-content;
+          margin: 0 auto;
         }
 
         .widget-wrapper {
