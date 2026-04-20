@@ -57,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarAct
                 <span 
                   className="material-symbols-outlined"
                   style={{ 
-                    fontSize: '26px',
+                    fontSize: 'clamp(20px, 3vh, 26px)',
                     fontVariationSettings: `'FILL' ${isActive ? 1 : 0}, 'wght' 100, 'GRAD' 0, 'opsz' 24`
                   }}
                 >
