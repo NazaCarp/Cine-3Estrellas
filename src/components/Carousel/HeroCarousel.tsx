@@ -61,6 +61,10 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ movies, isActiveActions, is
   if (!movies || movies.length === 0) return null;
 
   const currentMovie = movies[currentIndex];
+  
+  // Clean title: remove trailing " (YYYY)"
+  const titleMatch = currentMovie.title.match(/(.*)\s\((\d{4})\)$/);
+  const cleanTitle = titleMatch ? titleMatch[1] : currentMovie.title;
 
   // Helper to extract year
   const getYear = (date?: string) => {
@@ -79,6 +83,13 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ movies, isActiveActions, is
   return (
     <div className={`hero-carousel ${isActive ? 'focus' : ''}`.trim()}>
       {movies.map((movie, index) => {
+        const isCurrent = index === currentIndex;
+        
+        // Match title for each movie in the loop to be safe, 
+        // though we only strictly need it for the visible one
+        const mTitleMatch = movie.title.match(/(.*)\s\((\d{4})\)$/);
+        const mTitle = mTitleMatch ? mTitleMatch[1] : movie.title;
+
         const backdropUrl = movie.backdrop_path
           ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
           : 'https://via.placeholder.com/1200x600?text=No+Backdrop';
@@ -86,13 +97,13 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ movies, isActiveActions, is
         return (
           <div
             key={movie.id}
-            className={`hero-slide${index === currentIndex ? ' active' : ''}`.trim()}
+            className={`hero-slide${isCurrent ? ' active' : ''}`.trim()}
             style={{ backgroundImage: `url(${backdropUrl})` }}
           >
             <div className="hero-overlay">
               <div className="hero-content">
                 <span className="hero-trending">#{index + 1} EN TENDENCIA</span>
-                <h2 className="hero-title">{movie.title}</h2>
+                <h2 className="hero-title">{mTitle}</h2>
                 <div className="hero-meta">
                   {movie.quality && (
                     <>
