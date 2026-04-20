@@ -8,7 +8,7 @@ import { calculateMaxQuality, normalizeCertification } from '@/lib/utils';
  * This ensures TMDB_API_KEY is available and hide from client.
  */
 export async function getMovieDetailAction(movie: Movie): Promise<Movie> {
-  const TMDB_API_KEY = process.env.TMDB_API_KEY;
+  const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
   if (!TMDB_API_KEY) {
     console.error("TMDB_API_KEY missing in Server Action");
     return movie;

@@ -142,7 +142,7 @@ export async function fetchHomeData(): Promise<Category[]> {
     const finalMosIdx = deduplicatedResults.findIndex(c => c.name.toLowerCase() === 'lo más visto');
     if (finalMosIdx !== -1) {
       const mos = deduplicatedResults[finalMosIdx];
-      const TMDB_API_KEY = process.env.TMDB_API_KEY;
+      const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
       if (TMDB_API_KEY && mos.movies && mos.movies.length > 0) {
         // Only enrich top 10 to keep it fast
         const moviesToEnrich = mos.movies.slice(0, 10);
@@ -241,10 +241,10 @@ export async function searchMovies(query: string): Promise<Movie[]> {
 }
 
 export async function fetchMoviesByGenre(
-  genreIds: number[], 
-  page: number = 1, 
+  genreIds: number[],
+  page: number = 1,
   pageSize: number = 60,
-  sortBy: string = 'popularity', 
+  sortBy: string = 'popularity',
   starsFilter: string = 'all',
   yearFilter: string = 'all'
 ): Promise<{ movies: Movie[], count: number }> {
@@ -270,7 +270,7 @@ export async function fetchMoviesByGenre(
         query = query.filter('release_date', 'lt', '2000-01-01');
       } else if (yearFilter === '2000') {
         query = query.filter('release_date', 'gte', '2000-01-01')
-                     .filter('release_date', 'lt', '2010-01-01');
+          .filter('release_date', 'lt', '2010-01-01');
       } else {
         const minYear = parseInt(yearFilter);
         if (!isNaN(minYear)) {
@@ -299,7 +299,7 @@ export async function fetchMoviesByGenre(
       console.error('Supabase error details:', JSON.stringify(error, null, 2));
       throw error;
     }
-    
+
     if (!movieData) return { movies: [], count: 0 };
 
     // Enrich with quality/metadata info
@@ -364,7 +364,7 @@ export async function fetchMoviesByCategory(
       console.error(`Error fetching movies for category ${category.name}:`, error);
       throw error;
     }
-    
+
     if (!movieData) return { movies: [], count: 0 };
 
     // Enrich with quality info
