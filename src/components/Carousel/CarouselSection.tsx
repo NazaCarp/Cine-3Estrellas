@@ -34,11 +34,24 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
   }, [isActive]);
 
   useEffect(() => {
-    if (trackRef.current) {
-      const itemWidth = 200; // 180px item + 20px gap
-      const translateX = -(focusedCol * itemWidth);
-      trackRef.current.style.transform = `translateX(${translateX}px)`;
-    }
+    const updateTransform = () => {
+      if (trackRef.current) {
+        // Calculate dynamic width based on the actual rendered item size
+        const firstChild = trackRef.current.children[0] as HTMLElement;
+        const baseItemWidth = firstChild ? firstChild.offsetWidth : 180;
+        const itemWidth = baseItemWidth + 20; // Include CSS gap of 20px
+        
+        const translateX = -(focusedCol * itemWidth);
+        trackRef.current.style.transform = `translateX(${translateX}px)`;
+      }
+    };
+
+    updateTransform();
+    window.addEventListener('resize', updateTransform);
+    
+    return () => {
+      window.removeEventListener('resize', updateTransform);
+    };
   }, [focusedCol]);
 
   if (movies.length === 0) return null;

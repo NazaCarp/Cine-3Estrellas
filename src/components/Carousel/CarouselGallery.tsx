@@ -223,7 +223,7 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
             onSlideChange={handleHeroSlideChange}
           />
 
-          <div style={{ padding: '0 40px', display: 'flex', flexDirection: 'column', gap: '60px' }}>
+          <div className="categories-container">
             {displayCategories.map((cat, rIndex) => (
               <CarouselSection
                 key={cat.id}
