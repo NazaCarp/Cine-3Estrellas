@@ -2102,8 +2102,8 @@ body {
 /* Responsive Hero Styles for Landscape Mobile / Short Screens */
 @media (max-height: 600px) {
   .hero-carousel {
-    height: 100vh;
-    min-height: 350px;
+    height: 70vh;
+    min-height: 260px;
   }
   .hero-overlay {
     padding: 10px 40px 20px 40px;
