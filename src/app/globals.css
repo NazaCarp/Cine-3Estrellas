@@ -2035,3 +2035,66 @@ body {
   opacity: 0.4;
   font-weight: 600;
 }
+/* Responsive Hero Styles */
+@media (max-width: 768px) {
+  .hero-carousel {
+    height: clamp(350px, 60vh, 500px);
+  }
+  .hero-overlay {
+    padding: clamp(20px, 3vh, 40px) clamp(20px, 4vw, 40px);
+  }
+  .hero-title {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+  }
+  .hero-overview {
+    font-size: 1rem;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    margin-bottom: 12px;
+  }
+  .hero-genres-text {
+    font-size: 0.9rem;
+    margin-bottom: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-carousel {
+    height: clamp(300px, 50vh, 450px);
+  }
+  .hero-overlay {
+    padding: 15px 15px;
+    background: linear-gradient(0deg, rgba(15, 17, 21, 1) 20%, rgba(15, 17, 21, 0.7) 50%, rgba(15, 17, 21, 0) 100%);
+  }
+  .hero-trending {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    margin-bottom: 10px;
+  }
+  .hero-title {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+  }
+  .hero-meta {
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .hero-overview {
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+  }
+  .hero-genres-text {
+    font-size: 0.85rem;
+    margin-bottom: 30px;
+  }
+  .hero-actions {
+    gap: 10px;
+  }
+  .btn-primary,
+  .btn-secondary {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
