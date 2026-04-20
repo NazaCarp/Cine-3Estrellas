@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   description: "Navega por nuestra colección usando las flechas del teclado.",
 };
 
+import ScreenSizeDebugger from "@/components/ScreenSizeDebugger";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -33,6 +35,7 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         {children}
+        <ScreenSizeDebugger />
       </body>
     </html>
   );
