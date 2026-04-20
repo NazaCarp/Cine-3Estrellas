@@ -2100,7 +2100,7 @@ body {
   }
 
   .hero-trending {
-    display: none;
+    display: none !important;
   }
 }
 
@@ -2112,6 +2112,10 @@ body {
   .hero-overlay {
     padding: 15px 15px;
     background: linear-gradient(0deg, rgba(15, 17, 21, 1) 20%, rgba(15, 17, 21, 0.7) 50%, rgba(15, 17, 21, 0) 100%);
+  }
+
+  .hero-trending {
+    display: none !important;
   }
 
   .hero-title {
@@ -2155,6 +2159,10 @@ body {
 
   .hero-overlay {
     padding: 10px 40px 20px 40px;
+  }
+
+  .hero-trending {
+    display: none !important;
   }
 
   .hero-title {
@@ -2230,5 +2238,16 @@ body {
 
   .see-more-text small {
     font-size: 0.6rem;
+  }
+}
+@media (max-width: 1024px) {
+  .hero-trending {
+    display: none !important;
+  }
+}
+
+@media (max-height: 800px) {
+  .hero-trending {
+    display: none !important;
   }
 }
