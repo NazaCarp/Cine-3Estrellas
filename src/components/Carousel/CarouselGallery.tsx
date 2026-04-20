@@ -213,7 +213,7 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
         isSidebarActive={isSidebarActive}
       />
 
-      <div className={`main-content ${isSidebarActive || selectedMovie || expandedCategory ? 'dimmed' : ''}`.trim()} style={{ transition: 'all 0.4s ease', paddingLeft: '80px' }}>
+      <div className={`main-content ${isSidebarActive || selectedMovie || expandedCategory ? 'dimmed' : ''}`.trim()}>
         <div style={{ display: activeTab === 'inicio' ? 'block' : 'none' }}>
           <HeroCarousel
             movies={heroMovies}
