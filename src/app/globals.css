@@ -2098,6 +2098,10 @@ body {
     font-size: 0.9rem;
     margin-bottom: 40px;
   }
+
+  .hero-trending {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2108,12 +2112,6 @@ body {
   .hero-overlay {
     padding: 15px 15px;
     background: linear-gradient(0deg, rgba(15, 17, 21, 1) 20%, rgba(15, 17, 21, 0.7) 50%, rgba(15, 17, 21, 0) 100%);
-  }
-
-  .hero-trending {
-    font-size: 0.75rem;
-    padding: 3px 8px;
-    margin-bottom: 10px;
   }
 
   .hero-title {
