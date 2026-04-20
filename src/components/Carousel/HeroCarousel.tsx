@@ -45,7 +45,7 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ movies, isActiveActions, is
         behavior: 'smooth'
       });
     }
-  }, [isActive, currentIndex, focusedCol]);
+  }, [isActive]);
 
   useEffect(() => {
     // Pausar la rotación si el usuario está enfocado en él (para que pueda leer la sinopsis o elegir un botón)
