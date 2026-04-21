@@ -259,6 +259,8 @@ html, body {
   color: var(--text-color);
   font-family: var(--font-outfit), sans-serif;
   overflow-x: hidden;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .carousels-container {

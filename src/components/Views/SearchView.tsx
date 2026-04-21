@@ -91,12 +91,47 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isActive) return;
 
+    if (e.key === 'Enter' && e.ctrlKey) {
+      handleSearch(query);
+      setFocusArea('results');
+      setResultIndex(0);
+      return;
+    }
+
     // Handle physical keyboard typing
     if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
+      const selection = window.getSelection();
+      const selectedText = selection ? selection.toString() : "";
+      const hasSelection = selectedText.length > 0;
+
       if (e.key === 'Backspace') {
-        setQuery(prev => prev.slice(0, -1));
+        if (hasSelection) {
+          setQuery(prev => {
+            if (selectedText === prev) return "";
+            const idx = prev.indexOf(selectedText);
+            if (idx !== -1) {
+              return prev.slice(0, idx) + prev.slice(idx + selectedText.length);
+            }
+            return prev.slice(0, -1);
+          });
+          selection?.removeAllRanges();
+        } else {
+          setQuery(prev => prev.slice(0, -1));
+        }
       } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        setQuery(prev => prev + e.key.toUpperCase());
+        if (hasSelection) {
+          setQuery(prev => {
+            if (selectedText === prev) return e.key.toUpperCase();
+            const idx = prev.indexOf(selectedText);
+            if (idx !== -1) {
+              return prev.slice(0, idx) + e.key.toUpperCase() + prev.slice(idx + selectedText.length);
+            }
+            return prev + e.key.toUpperCase();
+          });
+          selection?.removeAllRanges();
+        } else {
+          setQuery(prev => prev + e.key.toUpperCase());
+        }
       }
       return;
     }
@@ -242,7 +277,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
             </div>
             
             <div className="search-input-area text-2xl font-headline font-semibold text-[#FFD700] border-b-2 border-[#FFD700]/30 pb-2 flex items-center gap-[2px] min-h-[48px]">
-              <span className="whitespace-pre text-white">{query}</span>
+              <span className="whitespace-pre text-white select-text cursor-text" style={{ WebkitUserSelect: 'text', userSelect: 'text' }}>{query}</span>
               <span className="w-[4px] h-8 bg-[#FFD700] animate-pulse shrink-0"></span>
             </div>
           </div>
