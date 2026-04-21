@@ -217,7 +217,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          if (isRepro) {
+          if (focusIndex === 1000) {
+            setFocusIndex(0);
+          } else if (isRepro) {
             if (focusIndex === vCount - 1) {
               setFocusIndex(vCount);
             } else {
@@ -237,7 +239,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
           if (focusIndex === vCount) {
             setFocusIndex(vCount - 1);
           } else if (isRepro) {
-            setFocusIndex(prev => Math.max(0, prev - 1));
+            if (focusIndex === 0) setFocusIndex(1000);
+            else setFocusIndex(prev => Math.max(0, prev - 1));
           } else if (isTabs) {
             setFocusIndex(vCount - 1);
           } else if (isGrid) {
@@ -286,7 +289,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
 
         case 'Enter':
           e.preventDefault();
-          if (isRepro) {
+          if (focusIndex === 1000) {
+            onClose();
+          } else if (isRepro) {
             const key = versions[focusIndex];
             const val = movie.versions![key];
             handleSelect(typeof val === 'object' ? (val as any).url : val);
@@ -336,6 +341,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       <div className="player-split-bg" style={{ backgroundImage: `url(${backdropUrl})` }} />
       <div className="player-split-gradient" />
       
+      <button 
+        className={`detail-btn btn-close${focusIndex === 1000 ? ' focused' : ''}`}
+        onPointerEnter={() => setFocusIndex(1000)}
+        onClick={onClose}
+      >
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="3" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
       <div className="player-split-container">
         
         {/* LADO IZQUIERDO: Menú (Ahora aquí) */}
@@ -351,7 +367,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                     const isActive = focusIndex === idx;
                     const details = getVersionDetails(v);
                     return (
-                      <div key={v} className={`glass-option-row ${isActive ? 'focused' : ''}`}>
+                      <div 
+                        key={v} 
+                        className={`glass-option-row ${isActive ? 'focused' : ''}`}
+                        onPointerEnter={() => setFocusIndex(idx)}
+                        onClick={() => {
+                          const val = movie.versions![v];
+                          handleSelect(typeof val === 'object' ? (val as any).url : val);
+                        }}
+                      >
                         <div className="glass-option-icon">{details.flag}</div>
                         <div className="glass-option-text">
                           <span className="lang-label">{details.label.toUpperCase()}</span>
@@ -384,7 +408,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                 ) : !hasDownloads ? (
                   <>
                     <div className="glass-list">
-                      <div className={`glass-option-row ${focusIndex === vCount ? 'focused' : ''}`}>
+                      <div 
+                        className={`glass-option-row ${focusIndex === vCount ? 'focused' : ''}`}
+                        onPointerEnter={() => setFocusIndex(vCount)}
+                        onClick={() => handleExtractAll(versions)}
+                      >
                         <div className="glass-option-icon">
                           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -443,6 +471,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                                 <div 
                                   key={tk} 
                                   className={`download-tab-btn ${isActive ? 'active' : ''} ${isFocused ? 'focused' : ''}`}
+                                  onPointerEnter={() => setFocusIndex(absIdx)}
                                   onClick={() => setActiveDownloadTab(tk)}
                                 >
                                   <div className="tab-flag">{details.flag}</div>
@@ -460,6 +489,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                                 <div 
                                   key={`${q.name}-${qidx}`} 
                                   className={`download-chip ${isFocused ? 'focused' : ''}`}
+                                  onPointerEnter={() => setFocusIndex(absIdx)}
                                   onClick={() => window.open(q.url, '_blank')}
                                 >
                                   <span className="chip-quality">{q.name}</span>

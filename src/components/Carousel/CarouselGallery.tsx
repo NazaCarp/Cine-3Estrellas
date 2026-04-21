@@ -255,6 +255,7 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
         isSidebarActive={isSidebarActive}
         onItemFocus={handleSidebarFocus}
         onItemClick={handleSidebarClick}
+        onPointerLeave={() => setIsSidebarActive(false)}
       />
 
       <div className={`main-content ${isSidebarActive || selectedMovie || expandedCategory ? 'dimmed' : ''}`.trim()}>

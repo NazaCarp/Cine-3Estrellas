@@ -2522,4 +2522,100 @@ body .btn-secondary.focused {
   .see-more-text small {
     font-size: 0.6rem;
   }
+
+  /* VideoPlayer TV Optimizations */
+  .player-split-container {
+    padding: 30px 40px !important;
+    gap: 30px !important;
+  }
+  
+  .player-split-right {
+    flex: 0 0 350px !important;
+  }
+  
+  .glass-panel {
+    padding: 20px !important;
+    max-height: 90vh !important;
+    border-radius: 16px !important;
+  }
+  
+  .glass-section-title {
+    font-size: 0.7rem !important;
+    margin-bottom: 10px !important;
+    letter-spacing: 2px !important;
+  }
+  
+  .glass-list {
+    gap: 8px !important;
+  }
+  
+  .glass-option-row {
+    padding: 8px 12px !important;
+    gap: 12px !important;
+    border-radius: 10px !important;
+  }
+  
+  .lang-label {
+    font-size: 0.9rem !important;
+  }
+  
+  .lang-sub {
+    font-size: 0.6rem !important;
+  }
+  
+  .split-movie-title {
+    font-size: 2.2rem !important;
+    margin-bottom: 10px !important;
+  }
+
+  .detail-btn.btn-close {
+    top: 20px !important;
+    right: 30px !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+  }
+
+  /* Movie Detail TV Optimizations */
+  .detail-content {
+    padding: 40px 40px 20px 40px !important;
+    gap: 8px !important;
+  }
+  
+  .detail-title {
+    font-size: 2.2rem !important;
+  }
+  
+  .detail-meta {
+    font-size: 0.8rem !important;
+    gap: 8px !important;
+  }
+  
+  .detail-overview {
+    font-size: 0.85rem !important;
+    margin-top: 5px !important;
+    margin-bottom: 5px !important;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .detail-genres {
+    font-size: 0.8rem !important;
+    padding: 4px 10px !important;
+    margin-top: 5px !important;
+  }
+  
+  .detail-actions {
+    margin-top: 5px !important;
+    margin-bottom: 10px !important;
+    gap: 10px !important;
+  }
+  
+  .detail-btn {
+    padding: 8px 16px !important;
+    font-size: 0.85rem !important;
+  }
 }

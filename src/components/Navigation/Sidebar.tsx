@@ -6,9 +6,10 @@ interface SidebarProps {
   isSidebarActive: boolean;
   onItemFocus?: (index: number) => void;
   onItemClick?: (index: number) => void;
+  onPointerLeave?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarActive, onItemFocus, onItemClick }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarActive, onItemFocus, onItemClick, onPointerLeave }) => {
   const menuItems = [
     {
       id: 'buscar',
@@ -33,7 +34,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarAct
   ];
 
   return (
-    <aside className={`sidebar ${isSidebarActive ? 'expanded' : ''}`.trim()}>
+    <aside 
+      className={`sidebar ${isSidebarActive ? 'expanded' : ''}`.trim()}
+      onPointerLeave={onPointerLeave}
+    >
       <div className="sidebar-logo">
         <img
           src="/assets/brand/logo.png"
