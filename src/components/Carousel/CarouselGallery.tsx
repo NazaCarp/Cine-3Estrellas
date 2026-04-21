@@ -224,13 +224,13 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
   }, [currentRow, currentCol, isSidebarActive, sidebarFocusedIndex, lastColPerRow, displayCategories, heroMovies.length, lastRowBeforeSidebar, lastColBeforeSidebar, selectedMovie, activeTab, expandedCategory, handleOpenGrid]);
 
   useEffect(() => {
-    // We update the active tab immediately when the sidebar selection changes
+    // We update the active tab immediately when the sidebar selection changes via keyboard
     // This provides visual feedback, but the "activation" of the view depends on isSidebarActive
-    if (isSidebarActive) {
+    if (isSidebarActive && !preventAutoScroll) {
       const tabIds: ('buscar' | 'inicio' | 'explorar' | 'favoritos')[] = ['buscar', 'inicio', 'explorar', 'favoritos'];
       setActiveTab(tabIds[sidebarFocusedIndex]);
     }
-  }, [sidebarFocusedIndex, isSidebarActive]);
+  }, [sidebarFocusedIndex, isSidebarActive, preventAutoScroll]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
