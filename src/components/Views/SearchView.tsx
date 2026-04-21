@@ -9,9 +9,10 @@ interface SearchViewProps {
   isActive: boolean;
   onMovieSelect: (movie: Movie) => void;
   onReturnToSidebar?: () => void;
+  preventAutoScroll?: boolean;
 }
 
-const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onReturnToSidebar }) => {
+const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onReturnToSidebar, preventAutoScroll = false }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Movie[]>([]);
   const [focusArea, setFocusArea] = useState<'keyboard' | 'filters' | 'results'>('keyboard');
@@ -24,10 +25,10 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (focusArea === 'results' && resultIndex < 5 && resultsContainerRef.current) {
+    if (focusArea === 'results' && resultIndex < 5 && !preventAutoScroll && resultsContainerRef.current) {
       resultsContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [focusArea, resultIndex]);
+  }, [focusArea, resultIndex, preventAutoScroll]);
 
   useEffect(() => {
     if (focusArea === 'keyboard' || focusArea === 'filters') {
@@ -340,6 +341,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
                   setResultIndex(idx);
                 }}
                 onClick={(movie) => onMovieSelect(movie)}
+                preventAutoScroll={preventAutoScroll}
               />
             ))}
           </div>

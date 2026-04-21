@@ -12,6 +12,7 @@ interface HeroCarouselProps {
   onActionFocus?: (col: number) => void;
   onActionClick?: (movie: Movie) => void;
   onIndicatorFocus?: (col: number) => void;
+  preventAutoScroll?: boolean;
 }
 
 const HeroCarousel: React.FC<HeroCarouselProps> = ({ 
@@ -22,7 +23,8 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({
   onSlideChange,
   onActionFocus,
   onActionClick,
-  onIndicatorFocus
+  onIndicatorFocus,
+  preventAutoScroll = false
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -51,13 +53,13 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
   // Scroll to top when the hero gets focus to ensure the user can see the whole poster
   useEffect(() => {
-    if (isActive) {
+    if (isActive && !preventAutoScroll) {
       window.scrollTo({
         top: 0,
         behavior: 'smooth'
       });
     }
-  }, [isActive]);
+  }, [isActive, preventAutoScroll]);
 
   useEffect(() => {
     // Pausar la rotación si el usuario está enfocado en él (para que pueda leer la sinopsis o elegir un botón)

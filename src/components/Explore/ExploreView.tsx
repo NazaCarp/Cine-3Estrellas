@@ -9,6 +9,7 @@ interface ExploreViewProps {
   isActive: boolean;
   onMovieSelect: (movie: Movie) => void;
   onReturnToSidebar?: () => void;
+  preventAutoScroll?: boolean;
 }
 
 const genres = [
@@ -59,7 +60,7 @@ const yearOptions = [
   { id: 'classic', label: 'Retro (Pre-2000)' }
 ];
 
-const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onReturnToSidebar }) => {
+const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onReturnToSidebar, preventAutoScroll = false }) => {
   const [selectedGenreIndex, setSelectedGenreIndex] = useState(0);
   const [focusArea, setFocusArea] = useState<'genres' | 'results' | 'filters' | 'menu'>('genres');
   const [genreFocusIndex, setGenreFocusIndex] = useState(0);
@@ -346,7 +347,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
 
   // Sidebar Auto-Scroll Logic
   useEffect(() => {
-    if (focusArea === 'genres') {
+    if (focusArea === 'genres' && !preventAutoScroll) {
       if (genreFocusIndex === 0 && sidebarRef.current) {
         sidebarRef.current.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (genreRefs.current[genreFocusIndex]) {
@@ -356,7 +357,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
         });
       }
     }
-  }, [genreFocusIndex, focusArea]);
+  }, [genreFocusIndex, focusArea, preventAutoScroll]);
 
   // Inline menu renderer to ensure pixel-perfect spatial relationship mapping
   const renderMenu = (menuType: 'stars' | 'year' | 'sort') => {
@@ -638,6 +639,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
                     setResultFocusIndex(index);
                   }}
                   onClick={(movie) => onMovieSelect(movie)}
+                  preventAutoScroll={preventAutoScroll}
                 />
               ))}
             </div>

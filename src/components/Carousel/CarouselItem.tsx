@@ -11,6 +11,7 @@ interface CarouselItemProps {
   disableAutoScroll?: boolean;
   onFocus?: (row: number, col: number) => void;
   onClick?: (movie: Movie) => void;
+  preventAutoScroll?: boolean;
 }
 
 const CarouselItem: React.FC<CarouselItemProps> = React.memo(({ 
@@ -20,7 +21,8 @@ const CarouselItem: React.FC<CarouselItemProps> = React.memo(({
   isActive, 
   disableAutoScroll = false,
   onFocus,
-  onClick
+  onClick,
+  preventAutoScroll = false
 }) => {
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
@@ -37,14 +39,14 @@ const CarouselItem: React.FC<CarouselItemProps> = React.memo(({
   const itemRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    if (isActive && itemRef.current && !disableAutoScroll) {
+    if (isActive && itemRef.current && !disableAutoScroll && !preventAutoScroll) {
       itemRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
         inline: 'nearest'
       });
     }
-  }, [isActive, disableAutoScroll]);
+  }, [isActive, disableAutoScroll, preventAutoScroll]);
 
   React.useEffect(() => {
     let timeoutId: number;
