@@ -91,6 +91,16 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isActive) return;
 
+    // Handle physical keyboard typing
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
+      if (e.key === 'Backspace') {
+        setQuery(prev => prev.slice(0, -1));
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        setQuery(prev => prev + e.key.toUpperCase());
+      }
+      return;
+    }
+
     if (focusArea === 'keyboard') {
       const maxRow = keyboardRows.length - 1;
       const maxCol = keyboardRows[keyboardPos.row].length - 1;

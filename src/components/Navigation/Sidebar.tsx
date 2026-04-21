@@ -34,7 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarAct
   ];
 
   return (
-    <aside 
+    <aside
       className={`sidebar ${isSidebarActive ? 'expanded' : ''}`.trim()}
       onPointerLeave={onPointerLeave}
     >
@@ -62,9 +62,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarAct
               onClick={() => onItemClick?.(index)}
             >
               <div className="item-icon">
-                <span 
+                <span
                   className="material-symbols-outlined"
-                  style={{ 
+                  style={{
                     fontSize: 'clamp(20px, 3vh, 26px)',
                     fontVariationSettings: `'FILL' ${isActive ? 1 : 0}, 'wght' 100, 'GRAD' 0, 'opsz' 24`
                   }}
