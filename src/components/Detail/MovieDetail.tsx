@@ -265,7 +265,7 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
             <h3 className="similar-title">Películas Similares</h3>
             <div className="similar-track" style={{ gap: '20px' }}>
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="skeleton" style={{ flex: '0 0 180px', height: '270px', borderRadius: '12px' }} />
+                <div key={i} className="skeleton" style={{ flex: '0 0 180px', height: '280px', borderRadius: '12px' }} />
               ))}
             </div>
           </div>
@@ -283,7 +283,7 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
                   <div 
                     key={s.id} 
                     className={`carousel-item${isActive ? ' active' : ''}`}
-                    style={{ flex: '0 0 180px', height: '325px' }}
+                    style={{ flex: '0 0 180px', height: 'auto', minHeight: '280px' }}
                   >
                     <div className="poster-wrapper">
                       <img 

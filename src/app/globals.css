@@ -806,29 +806,31 @@ body {
   z-index: 10;
   display: flex;
   flex-direction: column;
-  padding: 120px 100px 80px;
+  padding: clamp(60px, 12vh, 120px) clamp(40px, 8vw, 100px) clamp(40px, 8vh, 80px);
   max-width: 1400px;
   min-height: 100vh;
-  gap: 12px;
+  gap: clamp(8px, 1.5vh, 12px);
   justify-content: flex-start;
 }
 
 .detail-title {
-  font-size: 4.5rem;
+  font-size: clamp(2.5rem, 8vh, 4.5rem);
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -1px;
   text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
 }
 
 .detail-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  font-size: 1.1rem;
+  gap: clamp(8px, 1vh, 12px);
+  font-size: clamp(0.9rem, 1.5vh, 1.1rem);
   font-weight: 600;
   color: #f3f4f6;
+  flex-shrink: 0;
 }
 
 .detail-rating {
@@ -897,33 +899,36 @@ body {
 }
 
 .detail-genres {
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 1.2vh, 1rem);
   color: #9ca3af;
   font-weight: 500;
   background: rgba(0, 0, 0, 0.3);
-  padding: 8px 15px;
+  padding: clamp(4px, 1vh, 8px) clamp(10px, 1.5vw, 15px);
   border-radius: 8px;
   width: fit-content;
   display: flex;
   align-items: center;
-  margin-top: 25px;
+  margin-top: clamp(10px, 2vh, 25px);
+  flex-shrink: 0;
 }
 
 .detail-overview {
-  font-size: 1.25rem;
-  line-height: 1.6;
+  font-size: clamp(1.05rem, 1.8vh, 1.25rem);
+  line-height: 1.5;
   color: #e5e7eb;
   max-width: 800px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  margin-top: 5px;
-  margin-bottom: 10px;
+  margin-top: clamp(2px, 1vh, 5px);
+  margin-bottom: clamp(8px, 1.5vh, 10px);
+  flex-shrink: 0;
 }
 
 .detail-actions {
   display: flex;
-  gap: 20px;
-  margin-top: 10px;
-  margin-bottom: 40px;
+  gap: clamp(15px, 2vw, 20px);
+  margin-top: clamp(5px, 1vh, 10px);
+  margin-bottom: clamp(20px, 4vh, 40px);
+  flex-shrink: 0;
 }
 
 .detail-btn {
@@ -1032,6 +1037,33 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+/* RESPONSIVE ADJUSTMENTS FOR SMALL HEIGHTS (TVs, Landscape Mobile) */
+@media (max-height: 700px) {
+  .detail-content {
+    padding: 60px 80px 40px;
+    gap: 8px;
+  }
+
+  .detail-title {
+    font-size: 2.8rem;
+  }
+
+  .detail-meta {
+    font-size: 0.95rem;
+    gap: 10px;
+  }
+
+  .detail-genres {
+    margin-top: 10px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+
+  .similar-track {
+    padding: 10px 0;
+  }
 }
 
 .similar-title {
