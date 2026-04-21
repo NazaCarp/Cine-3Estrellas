@@ -8,9 +8,10 @@ interface CarouselItemProps {
   row: number;
   col: number;
   isActive: boolean;
+  disableAutoScroll?: boolean;
 }
 
-const CarouselItem: React.FC<CarouselItemProps> = React.memo(({ movie, isActive }) => {
+const CarouselItem: React.FC<CarouselItemProps> = React.memo(({ movie, isActive, disableAutoScroll = false }) => {
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
     : 'https://via.placeholder.com/300x450?text=No+Image';
@@ -26,14 +27,14 @@ const CarouselItem: React.FC<CarouselItemProps> = React.memo(({ movie, isActive 
   const itemRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    if (isActive && itemRef.current) {
+    if (isActive && itemRef.current && !disableAutoScroll) {
       itemRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
         inline: 'nearest'
       });
     }
-  }, [isActive]);
+  }, [isActive, disableAutoScroll]);
 
   React.useEffect(() => {
     let timeoutId: number;

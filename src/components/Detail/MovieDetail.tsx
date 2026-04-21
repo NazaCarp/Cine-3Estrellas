@@ -5,6 +5,7 @@ import { Movie } from '@/types';
 import { getMovieDetailAction } from '@/app/actions/movieActions';
 import VideoPlayer from './VideoPlayer';
 import { normalizeCertification } from '@/lib/utils';
+import CarouselItem from '../Carousel/CarouselItem';
 
 
 interface MovieDetailProps {
@@ -20,6 +21,8 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
   const [similarFocusIndex, setSimilarFocusIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const similarRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [translateX, setTranslateX] = useState(0);
 
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -54,6 +57,27 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
       overlayRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [rowFocus]);
+
+  // Calcular el desplazamiento dinámicamente para que el foco quede hacia la derecha
+  useEffect(() => {
+    if (trackRef.current && trackRef.current.parentElement) {
+      const firstChild = trackRef.current.children[0] as HTMLElement;
+      const containerWidth = trackRef.current.parentElement.offsetWidth;
+      
+      if (firstChild) {
+        const itemWidth = firstChild.offsetWidth + 20; // 180px + 20px gap
+        
+        // Calculamos cuánto desplazar para que el ítem quede a la derecha
+        // Queremos que el ítem (similarFocusIndex) esté en el lado derecho del container.
+        // Posición ideal = index * itemWidth - (containerWidth - itemWidth - 60)
+        // El 60 es para dejar un pequeño margen a la derecha
+        const idealTranslate = -(similarFocusIndex * itemWidth) + (containerWidth - itemWidth - 100);
+        
+        // Pero no queremos desplazar positivamente (que se vea vacío a la izquierda del primer ítem)
+        setTranslateX(Math.min(0, idealTranslate));
+      }
+    }
+  }, [similarFocusIndex]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     // Detener la propagación inmediatamente para que el fondo NO reciba nada
@@ -272,44 +296,21 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
         ) : movie.similar && movie.similar.length > 0 && (
           <div className="detail-similar-section" ref={similarRef}>
             <h3 className="similar-title">Películas Similares</h3>
-            <div className="similar-track" style={{ transform: `translateX(-${similarFocusIndex * 155}px)`, transition: 'transform 0.3s ease' }}>
-              {movie.similar.map((s, idx) => {
-                const titleMatch = s.title.match(/(.*)\s\((\d{4})\)$/);
-                const titleName = titleMatch ? titleMatch[1] : s.title;
-                const titleYear = titleMatch ? titleMatch[2] : s.release_date?.split('-')[0] || '';
-                const isActive = rowFocus === 'similar' && similarFocusIndex === idx;
-
-                return (
-                  <div 
-                    key={s.id} 
-                    className={`carousel-item${isActive ? ' active' : ''}`}
-                    style={{ flex: '0 0 180px', height: 'auto', minHeight: '280px' }}
-                  >
-                    <div className="poster-wrapper">
-                      <img 
-                        src={`https://image.tmdb.org/t/p/w300${s.poster_path}`} 
-                        alt={s.title} 
-                        className="item-bg"
-                      />
-                    </div>
-                    <div className="item-text">
-                      <div className="title-marquee">
-                        <span style={isActive ? { '--marquee-dur': `${Math.max(3, titleName.length * 0.15)}s` } as any : {}}>
-                          {titleName}
-                        </span>
-                      </div>
-                      <div className="item-meta">
-                        <span className="item-rating">
-                          <span className="star-icon">★</span>
-                          {s.vote_average?.toFixed(1) || '0.0'}
-                        </span>
-                        <span className="meta-separator">•</span>
-                        <span className="item-year">{titleYear}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div 
+              ref={trackRef}
+              className="similar-track" 
+              style={{ transform: `translateX(${translateX}px)`, gap: '20px', transition: 'transform 0.4s ease' }}
+            >
+              {movie.similar.map((s, idx) => (
+                <CarouselItem
+                  key={s.id}
+                  movie={s}
+                  row={100} // Dummy row for Detail view
+                  col={idx}
+                  isActive={rowFocus === 'similar' && similarFocusIndex === idx}
+                  disableAutoScroll={true}
+                />
+              ))}
             </div>
           </div>
         )}

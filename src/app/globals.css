@@ -1033,10 +1033,10 @@ body {
 }
 
 .detail-similar-section {
-  margin-top: 40px;
+  margin-top: clamp(20px, 4vh, 40px);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0px; /* Reduced to match Home carousels */
 }
 
 /* RESPONSIVE ADJUSTMENTS FOR SMALL HEIGHTS (TVs, Landscape Mobile) */
@@ -1071,12 +1071,13 @@ body {
   font-weight: 700;
   color: #fff;
   letter-spacing: 0.5px;
+  margin: 0; /* Clear default margins */
 }
 
 .similar-track {
   display: flex;
   gap: 20px;
-  padding: 20px 0;
+  padding: 10px 0 20px; /* Reduced top padding */
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 

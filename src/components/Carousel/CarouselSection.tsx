@@ -40,9 +40,13 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
         const firstChild = trackRef.current.children[0] as HTMLElement;
         const baseItemWidth = firstChild ? firstChild.offsetWidth : 180;
         const itemWidth = baseItemWidth + 20; // Include CSS gap of 20px
+        const containerWidth = trackRef.current.parentElement?.offsetWidth || 1000;
         
-        const translateX = -(focusedCol * itemWidth);
-        trackRef.current.style.transform = `translateX(${translateX}px)`;
+        // Mantener el ítem enfocado hacia el lado derecho de la vista
+        const idealTranslate = -(focusedCol * itemWidth) + (containerWidth - itemWidth - 100);
+        const finalTranslate = Math.min(0, idealTranslate);
+        
+        trackRef.current.style.transform = `translateX(${finalTranslate}px)`;
       }
     };
 
@@ -72,6 +76,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
               row={rowIndex}
               col={cIndex}
               isActive={isActive && focusedCol === cIndex}
+              disableAutoScroll={true}
             />
           ))}
           {movies.length > 0 && (
