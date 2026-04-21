@@ -1861,7 +1861,7 @@ body .btn-secondary.focused {
   .search-keyboard-grid {
     gap: 4px !important;
     max-width: 260px !important;
-    margin-top: 25px !important;
+    margin-top: 45px !important;
   }
 
   .key-floating {
@@ -1908,9 +1908,23 @@ body .btn-secondary.focused {
     opacity: 0.5 !important;
   }
 
-  /* Results area */
-  .search-results-panel {
-    padding: 20px 30px !important;
+  /* Results area - Miniature PC look (Forced Specificity) */
+  body .search-results-panel {
+    padding: 15px 30px !important;
+  }
+
+  body .search-results-panel .flex.items-baseline {
+    margin-bottom: 15px !important; /* Override inline 50px */
+  }
+
+  body .search-results-panel h2 {
+    font-size: 1.1rem !important;
+  }
+
+  body .search-results-panel .search-results-grid {
+    grid-template-columns: repeat(5, 1fr) !important; 
+    gap: 15px !important;
+    display: grid !important;
   }
 
   .search-results-panel h2 {
@@ -1923,6 +1937,111 @@ body .btn-secondary.focused {
 
   .search-results-panel span.text-sm {
     font-size: 10px !important;
+  }
+
+  /* EXPLORE VIEW - TV OPTIMIZATIONS */
+  .explore-sidebar {
+    width: 210px !important;
+    padding-top: 30px !important;
+  }
+
+  .explore-sidebar-header {
+    margin-bottom: 15px !important;
+    margin-top: 10px !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+
+  .explore-sidebar-header h2 {
+    font-size: 11px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .explore-sidebar li {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  .explore-header {
+    padding: 10px 30px !important;
+  }
+
+  .explore-title {
+    font-size: 1.4rem !important;
+  }
+
+  .explore-subtitle {
+    margin-top: 4px !important;
+    font-size: 10px !important;
+    gap: 15px !important;
+  }
+
+  .explore-filters-group {
+    gap: 15px !important;
+    font-size: 10px !important;
+  }
+
+  .explore-filters-group svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .explore-results-grid {
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 15px !important;
+  }
+
+  /* Shrink text in Explore Cards for TV */
+  .explore-results-grid .carousel-item .item-text {
+    padding: 6px 8px !important;
+  }
+
+  .explore-results-grid .carousel-item .title-marquee {
+    font-size: 0.75rem !important;
+  }
+
+  .explore-results-grid .carousel-item .item-meta {
+    font-size: 0.65rem !important;
+    margin-top: 2px !important;
+  }
+
+  /* Explore Menus */
+  .explore-menu-box {
+    width: 14rem !important;
+    padding: 0.75rem !important;
+    border-radius: 12px !important;
+  }
+
+  .explore-menu-box h3 {
+    font-size: 8px !important;
+  }
+
+  .explore-menu-box .flex-col {
+    gap: 2px !important;
+  }
+
+  .explore-menu-box [style*="padding: 0.75rem 1rem"] {
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .explore-menu-box span[class*="text-[12px]"] {
+    font-size: 10px !important;
+  }
+
+  /* Stars slider specific scaling */
+  .explore-menu-box .text-3xl {
+    font-size: 1.25rem !important;
+  }
+
+  .explore-menu-box .mt-8 {
+    margin-top: 1rem !important;
+  }
+
+  .explore-menu-box .mb-5 {
+    margin-bottom: 0.75rem !important;
   }
 }
 

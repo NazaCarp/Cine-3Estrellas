@@ -366,7 +366,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
     
     return (
       <div 
-        className="absolute left-1/2 z-50 cursor-default"
+        className="explore-menu-container absolute left-1/2 z-50 cursor-default"
         style={{ top: 'calc(100% + 1rem)' }}
       >
         {/* CSS Triangles for the 'speech bubble' pointer effect */}
@@ -374,7 +374,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
         <div className="absolute -top-[6px] left-0 -translate-x-1/2 w-0 h-0 border-l-[7px] border-r-[7px] border-b-[7px] border-transparent border-b-[#0f0f11] z-30"></div>
         
         <div 
-          className="rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,1)] relative z-10"
+          className="explore-menu-box rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,1)] relative z-10"
           style={{ 
             backgroundColor: '#0f0f11',
             border: '1px solid #FFD700',
@@ -455,9 +455,9 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
       {/* Secondary Sidebar: Genres */}
       <aside 
         ref={sidebarRef}
-        className="w-60 h-screen border-r border-white/5 bg-background-dark overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col pt-12 pb-6 shrink-0 transition-opacity duration-300"
+        className="explore-sidebar w-60 h-screen border-r border-white/5 bg-background-dark overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col pt-12 pb-6 shrink-0 transition-opacity duration-300"
       >
-        <div className="mb-8" style={{ marginTop: '40px', paddingLeft: '2rem', paddingRight: '2rem' }}>
+        <div className="explore-sidebar-header mb-8" style={{ marginTop: '40px', paddingLeft: '2rem', paddingRight: '2rem' }}>
           <h2 className="text-sm font-black uppercase tracking-[0.3em] text-white/50 border-b border-white/10 pb-3">Géneros</h2>
         </div>
         <ul className="flex flex-col">
@@ -503,13 +503,13 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
       <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-black/20 flex flex-col" style={{ scrollPaddingTop: '120px' }}>
         <header 
           style={{ paddingTop: '20px', paddingLeft: '40px', paddingRight: '40px', paddingBottom: '1rem' }}
-          className="sticky top-0 z-40 bg-background-dark/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between"
+          className="explore-header sticky top-0 z-40 bg-background-dark/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between"
         >
           <div className="flex flex-col gap-1">
-            <h1 className="text-[2.5rem] font-black tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 leading-none drop-shadow-sm">
+            <h1 className="explore-title text-[2.5rem] font-black tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 leading-none drop-shadow-sm">
               EXPLORAR
             </h1>
-            <p className="text-[#FFD700] text-xs mt-2 uppercase font-bold pl-1 flex items-center gap-x-8 flex-wrap">
+            <p className="explore-subtitle text-[#FFD700] text-xs mt-2 uppercase font-bold pl-1 flex items-center gap-x-4 flex-wrap">
               <span className="tracking-[0.2em] font-black">{genres[selectedGenreIndex].name}</span>
               {!isLoading && (
                 <>
@@ -538,7 +538,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
               )}
             </p>
           </div>
-          <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-[0.15em] relative pr-2">
+          <div className="explore-filters-group flex items-center gap-6 text-xs font-bold uppercase tracking-[0.15em] relative pr-2">
             <div 
               className={`relative flex items-center gap-2.5 transition-all duration-300 ${
                 (focusArea === 'filters' && filterFocusIndex === 0) || activeMenu === 'stars'
@@ -583,7 +583,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary"></div>
             </div>
           ) : movies.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8">
+            <div className="explore-results-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8">
               {movies.map((movie, index) => (
                 <CarouselItem
                   key={movie.id}

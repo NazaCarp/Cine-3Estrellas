@@ -24,7 +24,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (focusArea === 'results' && resultIndex < 4 && resultsContainerRef.current) {
+    if (focusArea === 'results' && resultIndex < 5 && resultsContainerRef.current) {
       resultsContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [focusArea, resultIndex]);
@@ -167,7 +167,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
           break;
       }
     } else if (focusArea === 'results') {
-      const cols = 4;
+      const cols = 5;
       switch (e.key) {
         case 'ArrowRight':
           setResultIndex(prev => Math.min(prev + 1, results.length - 1));
@@ -219,7 +219,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
     <div className="search-view-container">
       {/* Left Panel: Search Interface */}
       <section className="search-left-panel flex flex-col justify-between">
-        <div className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex flex-col flex-1 overflow-visible gap-10">
           <div className="flex flex-col gap-4">
             <div className="search-title-group flex flex-col gap-1">
               <h1 className="text-[2.5rem] font-black tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 leading-none drop-shadow-sm">
@@ -312,14 +312,14 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
         </div>
 
         {results.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="search-results-grid grid grid-cols-5 gap-8">
             {results.map((movie, idx) => (
               <CarouselItem
                 key={movie.id}
                 movie={movie}
                 isActive={focusArea === 'results' && resultIndex === idx}
-                row={Math.floor(idx / 4)}
-                col={idx % 4}
+                row={Math.floor(idx / 5)}
+                col={idx % 5}
               />
             ))}
           </div>
