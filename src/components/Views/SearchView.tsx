@@ -218,13 +218,10 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
   return (
     <div className="search-view-container">
       {/* Left Panel: Search Interface */}
-      <section
-        className="search-left-panel flex flex-col justify-between h-full"
-        style={{ width: '450px', paddingTop: '55px', paddingLeft: '50px', paddingRight: '48px', paddingBottom: '48px' }}
-      >
-        <div className="flex flex-col gap-10">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
+      <section className="search-left-panel flex flex-col justify-between">
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex flex-col gap-4">
+            <div className="search-title-group flex flex-col gap-1">
               <h1 className="text-[2.5rem] font-black tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 leading-none drop-shadow-sm">
                 BUSCAR
               </h1>
@@ -233,14 +230,14 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
               </p>
             </div>
             
-            <div className="text-2xl font-headline font-semibold text-[#FFD700] border-b-2 border-[#FFD700]/30 pb-2 flex items-center gap-[2px] min-h-[48px]">
+            <div className="search-input-area text-2xl font-headline font-semibold text-[#FFD700] border-b-2 border-[#FFD700]/30 pb-2 flex items-center gap-[2px] min-h-[48px]">
               <span className="whitespace-pre text-white">{query}</span>
               <span className="w-[4px] h-8 bg-[#FFD700] animate-pulse shrink-0"></span>
             </div>
           </div>
 
           {/* Keyboard Grid */}
-          <div className="grid grid-cols-6 gap-2 max-w-sm">
+          <div className="search-keyboard-grid grid grid-cols-6 gap-2 max-w-sm">
             {keyboardRows.map((row, rIdx) => (
               row.map((key, cIdx) => {
                 const isFocused = focusArea === 'keyboard' && keyboardPos.row === rIdx && keyboardPos.col === cIdx;
@@ -254,24 +251,24 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
                     className={`key-floating flex items-center justify-center rounded-md transition-all ${isFocused ? 'active-key scale-110' : ''} ${colSpanClass}`.trim().replace(/\s+/g, ' ')}
                   >
                     {key === 'BACKSPACE' ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-80">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={isFocused ? 'opacity-100' : 'opacity-80'}>
                         <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
                         <line x1="18" y1="9" x2="12" y2="15"></line>
                         <line x1="12" y1="9" x2="18" y2="15"></line>
                       </svg>
                     ) : key === 'CLEAR' ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-80">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={isFocused ? 'opacity-100' : 'opacity-80'}>
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         <line x1="10" y1="11" x2="10" y2="17"></line>
                         <line x1="14" y1="11" x2="14" y2="17"></line>
                       </svg>
                     ) : key === 'ESPACIO' ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-80">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={isFocused ? 'opacity-100' : 'opacity-80'}>
                         <path d="M4 10v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"></path>
                       </svg>
                     ) : (
-                      <span className={`text-sm font-bold opacity-80 ${key === 'BUSCAR' ? 'tracking-widest' : ''}`.trim()}>{key}</span>
+                      <span className={`text-sm font-bold ${isFocused ? 'opacity-100' : 'opacity-80'} ${key === 'BUSCAR' ? 'tracking-widest' : ''}`.trim()}>{key}</span>
                     )}
                   </div>
                 );
@@ -282,7 +279,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
 
         {/* Filters */}
         <div className="flex flex-col gap-4">
-          <span className="text-xs uppercase tracking-widest text-on-surface-variant opacity-60 font-bold pl-1">Búsquedas Populares</span>
+          <span className="text-xs uppercase tracking-widest text-on-surface-variant opacity-60 font-bold pl-1 section-subtitle">Búsquedas Populares</span>
           <div className="grid grid-cols-3 gap-3">
             {quickFilters.map((filter, idx) => {
               const isFocused = focusArea === 'filters' && filterIndex === idx;
