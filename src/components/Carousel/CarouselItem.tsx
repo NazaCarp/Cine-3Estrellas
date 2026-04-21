@@ -9,9 +9,19 @@ interface CarouselItemProps {
   col: number;
   isActive: boolean;
   disableAutoScroll?: boolean;
+  onFocus?: (row: number, col: number) => void;
+  onClick?: (movie: Movie) => void;
 }
 
-const CarouselItem: React.FC<CarouselItemProps> = React.memo(({ movie, isActive, disableAutoScroll = false }) => {
+const CarouselItem: React.FC<CarouselItemProps> = React.memo(({ 
+  movie, 
+  row, 
+  col, 
+  isActive, 
+  disableAutoScroll = false,
+  onFocus,
+  onClick
+}) => {
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
     : 'https://via.placeholder.com/300x450?text=No+Image';
@@ -72,7 +82,12 @@ const CarouselItem: React.FC<CarouselItemProps> = React.memo(({ movie, isActive,
   }, [isActive]);
 
   return (
-    <div ref={itemRef} className={`carousel-item${isActive ? ' active' : ''}`}>
+    <div 
+      ref={itemRef} 
+      className={`carousel-item${isActive ? ' active' : ''}`}
+      onPointerEnter={() => onFocus?.(row, col)}
+      onClick={() => onClick?.(movie)}
+    >
       <div className="poster-wrapper">
         <img
           className="item-bg"

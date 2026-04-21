@@ -425,10 +425,17 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
                   return (
                     <div 
                       key={opt.id}
-                      className={`transition-colors duration-200 rounded-xl ${
+                      className={`transition-colors duration-200 rounded-xl cursor-default ${
                         isFocused ? 'bg-white text-black font-bold shadow-md' : 'bg-transparent text-slate-300'
                       }`}
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem' }}
+                      onPointerEnter={() => setMenuFocusIndex(i)}
+                      onClick={() => {
+                        if (menuType === 'sort') setActiveSort(opt.id);
+                        else if (menuType === 'year') setActiveYear(opt.id);
+                        setActiveMenu('none');
+                        setFocusArea('filters');
+                      }}
                     >
                       <span className={`text-[12px] uppercase tracking-[0.1em] ${isSelected ? 'font-black' : 'font-semibold'}`}>
                         {opt.label}
@@ -485,11 +492,19 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
                   paddingRight: '2rem',
                   boxShadow: isFocused ? 'inset 0 0 20px rgba(255,255,255,0.05)' : 'none'
                 }}
-                className={`text-sm cursor-pointer transition-all duration-200 font-roboto flex items-center ${
-                  isSelected ? '' : 'hover:text-white hover:bg-white/5'
-                }`.trim().replace(/\s+/g, ' ')}
-                onClick={() => setSelectedGenreIndex(index)}
-              >
+                  className={`text-sm cursor-pointer transition-all duration-200 font-roboto flex items-center ${
+                    isSelected ? '' : 'hover:text-white hover:bg-white/5'
+                  }`.trim().replace(/\s+/g, ' ')}
+                  onPointerEnter={() => {
+                    setFocusArea('genres');
+                    setGenreFocusIndex(index);
+                  }}
+                  onClick={() => {
+                    setSelectedGenreIndex(index);
+                    setFocusArea('genres');
+                    setGenreFocusIndex(index);
+                  }}
+                >
                 <span className={`transition-all duration-200 ${isFocused ? 'scale-110' : 'scale-100'}`}>
                   {genre.name}
                 </span>
@@ -540,11 +555,20 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
           </div>
           <div className="explore-filters-group flex items-center gap-6 text-xs font-bold uppercase tracking-[0.15em] relative pr-2">
             <div 
-              className={`relative flex items-center gap-2.5 transition-all duration-300 ${
+              className={`relative flex items-center gap-2.5 transition-all duration-300 cursor-pointer ${
                 (focusArea === 'filters' && filterFocusIndex === 0) || activeMenu === 'stars'
                   ? 'text-[#FFD700] scale-110' 
                   : 'text-slate-500 hover:text-slate-300'
               }`.trim().replace(/\s+/g, ' ')}
+              onPointerEnter={() => {
+                setFocusArea('filters');
+                setFilterFocusIndex(0);
+              }}
+              onClick={() => {
+                setActiveMenu(activeMenu === 'stars' ? 'none' : 'stars');
+                setMenuFocusIndex(starsOptions.findIndex(o => o.id === activeStars));
+                setFocusArea('menu');
+              }}
             >
               <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
               <span>Estrellas</span>
@@ -552,11 +576,20 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
             </div>
             
             <div 
-              className={`relative flex items-center gap-2.5 transition-all duration-300 ${
+              className={`relative flex items-center gap-2.5 transition-all duration-300 cursor-pointer ${
                 (focusArea === 'filters' && filterFocusIndex === 1) || activeMenu === 'year'
                   ? 'text-[#FFD700] scale-110' 
                   : 'text-slate-500 hover:text-slate-300'
               }`.trim().replace(/\s+/g, ' ')}
+              onPointerEnter={() => {
+                setFocusArea('filters');
+                setFilterFocusIndex(1);
+              }}
+              onClick={() => {
+                setActiveMenu(activeMenu === 'year' ? 'none' : 'year');
+                setMenuFocusIndex(yearOptions.findIndex(o => o.id === activeYear));
+                setFocusArea('menu');
+              }}
             >
               <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               <span>Año</span>
@@ -564,11 +597,20 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
             </div>
 
             <div 
-              className={`relative flex items-center gap-2.5 transition-all duration-300 ${
+              className={`relative flex items-center gap-2.5 transition-all duration-300 cursor-pointer ${
                 (focusArea === 'filters' && filterFocusIndex === 2) || activeMenu === 'sort'
                   ? 'text-[#FFD700] scale-110' 
                   : 'text-slate-500 hover:text-slate-300'
               }`.trim().replace(/\s+/g, ' ')}
+              onPointerEnter={() => {
+                setFocusArea('filters');
+                setFilterFocusIndex(2);
+              }}
+              onClick={() => {
+                setActiveMenu(activeMenu === 'sort' ? 'none' : 'sort');
+                setMenuFocusIndex(sortOptions.findIndex(o => o.id === activeSort));
+                setFocusArea('menu');
+              }}
             >
               <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v14" /></svg>
               <span>Ordenar</span>
@@ -591,6 +633,11 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
                   isActive={focusArea === 'results' && resultFocusIndex === index}
                   row={Math.floor(index / 6)}
                   col={index % 6}
+                  onFocus={(row, col) => {
+                    setFocusArea('results');
+                    setResultFocusIndex(index);
+                  }}
+                  onClick={(movie) => onMovieSelect(movie)}
                 />
               ))}
             </div>

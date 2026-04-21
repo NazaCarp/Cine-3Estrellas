@@ -18,7 +18,7 @@ export async function getMovieDetailAction(movie: Movie): Promise<Movie> {
     const [tmdbRes, releaseRes, similarRes] = await Promise.all([
       fetch(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${TMDB_API_KEY}&language=es-MX&append_to_response=translations`),
       fetch(`https://api.themoviedb.org/3/movie/${movie.id}/release_dates?api_key=${TMDB_API_KEY}`),
-      fetch(`https://api.themoviedb.org/3/movie/${movie.id}/similar?api_key=${TMDB_API_KEY}&language=es-MX`)
+      fetch(`https://api.themoviedb.org/3/movie/${movie.id}/recommendations?api_key=${TMDB_API_KEY}&language=es-MX`)
     ]);
 
     if (!tmdbRes.ok) throw new Error("TMDB Main Fetch Failed");

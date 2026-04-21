@@ -2,36 +2,44 @@
 
 import React, { useRef, useEffect } from 'react';
 import CarouselItem from './CarouselItem';
-import { Movie } from '@/types';
+import { Category, Movie } from '@/types';
 
 interface CarouselSectionProps {
   rowIndex: number;
+  category?: Category;
   title: string;
   movies: Movie[];
   totalMovies?: number;
   isActive: boolean;
   focusedCol: number;
+  onItemFocus?: (row: number, col: number) => void;
+  onItemClick?: (movie: Movie | null, category?: Category) => void;
+  preventAutoScroll?: boolean;
 }
 
 const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
   rowIndex,
+  category,
   title,
   movies,
   totalMovies,
   isActive,
   focusedCol,
+  onItemFocus,
+  onItemClick,
+  preventAutoScroll = false,
 }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isActive && sectionRef.current) {
+    if (isActive && !preventAutoScroll && sectionRef.current) {
       sectionRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
       });
     }
-  }, [isActive]);
+  }, [isActive, preventAutoScroll]);
 
   useEffect(() => {
     const updateTransform = () => {
@@ -77,10 +85,17 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
               col={cIndex}
               isActive={isActive && focusedCol === cIndex}
               disableAutoScroll={true}
+              onFocus={onItemFocus}
+              onClick={onItemClick}
+              preventAutoScroll={preventAutoScroll}
             />
           ))}
           {movies.length > 0 && (
-            <div className={`see-more-card${isActive && focusedCol === Math.min(movies.length, 20) ? ' active' : ''}`.trim()}>
+            <div 
+              className={`see-more-card${isActive && focusedCol === Math.min(movies.length, 20) ? ' active' : ''}`.trim()}
+              onPointerEnter={() => onItemFocus?.(rowIndex, Math.min(movies.length, 20))}
+              onClick={() => onItemClick?.(null, category)}
+            >
               <div className="icon-circle">
                 <span className="material-symbols-outlined">add</span>
               </div>

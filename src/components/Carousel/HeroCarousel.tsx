@@ -9,9 +9,21 @@ interface HeroCarouselProps {
   isActiveIndicators: boolean;
   focusedCol?: number;
   onSlideChange?: (index: number) => void;
+  onActionFocus?: (col: number) => void;
+  onActionClick?: (movie: Movie) => void;
+  onIndicatorFocus?: (col: number) => void;
 }
 
-const HeroCarousel: React.FC<HeroCarouselProps> = ({ movies, isActiveActions, isActiveIndicators, focusedCol, onSlideChange }) => {
+const HeroCarousel: React.FC<HeroCarouselProps> = ({ 
+  movies, 
+  isActiveActions, 
+  isActiveIndicators, 
+  focusedCol, 
+  onSlideChange,
+  onActionFocus,
+  onActionClick,
+  onIndicatorFocus
+}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Notify parent of slide change so keyboard focus state stays synced
@@ -132,8 +144,20 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ movies, isActiveActions, is
                   </div>
                 )}
                 <div className="hero-actions">
-                  <button className={`btn-primary${isActiveActions && focusedCol === 0 ? ' focused' : ''}`.trim()}>Ver ahora</button>
-                  <button className={`btn-secondary${isActiveActions && focusedCol === 1 ? ' focused' : ''}`.trim()}>Más info</button>
+                  <button 
+                    className={`btn-primary${isActiveActions && focusedCol === 0 ? ' focused' : ''}`.trim()}
+                    onPointerEnter={() => onActionFocus?.(0)}
+                    onClick={() => onActionClick?.(movie)}
+                  >
+                    Ver ahora
+                  </button>
+                  <button 
+                    className={`btn-secondary${isActiveActions && focusedCol === 1 ? ' focused' : ''}`.trim()}
+                    onPointerEnter={() => onActionFocus?.(1)}
+                    onClick={() => onActionClick?.(movie)}
+                  >
+                    Más info
+                  </button>
                 </div>
               </div>
             </div>
@@ -151,7 +175,11 @@ const HeroCarousel: React.FC<HeroCarouselProps> = ({ movies, isActiveActions, is
             <div
               key={index}
               className={dotClasses.join(' ')}
-              onClick={() => setCurrentIndex(index)}
+              onPointerEnter={() => onIndicatorFocus?.(index)}
+              onClick={() => {
+                setCurrentIndex(index);
+                onIndicatorFocus?.(index);
+              }}
             />
           );
         })}

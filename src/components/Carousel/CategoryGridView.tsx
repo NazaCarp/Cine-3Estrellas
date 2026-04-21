@@ -156,7 +156,13 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
         </div>
 
         <div className="grid-controls-premium">
-          <div className={`control-pill ${focusArea === 'header' ? 'focused' : ''}`.trim()}>
+          <div 
+            className={`control-pill ${focusArea === 'header' ? 'focused' : ''}`.trim()}
+            onPointerEnter={() => {
+              setFocusArea('header');
+            }}
+            onClick={onClose}
+          >
             <span className="material-symbols-outlined">west</span>
             VOLVER
           </div>
@@ -172,6 +178,11 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
               row={0}
               col={index}
               isActive={focusArea === 'grid' && focusIndex === index}
+              onFocus={(row, col) => {
+                setFocusArea('grid');
+                setFocusIndex(index);
+              }}
+              onClick={(movie) => onMovieSelect(movie)}
             />
           ))}
           {isLoading && (

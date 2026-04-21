@@ -249,6 +249,11 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
                   <div
                     key={`${rIdx}-${cIdx}`}
                     className={`key-floating flex items-center justify-center rounded-md transition-all ${isFocused ? 'active-key scale-110' : ''} ${colSpanClass}`.trim().replace(/\s+/g, ' ')}
+                    onPointerEnter={() => {
+                      setFocusArea('keyboard');
+                      setKeyboardPos({ row: rIdx, col: cIdx });
+                    }}
+                    onClick={() => handleKeyPress(key)}
                   >
                     {key === 'BACKSPACE' ? (
                       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={isFocused ? 'opacity-100' : 'opacity-80'}>
@@ -291,6 +296,16 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
                       ? 'bg-primary-container text-on-primary-container scale-105 border-primary-container shadow-[0_0_20px_rgba(255,235,59,0.2)] z-10' 
                       : 'bg-surface-variant/20 border-surface-variant/30 text-on-surface-variant'
                   }`.trim().replace(/\s+/g, ' ')}
+                  onPointerEnter={() => {
+                    setFocusArea('filters');
+                    setFilterIndex(idx);
+                  }}
+                  onClick={() => {
+                    setQuery(filter);
+                    handleSearch(filter);
+                    setFocusArea('results');
+                    setResultIndex(0);
+                  }}
                 >
                   {filter}
                 </button>
@@ -320,6 +335,11 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
                 isActive={focusArea === 'results' && resultIndex === idx}
                 row={Math.floor(idx / 5)}
                 col={idx % 5}
+                onFocus={(row, col) => {
+                  setFocusArea('results');
+                  setResultIndex(idx);
+                }}
+                onClick={(movie) => onMovieSelect(movie)}
               />
             ))}
           </div>

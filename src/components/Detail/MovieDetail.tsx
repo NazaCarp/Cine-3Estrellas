@@ -176,6 +176,7 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
       
       <button 
         className={`detail-btn btn-close${focusedIndex === 100 ? ' focused' : ''}`}
+        onPointerEnter={() => setFocusedIndex(100)}
         onClick={onClose}
       >
         <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="3" fill="none">
@@ -269,14 +270,27 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
         </p>
 
         <div className="detail-actions">
-          <button className={`detail-btn btn-play${rowFocus === 'actions' && focusedIndex === 0 ? ' focused' : ''}`}>
+          <button 
+            className={`detail-btn btn-play${rowFocus === 'actions' && focusedIndex === 0 ? ' focused' : ''}`}
+            onPointerEnter={() => {
+              setRowFocus('actions');
+              setFocusedIndex(0);
+            }}
+            onClick={() => setIsPlaying(true)}
+          >
             <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
             Reproducir
           </button>
           
-          <button className={`detail-btn${rowFocus === 'actions' && focusedIndex === 1 ? ' focused' : ''}`}>
+          <button 
+            className={`detail-btn${rowFocus === 'actions' && focusedIndex === 1 ? ' focused' : ''}`}
+            onPointerEnter={() => {
+              setRowFocus('actions');
+              setFocusedIndex(1);
+            }}
+          >
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
             </svg>
@@ -309,6 +323,14 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
                   col={idx}
                   isActive={rowFocus === 'similar' && similarFocusIndex === idx}
                   disableAutoScroll={true}
+                  onFocus={(row, col) => {
+                    setRowFocus('similar');
+                    setSimilarFocusIndex(col);
+                  }}
+                  onClick={(movie) => {
+                    // Logic to navigate to similar movie if desired
+                    console.log('Similar movie clicked:', movie.title);
+                  }}
                 />
               ))}
             </div>

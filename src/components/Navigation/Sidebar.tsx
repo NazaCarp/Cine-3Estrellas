@@ -4,9 +4,11 @@ interface SidebarProps {
   activeTab: 'inicio' | 'explorar' | 'favoritos' | 'buscar';
   focusedIndex: number | null; // 0-3 if sidebar is focused
   isSidebarActive: boolean;
+  onItemFocus?: (index: number) => void;
+  onItemClick?: (index: number) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarActive }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarActive, onItemFocus, onItemClick }) => {
   const menuItems = [
     {
       id: 'buscar',
@@ -52,6 +54,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, focusedIndex, isSidebarAct
             <div
               key={item.id}
               className={`sidebar-item ${isActive ? 'active' : ''} ${focusedIndex === index ? 'focused' : ''}`.replace(/\s+/g, ' ').trim()}
+              onPointerEnter={() => onItemFocus?.(index)}
+              onClick={() => onItemClick?.(index)}
             >
               <div className="item-icon">
                 <span 

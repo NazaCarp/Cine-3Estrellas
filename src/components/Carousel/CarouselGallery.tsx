@@ -28,6 +28,7 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
   const [lastColPerRow, setLastColPerRow] = useState<Record<number, number>>(
     { 0: 0, 1: 0 }
   );
+  const [preventAutoScroll, setPreventAutoScroll] = useState(false);
 
   const lastTimeAtColZero = useRef<number>(0);
 
@@ -50,15 +51,56 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
     setExpandedCategory(category);
   }, []);
 
+  // --- Pointer Handlers ---
+  const handleItemFocus = useCallback((row: number, col: number) => {
+    // If sidebar was active and we hover an item, deactivate side item focus
+    if (isSidebarActive) setIsSidebarActive(false);
+    
+    // Only allow focusing items in 'inicio' tab for now (main carousels)
+    if (activeTab !== 'inicio') return;
+    
+    if (row !== currentRow || col !== currentCol) {
+      if (row !== currentRow) {
+        setLastColPerRow(prev => ({ ...prev, [currentRow]: currentCol }));
+      }
+      setPreventAutoScroll(true);
+      setCurrentRow(row);
+      setCurrentCol(col);
+    }
+  }, [currentRow, currentCol, isSidebarActive, activeTab]);
+
+  const handleItemClick = useCallback((movie: Movie | null, category?: Category) => {
+    if (movie) setSelectedMovie(movie);
+    else if (category) handleOpenGrid(category);
+  }, [handleOpenGrid]);
+
+  const handleSidebarFocus = useCallback((index: number) => {
+    setPreventAutoScroll(true);
+    if (!isSidebarActive) setIsSidebarActive(true);
+    if (sidebarFocusedIndex !== index) {
+      setSidebarFocusedIndex(index);
+    }
+  }, [isSidebarActive, sidebarFocusedIndex]);
+
+  const handleSidebarClick = useCallback((index: number) => {
+    const tabIds: ('buscar' | 'inicio' | 'explorar' | 'favoritos')[] = ['buscar', 'inicio', 'explorar', 'favoritos'];
+    setActiveTab(tabIds[index]);
+    setIsSidebarActive(false);
+    
+    if (tabIds[index] === 'inicio') {
+      setCurrentRow(lastRowBeforeSidebar);
+      setCurrentCol(lastColBeforeSidebar);
+    }
+  }, [lastRowBeforeSidebar, lastColBeforeSidebar]);
+  // ------------------------
+
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     // Si hay una categoría expandida o película seleccionada, ignorar TODO inmediatamente
     if (selectedMovie || expandedCategory) {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Backspace'].includes(e.key)) {
-        // We let the Grid or Detail handle their own events, but we prevent bubbling/default here if necessary
-        // Actually, Detail handles its own, so we only return early.
-      }
       return;
     }
+
+    setPreventAutoScroll(false);
 
     if (isSidebarActive) {
       switch (e.key) {
@@ -211,6 +253,8 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
         activeTab={activeTab}
         focusedIndex={isSidebarActive ? sidebarFocusedIndex : null}
         isSidebarActive={isSidebarActive}
+        onItemFocus={handleSidebarFocus}
+        onItemClick={handleSidebarClick}
       />
 
       <div className={`main-content ${isSidebarActive || selectedMovie || expandedCategory ? 'dimmed' : ''}`.trim()}>
@@ -219,8 +263,12 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
             movies={heroMovies}
             isActiveActions={activeTab === 'inicio' && currentRow === 0}
             isActiveIndicators={activeTab === 'inicio' && currentRow === 1}
-            focusedCol={currentCol}
+            focusedCol={activeTab === 'inicio' && (currentRow === 0 || currentRow === 1) ? currentCol : undefined}
             onSlideChange={handleHeroSlideChange}
+            onActionFocus={(col) => handleItemFocus(0, col)}
+            onActionClick={(movie) => handleItemClick(movie)}
+            onIndicatorFocus={(col) => handleItemFocus(1, col)}
+            preventAutoScroll={preventAutoScroll}
           />
 
           <div className="categories-container">
@@ -228,11 +276,15 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
               <CarouselSection
                 key={cat.id}
                 rowIndex={rIndex + 2}
+                category={cat}
                 title={cat.name}
                 movies={cat.movies || []}
                 totalMovies={cat.total_movies}
                 isActive={activeTab === 'inicio' && currentRow === rIndex + 2}
                 focusedCol={currentRow === rIndex + 2 ? currentCol : lastColPerRow[rIndex + 2]}
+                onItemFocus={handleItemFocus}
+                onItemClick={handleItemClick}
+                preventAutoScroll={preventAutoScroll}
               />
             ))}
           </div>
@@ -243,6 +295,7 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
             isActive={activeTab === 'buscar' && !isSidebarActive && !selectedMovie}
             onMovieSelect={setSelectedMovie}
             onReturnToSidebar={() => setIsSidebarActive(true)}
+            preventAutoScroll={preventAutoScroll}
           />
         </div>
 
@@ -251,6 +304,7 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
             isActive={activeTab === 'explorar' && !isSidebarActive && !selectedMovie}
             onMovieSelect={setSelectedMovie}
             onReturnToSidebar={() => setIsSidebarActive(true)}
+            preventAutoScroll={preventAutoScroll}
           />
         </div>
 
