@@ -309,6 +309,7 @@ html, body {
   display: flex;
   gap: 20px;
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  padding-right: 120px; /* Espacio extra al final para que el último item no se corte */
 }
 
 .carousel-item {

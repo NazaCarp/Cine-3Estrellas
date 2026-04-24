@@ -55,9 +55,11 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
 
         const baseItemWidth = firstChild.offsetWidth;
         const itemWidth = baseItemWidth + 20;
-        const containerWidth = trackRef.current.parentElement?.offsetWidth || 1000;
+        const containerWidth = trackRef.current.parentElement?.clientWidth || 1000;
+        const totalWidth = trackRef.current.scrollWidth;
         
-        const margin = 80;
+        const margin = 100; // Margen de cortesía
+        
         const itemLeft = focusedCol * itemWidth;
         const itemRight = itemLeft + itemWidth;
         
@@ -71,7 +73,6 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
           newTranslate = -(itemRight - containerWidth + margin);
         }
         
-        const totalWidth = trackRef.current.scrollWidth;
         const maxScroll = -(totalWidth - containerWidth);
         
         if (focusedCol === 0) {
@@ -98,51 +99,54 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
     dragStartX.current = e.clientX;
     dragStartTranslate.current = currentTranslateRef.current;
     trackRef.current.style.transition = 'none';
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging.current || !trackRef.current) return;
     
     const deltaX = e.clientX - dragStartX.current;
-    if (Math.abs(deltaX) > 5) hasMoved.current = true;
     
-    let newTranslate = dragStartTranslate.current + deltaX;
+    if (!hasMoved.current && Math.abs(deltaX) > 15) {
+      hasMoved.current = true;
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    }
     
-    // Resistance at boundaries
-    const containerWidth = trackRef.current.parentElement?.offsetWidth || 0;
-    const totalWidth = trackRef.current.scrollWidth;
-    const maxScroll = -(totalWidth - containerWidth);
-    
-    if (newTranslate > 0) newTranslate /= 3;
-    if (newTranslate < maxScroll) newTranslate = maxScroll + (newTranslate - maxScroll) / 3;
-    
-    trackRef.current.style.transform = `translateX(${newTranslate}px)`;
+    if (hasMoved.current) {
+      let newTranslate = dragStartTranslate.current + deltaX;
+      
+      const containerWidth = trackRef.current.parentElement?.clientWidth || 0;
+      const totalWidth = trackRef.current.scrollWidth;
+      const maxScroll = -(totalWidth - containerWidth);
+      
+      if (newTranslate > 0) newTranslate /= 3;
+      if (newTranslate < maxScroll) newTranslate = maxScroll + (newTranslate - maxScroll) / 3;
+      
+      trackRef.current.style.transform = `translateX(${newTranslate}px)`;
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
     if (!isDragging.current || !trackRef.current) return;
     isDragging.current = false;
-    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     
-    // Get current transform to sync back to currentTranslateRef
-    const style = window.getComputedStyle(trackRef.current);
-    const matrix = new WebKitCSSMatrix(style.transform);
-    let finalTranslate = matrix.m41;
-    
-    // Snap to boundaries
-    const containerWidth = trackRef.current.parentElement?.offsetWidth || 0;
-    const totalWidth = trackRef.current.scrollWidth;
-    const maxScroll = -(totalWidth - containerWidth);
-    
-    finalTranslate = Math.min(0, Math.max(finalTranslate, Math.min(0, maxScroll)));
-    
-    currentTranslateRef.current = finalTranslate;
-    trackRef.current.style.transition = 'transform 0.4s cubic-bezier(0.2, 0, 0, 1)';
-    trackRef.current.style.transform = `translateX(${finalTranslate}px)`;
+    if (hasMoved.current) {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      
+      const style = window.getComputedStyle(trackRef.current);
+      const matrix = new WebKitCSSMatrix(style.transform);
+      let finalTranslate = matrix.m41;
+      
+      const containerWidth = trackRef.current.parentElement?.clientWidth || 0;
+      const totalWidth = trackRef.current.scrollWidth;
+      const maxScroll = -(totalWidth - containerWidth);
+      
+      finalTranslate = Math.min(0, Math.max(finalTranslate, Math.min(0, maxScroll)));
+      
+      currentTranslateRef.current = finalTranslate;
+      trackRef.current.style.transition = 'transform 0.4s cubic-bezier(0.2, 0, 0, 1)';
+      trackRef.current.style.transform = `translateX(${finalTranslate}px)`;
+    }
 
-    // Reset hasMoved after a short delay so that focus can work again 
-    // but the immediate click event is still blocked
     setTimeout(() => {
       hasMoved.current = false;
     }, 100);
@@ -195,6 +199,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
               </div>
             </div>
           )}
+          <div className="carousel-spacer" style={{ flex: '0 0 100px', width: '100px' }} />
         </div>
       </div>
     </div>
