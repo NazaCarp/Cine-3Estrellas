@@ -28,7 +28,8 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
   const [lastColPerRow, setLastColPerRow] = useState<Record<number, number>>(
     { 0: 0, 1: 0 }
   );
-  const [preventAutoScroll, setPreventAutoScroll] = useState(false);
+  const [preventAutoScrollState, setPreventAutoScrollState] = useState(false);
+  const preventAutoScroll = preventAutoScrollState || !!selectedMovie || !!expandedCategory;
 
   const lastTimeAtColZero = useRef<number>(0);
 
@@ -63,7 +64,7 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
       if (row !== currentRow) {
         setLastColPerRow(prev => ({ ...prev, [currentRow]: currentCol }));
       }
-      setPreventAutoScroll(true);
+      setPreventAutoScrollState(true);
       setCurrentRow(row);
       setCurrentCol(col);
     }
@@ -75,7 +76,7 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
   }, [handleOpenGrid]);
 
   const handleSidebarFocus = useCallback((index: number) => {
-    setPreventAutoScroll(true);
+    setPreventAutoScrollState(true);
     if (!isSidebarActive) setIsSidebarActive(true);
     if (sidebarFocusedIndex !== index) {
       setSidebarFocusedIndex(index);
@@ -99,8 +100,8 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
     if (selectedMovie || expandedCategory) {
       return;
     }
-
-    setPreventAutoScroll(false);
+    
+    setPreventAutoScrollState(false);
 
     if (isSidebarActive) {
       switch (e.key) {

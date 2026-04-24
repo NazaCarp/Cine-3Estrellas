@@ -130,6 +130,16 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
 
   useEffect(() => {
     if (isActive) {
+      const html = document.documentElement;
+      html.classList.add('no-scroll');
+      return () => {
+        html.classList.remove('no-scroll');
+      };
+    }
+  }, [isActive]);
+
+  useEffect(() => {
+    if (isActive) {
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }

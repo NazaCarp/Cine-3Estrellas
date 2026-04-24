@@ -72,6 +72,11 @@
     background: #333;
     border-radius: 2px;
   }
+
+  .no-scroll {
+    overflow: hidden !important;
+    height: 100vh !important;
+  }
 }
 
 
@@ -765,6 +770,7 @@ body .btn-secondary.focused {
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   animation: fadeIn 0.4s ease-out;
   scroll-behavior: smooth;
 }

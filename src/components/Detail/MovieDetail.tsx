@@ -49,18 +49,33 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
     loadFullDetail();
   }, [initialMovie]);
 
-  // Bloquear scroll del fondo
+  // Bloquear scroll del fondo de forma estricta
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    const html = document.documentElement;
+    html.classList.add('no-scroll');
     return () => {
-      document.body.style.overflow = 'auto';
+      html.classList.remove('no-scroll');
     };
   }, []);
 
-  // Auto-scroll a similares
+  // Auto-scroll a similares sin afectar al scroll del fondo (evitando scrollIntoView)
   useEffect(() => {
-    if (rowFocus === 'similar' && similarRef.current) {
-      similarRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (rowFocus === 'similar' && similarRef.current && overlayRef.current) {
+      const element = similarRef.current;
+      const container = overlayRef.current;
+      
+      // Calculamos la posición relativa del elemento dentro del contenedor scrollable
+      const elementTop = element.offsetTop;
+      const elementHeight = element.offsetHeight;
+      const containerHeight = container.offsetHeight;
+      
+      // Centramos el elemento en el contenedor
+      const targetScroll = elementTop - (containerHeight / 2) + (elementHeight / 2);
+      
+      container.scrollTo({ 
+        top: Math.max(0, targetScroll), 
+        behavior: 'smooth' 
+      });
     } else if (rowFocus === 'actions' && overlayRef.current) {
       overlayRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
