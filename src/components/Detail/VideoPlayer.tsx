@@ -253,7 +253,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       // Section Identification
       const isRepro = focusIndex < tabStartIdx;
       const isTabs = focusIndex >= tabStartIdx && focusIndex < gridStartIdx;
-      const isGrid = focusIndex >= gridStartIdx;
+      const isGrid = focusIndex >= gridStartIdx && focusIndex !== 1000;
 
       switch (e.key) {
         case 'ArrowDown':
@@ -277,6 +277,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
 
         case 'ArrowUp':
           e.preventDefault();
+          if (focusIndex === 1000) return; // El enfoque no se mueve de aquí (límite superior)
+          
           if (focusIndex === vCount) {
             setFocusIndex(vCount - 1);
           } else if (isRepro) {
