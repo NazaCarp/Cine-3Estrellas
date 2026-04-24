@@ -41,20 +41,52 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
     }
   }, [isActive, preventAutoScroll]);
 
+  const currentTranslateRef = useRef(0);
+
   useEffect(() => {
     const updateTransform = () => {
       if (trackRef.current) {
-        // Calculate dynamic width based on the actual rendered item size
         const firstChild = trackRef.current.children[0] as HTMLElement;
-        const baseItemWidth = firstChild ? firstChild.offsetWidth : 180;
-        const itemWidth = baseItemWidth + 20; // Include CSS gap of 20px
+        if (!firstChild) return;
+
+        const baseItemWidth = firstChild.offsetWidth;
+        const itemWidth = baseItemWidth + 20; // Include CSS gap
         const containerWidth = trackRef.current.parentElement?.offsetWidth || 1000;
         
-        // Mantener el ítem enfocado hacia el lado derecho de la vista
-        const idealTranslate = -(focusedCol * itemWidth) + (containerWidth - itemWidth - 100);
-        const finalTranslate = Math.min(0, idealTranslate);
+        const margin = 80; // Margen de cortesía
         
-        trackRef.current.style.transform = `translateX(${finalTranslate}px)`;
+        const itemLeft = focusedCol * itemWidth;
+        const itemRight = itemLeft + itemWidth;
+        
+        let newTranslate = currentTranslateRef.current;
+        
+        // Definir la "ventana" visible actual
+        const viewLeft = -newTranslate;
+        const viewRight = viewLeft + containerWidth;
+        
+        // Lógica de scroll inteligente:
+        // Si el ítem se sale por la IZQUIERDA (o entra en el margen)
+        if (itemLeft < viewLeft + margin) {
+          newTranslate = -(itemLeft - margin);
+        } 
+        // Si el ítem se sale por la DERECHA (o entra en el margen)
+        else if (itemRight > viewRight - margin) {
+          newTranslate = -(itemRight - containerWidth + margin);
+        }
+        
+        // Límites: No permitir scroll más allá del inicio (0) 
+        // o del final (scrollWidth - containerWidth)
+        const totalWidth = trackRef.current.scrollWidth;
+        const maxScroll = -(totalWidth - containerWidth);
+        
+        if (focusedCol === 0) {
+          newTranslate = 0;
+        } else {
+          newTranslate = Math.min(0, Math.max(newTranslate, Math.min(0, maxScroll)));
+        }
+
+        currentTranslateRef.current = newTranslate;
+        trackRef.current.style.transform = `translateX(${newTranslate}px)`;
       }
     };
 
