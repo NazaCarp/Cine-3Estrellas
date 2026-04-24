@@ -132,6 +132,10 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
         } else {
           setQuery(prev => prev + e.key.toUpperCase());
         }
+        
+        // Move focus to BUSCAR button
+        setFocusArea('keyboard');
+        setKeyboardPos({ row: 6, col: 4 });
       }
       return;
     }
@@ -329,18 +333,18 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col gap-4">
-          <span className="text-xs uppercase tracking-widest text-on-surface-variant opacity-60 font-bold pl-1 section-subtitle">Búsquedas Populares</span>
-          <div className="grid grid-cols-3 gap-3">
+        <div className="flex flex-col gap-2 mt-2">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant opacity-50 font-black pl-1">Búsquedas Populares</span>
+          <div className="grid grid-cols-3 gap-2">
             {quickFilters.map((filter, idx) => {
               const isFocused = focusArea === 'filters' && filterIndex === idx;
               return (
                 <button
                   key={filter}
-                  className={`px-4 h-[52px] rounded-xl text-sm font-bold tracking-wider transition-all duration-300 flex items-center justify-center border-2 ${
+                  className={`px-3 h-[40px] rounded-lg text-[11px] font-bold tracking-widest transition-all duration-300 flex items-center justify-center border ${
                     isFocused 
-                      ? 'bg-primary-container text-on-primary-container scale-105 border-primary-container shadow-[0_0_20px_rgba(255,235,59,0.2)] z-10' 
-                      : 'bg-surface-variant/20 border-surface-variant/30 text-on-surface-variant'
+                      ? 'bg-primary-container text-on-primary-container scale-105 border-primary-container shadow-lg z-10' 
+                      : 'bg-surface-variant/10 border-surface-variant/20 text-on-surface-variant'
                   }`.trim().replace(/\s+/g, ' ')}
                   onPointerEnter={() => {
                     setFocusArea('filters');
@@ -365,14 +369,32 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
       <section ref={resultsContainerRef} className="search-results-panel">
         <div className="flex items-baseline justify-between" style={{ marginBottom: '50px' }}>
           <h2 className="font-headline text-2xl font-bold">
-            {results.length > 0 ? `Resultados para "${query}"` : 'Resultados'}
+            {isSearching ? 'Buscando...' : results.length > 0 ? `Resultados para "${query}"` : 'Resultados'}
           </h2>
           <span className="text-on-surface-variant text-sm font-label opacity-60">
-            {results.length} Títulos encontrados
+            {isSearching ? 'Por favor, espera un momento' : `${results.length} Títulos encontrados`}
           </span>
         </div>
 
-        {results.length > 0 ? (
+        {isSearching ? (
+          <div className="search-results-grid grid grid-cols-5 gap-8">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="flex flex-col gap-3">
+                <div className="aspect-[2/3] w-full bg-white/5 rounded-2xl relative overflow-hidden">
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent"
+                    style={{ 
+                      animation: 'shimmer 2s infinite',
+                      width: '200%'
+                    }}
+                  ></div>
+                </div>
+                <div className="h-4 w-3/4 bg-white/10 rounded-md animate-pulse"></div>
+                <div className="h-3 w-1/2 bg-white/5 rounded-md animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        ) : results.length > 0 ? (
           <div className="search-results-grid grid grid-cols-5 gap-8">
             {results.map((movie, idx) => (
               <CarouselItem
@@ -389,6 +411,14 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
                 preventAutoScroll={preventAutoScroll}
               />
             ))}
+          </div>
+        ) : query.trim() !== "" ? (
+          <div className="flex flex-col items-center justify-center h-[60%] gap-6">
+            <span className="material-symbols-outlined text-8xl opacity-20" style={{ fontSize: '80px' }}>sentiment_dissatisfied</span>
+            <div className="text-center">
+              <p className="text-2xl font-headline font-bold opacity-40">No se encontraron resultados</p>
+              <p className="text-sm opacity-30 mt-2">Intenta buscar con otras palabras clave</p>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-[60%] opacity-20 gap-6">

@@ -2620,4 +2620,84 @@ body .btn-secondary.focused {
     padding: 8px 16px !important;
     font-size: 0.85rem !important;
   }
+
+  /* Search View TV/Short Screen Optimizations - Ultra Compact v3 */
+  .search-left-panel {
+    padding: 0.5rem 1rem 0.25rem 1rem !important;
+    gap: 0.15rem !important;
+    max-width: 265px !important;
+  }
+
+  /* Override the gap-10 in the main content div */
+  .search-left-panel > div.flex-1 {
+    gap: 0.15rem !important;
+    flex: none !important;
+  }
+
+  .search-title-group h1 {
+    font-size: 1.4rem !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  /* Restore subtitle with very small font */
+  .search-title-group p {
+    display: block !important;
+    font-size: 8px !important;
+    margin-top: -2px !important;
+    opacity: 0.5 !important;
+  }
+
+  .search-input-area {
+    font-size: 1.1rem !important;
+    min-height: 26px !important;
+    margin-top: 0 !important;
+    padding-bottom: 2px !important;
+    border-bottom-width: 1px !important;
+  }
+
+  .key-floating {
+    height: 24px !important;
+    font-size: 0.7rem !important;
+  }
+
+  .search-keyboard-grid {
+    gap: 3px !important;
+    margin-top: 2px !important;
+  }
+
+  /* Filters section */
+  .search-left-panel .flex-col.gap-2.mt-2 {
+    margin-top: 2px !important;
+    gap: 2px !important;
+  }
+
+  .search-left-panel .grid-cols-3 {
+    gap: 4px !important;
+  }
+
+  .search-left-panel button[class*="h-[40px]"],
+  .search-left-panel button[class*="h-[32px]"] {
+    height: 24px !important;
+    font-size: 8px !important;
+    padding: 0 4px !important;
+    border-radius: 4px !important;
+    border-width: 1px !important;
+  }
+
+  .search-results-panel {
+    padding: 20px 15px !important;
+  }
+
+  .search-results-panel h2 {
+    font-size: 1.2rem !important;
+  }
+
+  .search-results-panel .flex.items-baseline {
+    margin-bottom: 15px !important;
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
