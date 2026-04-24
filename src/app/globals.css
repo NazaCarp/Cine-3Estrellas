@@ -2145,7 +2145,7 @@ body .btn-secondary.focused {
 }
 
 .grid-header-immersive {
-  padding: clamp(30px, 6vh, 80px) clamp(20px, 8vw, 100px) 30px clamp(20px, 8vw, 100px);
+  padding: clamp(20px, 4vh, 50px) clamp(20px, 8vw, 100px) 15px clamp(20px, 8vw, 100px);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -2157,19 +2157,20 @@ body .btn-secondary.focused {
 .grid-title-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .grid-title-premium {
   font-family: 'Outfit', sans-serif;
-  font-size: clamp(1.8rem, 6vw, 4.5rem); /* Fluid scaling based on screen width */
+  font-size: clamp(1.6rem, 4vw, 3.2rem); 
   font-weight: 800;
   line-height: 1;
   margin: 0;
   color: #fff;
-  letter-spacing: -2px;
+  letter-spacing: -1.5px;
   text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
+
 
 .grid-metadata-badge {
   display: inline-flex;
