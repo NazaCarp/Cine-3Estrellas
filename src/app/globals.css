@@ -1970,15 +1970,20 @@ body .btn-secondary.focused {
 
   /* EXPLORE VIEW - TV OPTIMIZATIONS */
   .explore-sidebar {
-    width: 210px !important;
+    width: 160px !important;
     padding-top: 30px !important;
+  }
+
+  .explore-results-container {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
   }
 
   .explore-sidebar-header {
     margin-bottom: 15px !important;
     margin-top: 10px !important;
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
 
   .explore-sidebar-header h2 {
@@ -1989,13 +1994,13 @@ body .btn-secondary.focused {
   .explore-sidebar li {
     padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
     font-size: 0.75rem !important;
   }
 
   .explore-header {
-    padding: 10px 30px !important;
+    padding: 10px 20px !important;
   }
 
   .explore-title {

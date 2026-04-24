@@ -620,7 +620,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
           </div>
         </header>
 
-        <div className="flex-1 flex flex-col" style={{ paddingLeft: '40px', paddingRight: '40px', paddingTop: '1.5rem', paddingBottom: '4rem' }}>
+        <div className="explore-results-container flex-1 flex flex-col" style={{ paddingLeft: '40px', paddingRight: '40px', paddingTop: '1.5rem', paddingBottom: '4rem' }}>
           {isLoading ? (
             <div className="flex items-center justify-center h-64 opacity-20">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary"></div>
