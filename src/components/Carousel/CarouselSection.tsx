@@ -168,7 +168,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
               isActive={isActive && focusedCol === cIndex}
               disableAutoScroll={true}
               onFocus={(r, c) => !hasMoved.current && onItemFocus?.(r, c)}
-              onClick={(m, c) => !hasMoved.current && onItemClick?.(m, c)}
+              onClick={(m) => !hasMoved.current && onItemClick?.(m)}
               preventAutoScroll={preventAutoScroll}
             />
           ))}
