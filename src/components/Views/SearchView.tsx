@@ -77,9 +77,14 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
     try {
       const { movies, count } = await searchMovies(searchQuery, newPage);
       
-      setResults(prev => newPage === 1 ? movies : [...prev, ...movies]);
+      setResults(prev => {
+        if (newPage === 1) return movies;
+        // Deduplicate: only add movies that aren't already in the list
+        const newMovies = movies.filter(nm => !prev.some(pm => pm.id === nm.id));
+        return [...prev, ...newMovies];
+      });
       setTotalResults(count);
-      setHasMore(newPage * 60 < count); // 60 is the default pageSize in data.ts
+      setHasMore(newPage * 60 < count); 
       setPage(newPage);
     } catch (error) {
       console.error("Search error:", error);
@@ -256,11 +261,30 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // Infinite Scroll Trigger
+  // Infinite Scroll Trigger (Scroll-based for Touch/Mouse)
+  const handleScroll = useCallback(() => {
+    if (!resultsContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = resultsContainerRef.current;
+    
+    // Trigger when user is within 1200px of the bottom (earlier prefetch)
+    if (scrollHeight - scrollTop - clientHeight < 1200 && hasMore && !isLoadingMore && !isSearching) {
+      handleSearch(query, page + 1);
+    }
+  }, [hasMore, isLoadingMore, isSearching, query, page, handleSearch]);
+
+  useEffect(() => {
+    const el = resultsContainerRef.current;
+    if (el) {
+      el.addEventListener('scroll', handleScroll);
+      return () => el.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll]);
+
+  // Infinite Scroll Trigger (Focus-based for TV/Remote)
   useEffect(() => {
     if (focusArea === 'results' && 
         results.length > 0 && 
-        resultIndex >= results.length - 15 && // Trigger 3 rows before the end
+        resultIndex >= results.length - 30 && // Trigger 6 rows before the end (earlier prefetch)
         hasMore && 
         !isLoadingMore && 
         !isSearching) {
@@ -416,16 +440,16 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
           </div>
         ) : results.length > 0 ? (
           <div className="search-results-grid grid grid-cols-5 gap-8">
-            {results.map((movie, idx) => (
+            {results.map((movie, index) => (
               <CarouselItem
-                key={movie.id}
+                key={`${movie.id}-${index}`}
                 movie={movie}
-                isActive={focusArea === 'results' && resultIndex === idx}
-                row={Math.floor(idx / 5)}
-                col={idx % 5}
+                isActive={focusArea === 'results' && resultIndex === index}
+                row={Math.floor(index / 5)}
+                col={index % 5}
                 onFocus={(row, col) => {
                   setFocusArea('results');
-                  setResultIndex(idx);
+                  setResultIndex(index);
                 }}
                 onClick={(movie) => onMovieSelect(movie)}
                 preventAutoScroll={preventAutoScroll}

@@ -84,6 +84,25 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
   const latestRequestRef = useRef<number>(0);
   const genreRefs = useRef<(HTMLLIElement | null)[]>([]);
   const sidebarRef = useRef<HTMLElement>(null);
+  const scrollContainerRef = useRef<HTMLElement>(null);
+
+  const handleScroll = useCallback(() => {
+    if (!scrollContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    
+    // Trigger when user is within 1200px of the bottom (earlier prefetch)
+    if (scrollHeight - scrollTop - clientHeight < 1200 && hasMore && !isLoadingMore && !isLoading) {
+      setPage(p => p + 1);
+    }
+  }, [hasMore, isLoadingMore, isLoading]);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      el.addEventListener('scroll', handleScroll);
+      return () => el.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll]);
 
   const loadMoviesInit = useCallback(async (genreId: number, sort: string, stars: string, year: string) => {
     const requestId = Date.now() + Math.random();
@@ -268,8 +287,8 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
             setResultFocusIndex(prev => prev + cols);
             const nextRow = Math.floor((resultFocusIndex + cols) / cols);
             const totalRows = Math.ceil(movies.length / cols);
-            // Infinite scroll trigger: load next page when 2 rows away from the bottom
-            if (hasMore && !isLoadingMore && (nextRow >= totalRows - 2)) {
+            // Infinite scroll trigger: load next page earlier (5 rows away from bottom)
+            if (hasMore && !isLoadingMore && (nextRow >= totalRows - 5)) {
                setPage(p => p + 1);
             }
           } else {
@@ -552,7 +571,11 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-black/20 flex flex-col" style={{ scrollPaddingTop: '120px' }}>
+      <main 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-black/20 flex flex-col" 
+        style={{ scrollPaddingTop: '120px' }}
+      >
         <header 
           style={{ paddingTop: '20px', paddingLeft: '40px', paddingRight: '40px', paddingBottom: '1rem' }}
           className="explore-header sticky top-0 z-40 bg-background-dark/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between"
@@ -671,7 +694,7 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
             <div className="explore-results-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8">
               {movies.map((movie, index) => (
                 <CarouselItem
-                  key={movie.id}
+                  key={`${movie.id}-${index}`}
                   movie={movie}
                   isActive={focusArea === 'results' && resultFocusIndex === index}
                   row={Math.floor(index / 6)}

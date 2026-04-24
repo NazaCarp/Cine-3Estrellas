@@ -119,10 +119,10 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
   useEffect(() => {
     if (isActive && hasMore && !isLoading && focusArea === 'grid') {
       const rowCapacity = movies.length;
-      const currentRow = Math.floor(focusIndex / COLS);
+      const currentRow = Math.floor(rowCapacity / COLS);
       const totalRows = Math.ceil(rowCapacity / COLS);
       
-      if (currentRow >= totalRows - 3) {
+      if (currentRow >= totalRows - 6) {
         loadMore();
       }
     }
@@ -134,6 +134,25 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
   }, [isActive, handleKeyDown]);
+
+  // Infinite Scroll Trigger (Scroll-based for Touch/Mouse)
+  const handleScroll = useCallback(() => {
+    if (!gridScrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = gridScrollRef.current;
+    
+    // Trigger when user is within 1200px of the bottom (earlier prefetch)
+    if (scrollHeight - scrollTop - clientHeight < 1200 && hasMore && !isLoading) {
+      loadMore();
+    }
+  }, [hasMore, isLoading, loadMore]);
+
+  useEffect(() => {
+    const el = gridScrollRef.current;
+    if (el && isActive) {
+      el.addEventListener('scroll', handleScroll);
+      return () => el.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll, isActive]);
 
   useEffect(() => {
     if (isActive && focusArea === 'grid' && isKeyboardAction.current) {
