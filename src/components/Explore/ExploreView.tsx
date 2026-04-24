@@ -391,21 +391,55 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
                 <span className="text-3xl font-black text-white leading-none">{(options[menuFocusIndex] as any).badge}</span>
               </div>
               
-              <div className="relative h-1.5 w-full bg-white/10 rounded-full mb-3 mt-8">
-                 <div 
-                     className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#B8860B] to-[#FFD700] rounded-full transition-all duration-300 ease-out"
-                     style={{ width: `${(menuFocusIndex / (options.length - 1)) * 100}%` }}
-                 ></div>
-                 
-                 <div 
-                     className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_15px_rgba(255,215,0,0.6)] transition-all duration-300 ease-out z-10"
-                     style={{ left: `calc(${(menuFocusIndex / (options.length - 1)) * 100}% - 8px)` }}
-                 ></div>
+              <div 
+                className="relative h-6 w-full flex items-center cursor-pointer mb-2 mt-6"
+                onPointerDown={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const percentage = Math.max(0, Math.min(1, x / rect.width));
+                  const index = Math.round(percentage * (options.length - 1));
+                  setMenuFocusIndex(index);
+                }}
+                onPointerMove={(e) => {
+                  if (e.buttons === 1) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const percentage = Math.max(0, Math.min(1, x / rect.width));
+                    const index = Math.round(percentage * (options.length - 1));
+                    setMenuFocusIndex(index);
+                  }
+                }}
+                onPointerUp={() => {
+                  setActiveStars(options[menuFocusIndex].id);
+                  setActiveMenu('none');
+                  setFocusArea('filters');
+                }}
+              >
+                <div className="h-1.5 w-full bg-white/10 rounded-full relative">
+                  <div 
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#B8860B] to-[#FFD700] rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${(menuFocusIndex / (options.length - 1)) * 100}%` }}
+                  ></div>
+                  
+                  <div 
+                      className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_15px_rgba(255,215,0,0.6)] transition-all duration-300 ease-out z-10"
+                      style={{ left: `calc(${(menuFocusIndex / (options.length - 1)) * 100}% - 8px)` }}
+                  ></div>
+                </div>
               </div>
               
               <div className="flex justify-between w-full text-[10px] font-bold text-white/40 tracking-wider">
                 {(options as any[]).map((opt, i) => (
-                  <span key={opt.id} className={`transition-colors duration-300 ${menuFocusIndex >= i ? 'text-white/80' : 'text-white/20'}`}>
+                  <span 
+                    key={opt.id} 
+                    className={`transition-colors duration-300 cursor-pointer p-1 ${menuFocusIndex >= i ? 'text-white/80' : 'text-white/20'}`}
+                    onClick={() => {
+                      setMenuFocusIndex(i);
+                      setActiveStars(opt.id);
+                      setActiveMenu('none');
+                      setFocusArea('filters');
+                    }}
+                  >
                     {(opt as any).num}
                   </span>
                 ))}
@@ -497,8 +531,10 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
                     isSelected ? '' : 'hover:text-white hover:bg-white/5'
                   }`.trim().replace(/\s+/g, ' ')}
                   onPointerEnter={() => {
-                    setFocusArea('genres');
-                    setGenreFocusIndex(index);
+                    if (activeMenu === 'none') {
+                      setFocusArea('genres');
+                      setGenreFocusIndex(index);
+                    }
                   }}
                   onClick={() => {
                     setSelectedGenreIndex(index);
@@ -562,8 +598,10 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
                   : 'text-slate-500 hover:text-slate-300'
               }`.trim().replace(/\s+/g, ' ')}
               onPointerEnter={() => {
-                setFocusArea('filters');
-                setFilterFocusIndex(0);
+                if (activeMenu === 'none') {
+                  setFocusArea('filters');
+                  setFilterFocusIndex(0);
+                }
               }}
               onClick={() => {
                 setActiveMenu(activeMenu === 'stars' ? 'none' : 'stars');
@@ -583,8 +621,10 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
                   : 'text-slate-500 hover:text-slate-300'
               }`.trim().replace(/\s+/g, ' ')}
               onPointerEnter={() => {
-                setFocusArea('filters');
-                setFilterFocusIndex(1);
+                if (activeMenu === 'none') {
+                  setFocusArea('filters');
+                  setFilterFocusIndex(1);
+                }
               }}
               onClick={() => {
                 setActiveMenu(activeMenu === 'year' ? 'none' : 'year');
@@ -604,8 +644,10 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
                   : 'text-slate-500 hover:text-slate-300'
               }`.trim().replace(/\s+/g, ' ')}
               onPointerEnter={() => {
-                setFocusArea('filters');
-                setFilterFocusIndex(2);
+                if (activeMenu === 'none') {
+                  setFocusArea('filters');
+                  setFilterFocusIndex(2);
+                }
               }}
               onClick={() => {
                 setActiveMenu(activeMenu === 'sort' ? 'none' : 'sort');
@@ -635,8 +677,10 @@ const ExploreView: React.FC<ExploreViewProps> = ({ isActive, onMovieSelect, onRe
                   row={Math.floor(index / 6)}
                   col={index % 6}
                   onFocus={(row, col) => {
-                    setFocusArea('results');
-                    setResultFocusIndex(index);
+                    if (activeMenu === 'none') {
+                      setFocusArea('results');
+                      setResultFocusIndex(index);
+                    }
                   }}
                   onClick={(movie) => onMovieSelect(movie)}
                   preventAutoScroll={preventAutoScroll}
