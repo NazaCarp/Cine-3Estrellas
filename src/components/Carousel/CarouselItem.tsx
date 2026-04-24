@@ -96,6 +96,8 @@ const CarouselItem: React.FC<CarouselItemProps> = React.memo(({
           src={posterUrl}
           alt={movie.title}
           loading="lazy"
+          draggable="false"
+          onDragStart={(e) => e.preventDefault()}
         />
       </div>
       <div className="item-text">

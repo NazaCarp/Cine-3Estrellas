@@ -42,40 +42,35 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
   }, [isActive, preventAutoScroll]);
 
   const currentTranslateRef = useRef(0);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartTranslate = useRef(0);
+  const hasMoved = useRef(false);
 
   useEffect(() => {
     const updateTransform = () => {
-      if (trackRef.current) {
+      if (trackRef.current && !isDragging.current) {
         const firstChild = trackRef.current.children[0] as HTMLElement;
         if (!firstChild) return;
 
         const baseItemWidth = firstChild.offsetWidth;
-        const itemWidth = baseItemWidth + 20; // Include CSS gap
+        const itemWidth = baseItemWidth + 20;
         const containerWidth = trackRef.current.parentElement?.offsetWidth || 1000;
         
-        const margin = 80; // Margen de cortesía
-        
+        const margin = 80;
         const itemLeft = focusedCol * itemWidth;
         const itemRight = itemLeft + itemWidth;
         
         let newTranslate = currentTranslateRef.current;
-        
-        // Definir la "ventana" visible actual
         const viewLeft = -newTranslate;
         const viewRight = viewLeft + containerWidth;
         
-        // Lógica de scroll inteligente:
-        // Si el ítem se sale por la IZQUIERDA (o entra en el margen)
         if (itemLeft < viewLeft + margin) {
           newTranslate = -(itemLeft - margin);
-        } 
-        // Si el ítem se sale por la DERECHA (o entra en el margen)
-        else if (itemRight > viewRight - margin) {
+        } else if (itemRight > viewRight - margin) {
           newTranslate = -(itemRight - containerWidth + margin);
         }
         
-        // Límites: No permitir scroll más allá del inicio (0) 
-        // o del final (scrollWidth - containerWidth)
         const totalWidth = trackRef.current.scrollWidth;
         const maxScroll = -(totalWidth - containerWidth);
         
@@ -86,17 +81,66 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
         }
 
         currentTranslateRef.current = newTranslate;
+        trackRef.current.style.transition = 'transform 0.5s cubic-bezier(0.2, 0, 0, 1)';
         trackRef.current.style.transform = `translateX(${newTranslate}px)`;
       }
     };
 
     updateTransform();
     window.addEventListener('resize', updateTransform);
-    
-    return () => {
-      window.removeEventListener('resize', updateTransform);
-    };
+    return () => window.removeEventListener('resize', updateTransform);
   }, [focusedCol]);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!trackRef.current) return;
+    isDragging.current = true;
+    hasMoved.current = false;
+    dragStartX.current = e.clientX;
+    dragStartTranslate.current = currentTranslateRef.current;
+    trackRef.current.style.transition = 'none';
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging.current || !trackRef.current) return;
+    
+    const deltaX = e.clientX - dragStartX.current;
+    if (Math.abs(deltaX) > 5) hasMoved.current = true;
+    
+    let newTranslate = dragStartTranslate.current + deltaX;
+    
+    // Resistance at boundaries
+    const containerWidth = trackRef.current.parentElement?.offsetWidth || 0;
+    const totalWidth = trackRef.current.scrollWidth;
+    const maxScroll = -(totalWidth - containerWidth);
+    
+    if (newTranslate > 0) newTranslate /= 3;
+    if (newTranslate < maxScroll) newTranslate = maxScroll + (newTranslate - maxScroll) / 3;
+    
+    trackRef.current.style.transform = `translateX(${newTranslate}px)`;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDragging.current || !trackRef.current) return;
+    isDragging.current = false;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    
+    // Get current transform to sync back to currentTranslateRef
+    const style = window.getComputedStyle(trackRef.current);
+    const matrix = new WebKitCSSMatrix(style.transform);
+    let finalTranslate = matrix.m41;
+    
+    // Snap to boundaries
+    const containerWidth = trackRef.current.parentElement?.offsetWidth || 0;
+    const totalWidth = trackRef.current.scrollWidth;
+    const maxScroll = -(totalWidth - containerWidth);
+    
+    finalTranslate = Math.min(0, Math.max(finalTranslate, Math.min(0, maxScroll)));
+    
+    currentTranslateRef.current = finalTranslate;
+    trackRef.current.style.transition = 'transform 0.4s cubic-bezier(0.2, 0, 0, 1)';
+    trackRef.current.style.transform = `translateX(${finalTranslate}px)`;
+  };
 
   if (movies.length === 0) return null;
 
@@ -107,8 +151,14 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
       id={`carousel-${rowIndex}`}
     >
       <h2 className="carousel-title">{title}</h2>
-      <div className="carousel-track-wrapper">
-        <div ref={trackRef} className="carousel-track">
+      <div 
+        className="carousel-track-wrapper"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        style={{ cursor: 'grab', touchAction: 'none' }}
+      >
+        <div ref={trackRef} className="carousel-track" style={{ transition: 'transform 0.5s cubic-bezier(0.2, 0, 0, 1)' }}>
           {movies.slice(0, 20).map((movie, cIndex) => (
             <CarouselItem
               key={`${movie.id}-${cIndex}`}
@@ -117,16 +167,16 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
               col={cIndex}
               isActive={isActive && focusedCol === cIndex}
               disableAutoScroll={true}
-              onFocus={onItemFocus}
-              onClick={onItemClick}
+              onFocus={(r, c) => !hasMoved.current && onItemFocus?.(r, c)}
+              onClick={(m, c) => !hasMoved.current && onItemClick?.(m, c)}
               preventAutoScroll={preventAutoScroll}
             />
           ))}
           {movies.length > 0 && (
             <div 
               className={`see-more-card${isActive && focusedCol === Math.min(movies.length, 20) ? ' active' : ''}`.trim()}
-              onPointerEnter={() => onItemFocus?.(rowIndex, Math.min(movies.length, 20))}
-              onClick={() => onItemClick?.(null, category)}
+              onPointerEnter={() => !hasMoved.current && onItemFocus?.(rowIndex, Math.min(movies.length, 20))}
+              onClick={() => !hasMoved.current && onItemClick?.(null, category)}
             >
               <div className="icon-circle">
                 <span className="material-symbols-outlined">add</span>
