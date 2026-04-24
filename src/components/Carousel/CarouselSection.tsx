@@ -140,6 +140,12 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
     currentTranslateRef.current = finalTranslate;
     trackRef.current.style.transition = 'transform 0.4s cubic-bezier(0.2, 0, 0, 1)';
     trackRef.current.style.transform = `translateX(${finalTranslate}px)`;
+
+    // Reset hasMoved after a short delay so that focus can work again 
+    // but the immediate click event is still blocked
+    setTimeout(() => {
+      hasMoved.current = false;
+    }, 100);
   };
 
   if (movies.length === 0) return null;
@@ -167,7 +173,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
               col={cIndex}
               isActive={isActive && focusedCol === cIndex}
               disableAutoScroll={true}
-              onFocus={(r, c) => !hasMoved.current && onItemFocus?.(r, c)}
+              onFocus={(r, c) => !isDragging.current && onItemFocus?.(r, c)}
               onClick={(m) => !hasMoved.current && onItemClick?.(m)}
               preventAutoScroll={preventAutoScroll}
             />
@@ -175,7 +181,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
           {movies.length > 0 && (
             <div 
               className={`see-more-card${isActive && focusedCol === Math.min(movies.length, 20) ? ' active' : ''}`.trim()}
-              onPointerEnter={() => !hasMoved.current && onItemFocus?.(rowIndex, Math.min(movies.length, 20))}
+              onPointerEnter={() => !isDragging.current && onItemFocus?.(rowIndex, Math.min(movies.length, 20))}
               onClick={() => !hasMoved.current && onItemClick?.(null, category)}
             >
               <div className="icon-circle">
