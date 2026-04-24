@@ -256,7 +256,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
             </div>
             
             <div 
-              className="search-input-area relative border-b-2 border-[#FFD700]/30 pb-2 flex items-center min-h-[48px] cursor-text"
+              className="search-input-area relative text-2xl font-headline font-semibold text-[#FFD700] border-b-2 border-[#FFD700]/30 pb-2 flex items-center gap-[2px] min-h-[48px] cursor-text"
               onClick={() => inputRef.current?.focus()}
             >
               {/* Hidden input to capture system keyboard events and touch focus */}
@@ -273,13 +273,8 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
                 aria-label="Search"
               />
 
-              {/* Premium UI Rendering */}
-              <div className="flex items-center gap-[2px] relative z-0 pointer-events-none">
-                <span className={`whitespace-pre text-2xl font-headline font-semibold uppercase tracking-[0.1em] transition-colors duration-200 ${query ? 'text-[#FFD700]' : 'text-white/20'}`}>
-                  {query || 'ESCRIBE AQUÍ...'}
-                </span>
-                <span className="w-[4px] h-8 bg-[#FFD700] animate-pulse shrink-0 ml-1"></span>
-              </div>
+              <span className="whitespace-pre text-white select-text cursor-text relative z-0 pointer-events-none" style={{ WebkitUserSelect: 'text', userSelect: 'text' }}>{query}</span>
+              <span className="w-[4px] h-8 bg-[#FFD700] animate-pulse shrink-0 relative z-0 pointer-events-none"></span>
             </div>
           </div>
 
