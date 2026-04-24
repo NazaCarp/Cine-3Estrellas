@@ -256,26 +256,30 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
             </div>
             
             <div 
-              className="search-input-area border-b-2 border-[#FFD700]/30 pb-2 flex items-center min-h-[48px] cursor-text"
+              className="search-input-area relative border-b-2 border-[#FFD700]/30 pb-2 flex items-center min-h-[48px] cursor-text"
               onClick={() => inputRef.current?.focus()}
             >
+              {/* Hidden input to capture system keyboard events and touch focus */}
               <input
                 ref={inputRef}
                 type="text"
                 value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value.toUpperCase());
-                  // Don't auto-search on every keystroke to avoid API limits, 
-                  // but we could if we wanted to.
-                }}
+                onChange={(e) => setQuery(e.target.value.toUpperCase())}
                 onFocus={() => {
                   setFocusArea('keyboard');
-                  // Move focus to BUSCAR button or just keep it in keyboard area
                   setKeyboardPos({ row: 6, col: 4 });
                 }}
-                placeholder="ESCRIBE AQUÍ..."
-                className="w-full bg-transparent border-none outline-none text-2xl font-headline font-semibold text-[#FFD700] caret-[#FFD700] placeholder:text-white/20 uppercase tracking-[0.1em]"
+                className="absolute inset-0 opacity-0 w-full h-full z-10 cursor-text"
+                aria-label="Search"
               />
+
+              {/* Premium UI Rendering */}
+              <div className="flex items-center gap-[2px] relative z-0 pointer-events-none">
+                <span className={`whitespace-pre text-2xl font-headline font-semibold uppercase tracking-[0.1em] transition-colors duration-200 ${query ? 'text-[#FFD700]' : 'text-white/20'}`}>
+                  {query || 'ESCRIBE AQUÍ...'}
+                </span>
+                <span className="w-[4px] h-8 bg-[#FFD700] animate-pulse shrink-0 ml-1"></span>
+              </div>
             </div>
           </div>
 
