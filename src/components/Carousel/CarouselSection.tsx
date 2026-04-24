@@ -36,7 +36,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
     if (isActive && !preventAutoScroll && sectionRef.current) {
       sectionRef.current.scrollIntoView({
         behavior: 'smooth',
-        block: 'center',
+        block: 'nearest',
       });
     }
   }, [isActive, preventAutoScroll]);

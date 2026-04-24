@@ -316,19 +316,19 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
         </div>
       </div>
 
-      {selectedMovie && (
-        <MovieDetail
-          movie={selectedMovie}
-          onClose={() => setSelectedMovie(null)}
-        />
-      )}
-
       {expandedCategory && (
         <CategoryGridView
           category={expandedCategory}
           isActive={!!expandedCategory}
           onClose={() => setExpandedCategory(null)}
           onMovieSelect={setSelectedMovie}
+        />
+      )}
+
+      {selectedMovie && (
+        <MovieDetail
+          movie={selectedMovie}
+          onClose={() => setSelectedMovie(null)}
         />
       )}
     </div>

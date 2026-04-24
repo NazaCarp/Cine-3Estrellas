@@ -26,8 +26,9 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
   const [hasMore, setHasMore] = useState((category.movies?.length || 0) >= 60);
   const [totalCount, setTotalCount] = useState(category.total_movies || 0);
 
-  const COLS = 6;
+  const COLS = 7;
   const gridScrollRef = useRef<HTMLDivElement>(null);
+  const isKeyboardAction = useRef(false);
 
   const loadMore = useCallback(async () => {
     if (isLoading || !hasMore) return;
@@ -53,6 +54,7 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isActive) return;
+    isKeyboardAction.current = true;
 
     if (focusArea === 'header') {
       switch (e.key) {
@@ -134,11 +136,12 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
   }, [isActive, handleKeyDown]);
 
   useEffect(() => {
-    if (isActive && focusArea === 'grid') {
+    if (isActive && focusArea === 'grid' && isKeyboardAction.current) {
       const activeItem = gridScrollRef.current?.querySelector('.carousel-item.active');
       if (activeItem) {
         activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
+      isKeyboardAction.current = false;
     }
   }, [focusIndex, isActive, focusArea]);
 
@@ -178,7 +181,9 @@ const CategoryGridView: React.FC<CategoryGridViewProps> = ({
               row={0}
               col={index}
               isActive={focusArea === 'grid' && focusIndex === index}
+              disableAutoScroll={true} // El grid maneja su propio scroll
               onFocus={(row, col) => {
+                isKeyboardAction.current = false; // Si viene de pointer, desactivar scroll
                 setFocusArea('grid');
                 setFocusIndex(index);
               }}
