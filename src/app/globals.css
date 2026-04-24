@@ -977,6 +977,19 @@ body .btn-secondary.focused {
   z-index: 100;
 }
 
+.detail-btn.btn-fullscreen {
+  position: absolute;
+  top: 30px;
+  right: 90px;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border-radius: 50%;
+  justify-content: center;
+  z-index: 100;
+}
+
+
 .detail-btn.btn-close.focused {
   background: linear-gradient(135deg, #fff6df 0%, #ffd700 100%) !important;
   color: #3a3000 !important;

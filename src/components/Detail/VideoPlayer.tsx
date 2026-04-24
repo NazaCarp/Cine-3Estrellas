@@ -24,6 +24,32 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const [activeDownloadTab, setActiveDownloadTab] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      // If exiting fullscreen while a video is playing, close the player entirely
+      if (!document.fullscreenElement && selectedUrl) {
+        setSelectedUrl(null);
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, [selectedUrl]);
+
+
 
 
 
@@ -46,7 +72,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
 
   const handleSelect = (url: string) => {
     setSelectedUrl(url);
+    // Auto-fullscreen on select (user gesture)
+    setTimeout(() => {
+      if (containerRef.current && !document.fullscreenElement) {
+        containerRef.current.requestFullscreen().catch(() => {});
+      }
+    }, 100);
   };
+
 
   // Helper to group downloads for UI and logic
   const getGroupedDownloads = () => {
@@ -196,10 +229,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape' || e.key === 'Backspace') {
       e.preventDefault();
-      if (selectedUrl) setSelectedUrl(null);
+      if (selectedUrl) {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        }
+        setSelectedUrl(null);
+      }
       else onClose();
       return;
     }
+
 
     if (!selectedUrl) {
       const vCount = versions.length;
@@ -327,13 +366,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
 
   if (selectedUrl) {
     return (
-      <div className="video-player-overlay">
+      <div className="video-player-overlay" ref={containerRef}>
         <iframe src={selectedUrl} className="video-element" allow="autoplay; fullscreen" allowFullScreen />
         
         <div className="player-controls-layer">
           <button 
             className="detail-btn btn-close"
-            onClick={() => setSelectedUrl(null)}
+            onClick={() => {
+              if (document.fullscreenElement) document.exitFullscreen();
+              setSelectedUrl(null);
+            }}
+            title="Cerrar reproductor"
           >
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="3" fill="none">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -344,6 +387,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       </div>
     );
   }
+
+
 
 
 
