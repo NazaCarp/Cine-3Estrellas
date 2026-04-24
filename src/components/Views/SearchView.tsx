@@ -23,6 +23,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
   const lastTimeAtColZero = useRef<number>(0);
   const lastLeftPanelFocus = useRef<'keyboard' | 'filters'>('keyboard');
   const resultsContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (focusArea === 'results' && resultIndex < 5 && !preventAutoScroll && resultsContainerRef.current) {
@@ -99,44 +100,18 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
     }
 
     // Handle physical keyboard typing
-    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
-      const selection = window.getSelection();
-      const selectedText = selection ? selection.toString() : "";
-      const hasSelection = selectedText.length > 0;
+    // Enter handles search execution
+    if (e.key === 'Enter' && focusArea !== 'keyboard' && focusArea !== 'results') {
+      handleSearch(query);
+      setFocusArea('results');
+      setResultIndex(0);
+      inputRef.current?.blur();
+      return;
+    }
 
-      if (e.key === 'Backspace') {
-        if (hasSelection) {
-          setQuery(prev => {
-            if (selectedText === prev) return "";
-            const idx = prev.indexOf(selectedText);
-            if (idx !== -1) {
-              return prev.slice(0, idx) + prev.slice(idx + selectedText.length);
-            }
-            return prev.slice(0, -1);
-          });
-          selection?.removeAllRanges();
-        } else {
-          setQuery(prev => prev.slice(0, -1));
-        }
-      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (hasSelection) {
-          setQuery(prev => {
-            if (selectedText === prev) return e.key.toUpperCase();
-            const idx = prev.indexOf(selectedText);
-            if (idx !== -1) {
-              return prev.slice(0, idx) + e.key.toUpperCase() + prev.slice(idx + selectedText.length);
-            }
-            return prev + e.key.toUpperCase();
-          });
-          selection?.removeAllRanges();
-        } else {
-          setQuery(prev => prev + e.key.toUpperCase());
-        }
-        
-        // Move focus to BUSCAR button
-        setFocusArea('keyboard');
-        setKeyboardPos({ row: 6, col: 4 });
-      }
+    // Handle physical keyboard navigation and other specific keys
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Backspace'].includes(e.key)) {
+      // Allow the input to handle typing naturally if focused
       return;
     }
 
@@ -280,9 +255,27 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
               </p>
             </div>
             
-            <div className="search-input-area text-2xl font-headline font-semibold text-[#FFD700] border-b-2 border-[#FFD700]/30 pb-2 flex items-center gap-[2px] min-h-[48px]">
-              <span className="whitespace-pre text-white select-text cursor-text" style={{ WebkitUserSelect: 'text', userSelect: 'text' }}>{query}</span>
-              <span className="w-[4px] h-8 bg-[#FFD700] animate-pulse shrink-0"></span>
+            <div 
+              className="search-input-area border-b-2 border-[#FFD700]/30 pb-2 flex items-center min-h-[48px] cursor-text"
+              onClick={() => inputRef.current?.focus()}
+            >
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value.toUpperCase());
+                  // Don't auto-search on every keystroke to avoid API limits, 
+                  // but we could if we wanted to.
+                }}
+                onFocus={() => {
+                  setFocusArea('keyboard');
+                  // Move focus to BUSCAR button or just keep it in keyboard area
+                  setKeyboardPos({ row: 6, col: 4 });
+                }}
+                placeholder="ESCRIBE AQUÍ..."
+                className="w-full bg-transparent border-none outline-none text-2xl font-headline font-semibold text-[#FFD700] caret-[#FFD700] placeholder:text-white/20 uppercase tracking-[0.1em]"
+              />
             </div>
           </div>
 
