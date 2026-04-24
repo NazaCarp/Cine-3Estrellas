@@ -22,7 +22,15 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
   const [isPlaying, setIsPlaying] = useState(false);
   const similarRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const [translateX, setTranslateX] = useState(0);
+  const currentTranslateRef = useRef(0);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartTranslate = useRef(0);
+  const hasMoved = useRef(false);
+  const lastX = useRef(0);
+  const lastTime = useRef(0);
+  const velocity = useRef(0);
+  const dragStartY = useRef(0);
 
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -58,26 +66,133 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
     }
   }, [rowFocus]);
 
-  // Calcular el desplazamiento dinámicamente para que el foco quede hacia la derecha
+  // Precise carousel translation logic synced with focus
   useEffect(() => {
-    if (trackRef.current && trackRef.current.parentElement) {
-      const firstChild = trackRef.current.children[0] as HTMLElement;
-      const containerWidth = trackRef.current.parentElement.offsetWidth;
-      
-      if (firstChild) {
-        const itemWidth = firstChild.offsetWidth + 20; // 180px + 20px gap
+    const updateTransform = () => {
+      if (trackRef.current && !isDragging.current && trackRef.current.parentElement) {
+        const firstChild = trackRef.current.children[0] as HTMLElement;
+        if (!firstChild) return;
+
+        const baseItemWidth = firstChild.offsetWidth;
+        const itemWidth = baseItemWidth + 20; // 20 is the gap
+        const containerWidth = trackRef.current.parentElement.clientWidth;
+        const totalWidth = trackRef.current.scrollWidth;
         
-        // Calculamos cuánto desplazar para que el ítem quede a la derecha
-        // Queremos que el ítem (similarFocusIndex) esté en el lado derecho del container.
-        // Posición ideal = index * itemWidth - (containerWidth - itemWidth - 60)
-        // El 60 es para dejar un pequeño margen a la derecha
-        const idealTranslate = -(similarFocusIndex * itemWidth) + (containerWidth - itemWidth - 100);
+        const margin = 100; // Courtesy margin
         
-        // Pero no queremos desplazar positivamente (que se vea vacío a la izquierda del primer ítem)
-        setTranslateX(Math.min(0, idealTranslate));
+        const itemLeft = similarFocusIndex * itemWidth;
+        const itemRight = itemLeft + itemWidth;
+        
+        let newTranslate = currentTranslateRef.current;
+        const viewLeft = -newTranslate;
+        const viewRight = viewLeft + containerWidth;
+        
+        if (itemLeft < viewLeft + margin) {
+          newTranslate = -(itemLeft - margin);
+        } else if (itemRight > viewRight - margin) {
+          newTranslate = -(itemRight - containerWidth + margin);
+        }
+        
+        const maxScroll = -(totalWidth - containerWidth);
+        
+        if (similarFocusIndex === 0) {
+          newTranslate = 0;
+        } else {
+          newTranslate = Math.min(0, Math.max(newTranslate, Math.min(0, maxScroll)));
+        }
+
+        currentTranslateRef.current = newTranslate;
+        trackRef.current.style.transition = 'transform 0.5s cubic-bezier(0.2, 0, 0, 1)';
+        trackRef.current.style.transform = `translateX(${newTranslate}px)`;
+      }
+    };
+
+    updateTransform();
+    window.addEventListener('resize', updateTransform);
+    return () => window.removeEventListener('resize', updateTransform);
+  }, [similarFocusIndex]);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!trackRef.current) return;
+    isDragging.current = true;
+    hasMoved.current = false;
+    dragStartX.current = e.clientX;
+    dragStartY.current = e.clientY;
+    dragStartTranslate.current = currentTranslateRef.current;
+    lastX.current = e.clientX;
+    lastTime.current = Date.now();
+    velocity.current = 0;
+    trackRef.current.style.transition = 'none';
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging.current || !trackRef.current) return;
+    
+    const deltaX = e.clientX - dragStartX.current;
+    const deltaY = e.clientY - dragStartY.current;
+    
+    if (!hasMoved.current && Math.abs(deltaX) > 15) {
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        hasMoved.current = true;
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      } else {
+        isDragging.current = false;
+        return;
       }
     }
-  }, [similarFocusIndex]);
+    
+    if (hasMoved.current) {
+      const now = Date.now();
+      const dt = now - lastTime.current;
+      if (dt > 0) {
+        const currentV = (e.clientX - lastX.current) / dt;
+        velocity.current = velocity.current * 0.4 + currentV * 0.6;
+      }
+      lastX.current = e.clientX;
+      lastTime.current = now;
+
+      let newTranslate = dragStartTranslate.current + deltaX;
+      
+      const containerWidth = trackRef.current.parentElement?.clientWidth || 0;
+      const totalWidth = trackRef.current.scrollWidth;
+      const maxScroll = -(totalWidth - containerWidth);
+      
+      if (newTranslate > 0) newTranslate /= 3;
+      if (newTranslate < maxScroll) newTranslate = maxScroll + (newTranslate - maxScroll) / 3;
+      
+      trackRef.current.style.transform = `translateX(${newTranslate}px)`;
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDragging.current || !trackRef.current) return;
+    isDragging.current = false;
+    
+    if (hasMoved.current) {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      
+      const style = window.getComputedStyle(trackRef.current);
+      const matrix = new WebKitCSSMatrix(style.transform);
+      let currentPos = matrix.m41;
+      
+      const containerWidth = trackRef.current.parentElement?.clientWidth || 0;
+      const totalWidth = trackRef.current.scrollWidth;
+      const maxScroll = -(totalWidth - containerWidth);
+      
+      const momentumFactor = 250; 
+      let finalTranslate = currentPos + (velocity.current * momentumFactor);
+      
+      finalTranslate = Math.min(0, Math.max(finalTranslate, maxScroll));
+      
+      currentTranslateRef.current = finalTranslate;
+      trackRef.current.style.transition = 'transform 0.7s cubic-bezier(0.1, 0.45, 0.1, 1)';
+      trackRef.current.style.transform = `translateX(${finalTranslate}px)`;
+    }
+
+    setTimeout(() => {
+      hasMoved.current = false;
+    }, 100);
+  };
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     // Detener la propagación inmediatamente para que el fondo NO reciba nada
@@ -310,11 +425,16 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
         ) : movie.similar && movie.similar.length > 0 && (
           <div className="detail-similar-section" ref={similarRef}>
             <h3 className="similar-title">Películas Similares</h3>
-            <div 
-              ref={trackRef}
-              className="similar-track" 
-              style={{ transform: `translateX(${translateX}px)`, gap: '20px', transition: 'transform 0.4s ease' }}
-            >
+            <div className="similar-track-wrapper"
+                 onPointerDown={handlePointerDown}
+                 onPointerMove={handlePointerMove}
+                 onPointerUp={handlePointerUp}
+                 style={{ cursor: 'grab', touchAction: 'pan-y' }}>
+              <div 
+                ref={trackRef}
+                className="similar-track" 
+                style={{ gap: '20px', transition: 'transform 0.4s ease' }}
+              >
               {movie.similar.map((s, idx) => (
                 <CarouselItem
                   key={s.id}
@@ -335,7 +455,8 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
               ))}
             </div>
           </div>
-        )}
+        </div>
+      )}
       </div>
 
       {isPlaying && (
