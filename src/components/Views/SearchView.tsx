@@ -24,6 +24,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
   const [totalResults, setTotalResults] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [lastSearchedQuery, setLastSearchedQuery] = useState("");
   const lastTimeAtColZero = useRef<number>(0);
   const lastLeftPanelFocus = useRef<'keyboard' | 'filters'>('keyboard');
   const resultsContainerRef = useRef<HTMLDivElement>(null);
@@ -70,6 +71,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
     if (newPage === 1) {
       setIsSearching(true);
       setResults([]);
+      setLastSearchedQuery(searchQuery);
     } else {
       setIsLoadingMore(true);
     }
@@ -413,7 +415,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
       <section ref={resultsContainerRef} className="search-results-panel">
         <div className="flex items-baseline justify-between" style={{ marginBottom: '50px' }}>
           <h2 className="font-headline text-2xl font-bold">
-            {isSearching ? 'Buscando...' : results.length > 0 ? `Resultados para "${query}"` : 'Resultados'}
+            {isSearching ? 'Buscando...' : results.length > 0 ? `Resultados para "${lastSearchedQuery}"` : 'Resultados'}
           </h2>
           <span className="text-on-surface-variant text-sm font-label opacity-60">
             {isSearching ? 'Por favor, espera un momento' : `${totalResults} Títulos encontrados`}
@@ -470,7 +472,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
               </div>
             ))}
           </div>
-        ) : query.trim() !== "" ? (
+        ) : lastSearchedQuery.trim() !== "" ? (
           <div className="flex flex-col items-center justify-center h-[60%] gap-6">
             <span className="material-symbols-outlined text-8xl opacity-20" style={{ fontSize: '80px' }}>sentiment_dissatisfied</span>
             <div className="text-center">
