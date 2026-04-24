@@ -25,6 +25,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+
+
   // Auto-set the first download tab when qualities are extracted
   useEffect(() => {
     if (downloadQualities.length > 0 && !activeDownloadTab) {
@@ -327,10 +329,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     return (
       <div className="video-player-overlay">
         <iframe src={selectedUrl} className="video-element" allow="autoplay; fullscreen" allowFullScreen />
-        <div style={{ position: 'absolute', top: '30px', left: '30px', color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem', letterSpacing: '3px', textTransform: 'uppercase' }}>ESC para volver</div>
+        
+        <div className="player-controls-layer">
+          <button 
+            className="detail-btn btn-close"
+            onClick={() => setSelectedUrl(null)}
+          >
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="3" fill="none">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
       </div>
     );
   }
+
+
 
   // Calculate UI values for focus ring
   const hasDownloads = downloadQualities.length > 0;
