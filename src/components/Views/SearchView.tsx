@@ -20,6 +20,10 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
   const [filterIndex, setFilterIndex] = useState(0);
   const [resultIndex, setResultIndex] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const lastTimeAtColZero = useRef<number>(0);
   const lastLeftPanelFocus = useRef<'keyboard' | 'filters'>('keyboard');
   const resultsContainerRef = useRef<HTMLDivElement>(null);
@@ -60,16 +64,28 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
 
   const quickFilters = ['Harry Potter', 'Star Wars', 'Marvel', 'Batman', 'Disney', 'Pixar'];
 
-  const handleSearch = useCallback(async (searchQuery: string) => {
+  const handleSearch = useCallback(async (searchQuery: string, newPage: number = 1) => {
     if (!searchQuery.trim()) return;
-    setIsSearching(true);
+    
+    if (newPage === 1) {
+      setIsSearching(true);
+      setResults([]);
+    } else {
+      setIsLoadingMore(true);
+    }
+
     try {
-      const movies = await searchMovies(searchQuery);
-      setResults(movies);
+      const { movies, count } = await searchMovies(searchQuery, newPage);
+      
+      setResults(prev => newPage === 1 ? movies : [...prev, ...movies]);
+      setTotalResults(count);
+      setHasMore(newPage * 60 < count); // 60 is the default pageSize in data.ts
+      setPage(newPage);
     } catch (error) {
       console.error("Search error:", error);
     } finally {
       setIsSearching(false);
+      setIsLoadingMore(false);
     }
   }, []);
 
@@ -81,7 +97,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
     } else if (key === 'CLEAR') {
       setQuery("");
     } else if (key === 'BUSCAR') {
-      handleSearch(query);
+      handleSearch(query, 1);
       setFocusArea('results');
       setResultIndex(0);
     } else {
@@ -102,7 +118,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
     // Handle physical keyboard typing
     // Enter handles search execution
     if (e.key === 'Enter' && focusArea !== 'keyboard' && focusArea !== 'results') {
-      handleSearch(query);
+      handleSearch(query, 1);
       setFocusArea('results');
       setResultIndex(0);
       inputRef.current?.blur();
@@ -240,6 +256,18 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // Infinite Scroll Trigger
+  useEffect(() => {
+    if (focusArea === 'results' && 
+        results.length > 0 && 
+        resultIndex >= results.length - 15 && // Trigger 3 rows before the end
+        hasMore && 
+        !isLoadingMore && 
+        !isSearching) {
+      handleSearch(query, page + 1);
+    }
+  }, [focusArea, resultIndex, results.length, hasMore, isLoadingMore, isSearching, query, page, handleSearch]);
+
   return (
     <div className="search-view-container">
       {/* Left Panel: Search Interface */}
@@ -344,7 +372,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
                   }}
                   onClick={() => {
                     setQuery(filter);
-                    handleSearch(filter);
+                    handleSearch(filter, 1);
                     setFocusArea('results');
                     setResultIndex(0);
                   }}
@@ -364,7 +392,7 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
             {isSearching ? 'Buscando...' : results.length > 0 ? `Resultados para "${query}"` : 'Resultados'}
           </h2>
           <span className="text-on-surface-variant text-sm font-label opacity-60">
-            {isSearching ? 'Por favor, espera un momento' : `${results.length} Títulos encontrados`}
+            {isSearching ? 'Por favor, espera un momento' : `${totalResults} Títulos encontrados`}
           </span>
         </div>
 
@@ -402,6 +430,20 @@ const SearchView: React.FC<SearchViewProps> = ({ isActive, onMovieSelect, onRetu
                 onClick={(movie) => onMovieSelect(movie)}
                 preventAutoScroll={preventAutoScroll}
               />
+            ))}
+            
+            {isLoadingMore && [...Array(5)].map((_, i) => (
+              <div key={`loading-more-${i}`} className="flex flex-col gap-3">
+                <div className="aspect-[2/3] w-full bg-white/5 rounded-2xl relative overflow-hidden">
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent"
+                    style={{ 
+                      animation: 'shimmer 2s infinite',
+                      width: '200%'
+                    }}
+                  ></div>
+                </div>
+              </div>
             ))}
           </div>
         ) : query.trim() !== "" ? (

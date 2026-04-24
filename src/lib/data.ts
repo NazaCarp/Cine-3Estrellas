@@ -205,19 +205,22 @@ export async function fetchHomeData(): Promise<Category[]> {
   }
 }
 
-export async function searchMovies(query: string): Promise<Movie[]> {
-  if (!query || query.trim().length === 0) return [];
+export async function searchMovies(query: string, page: number = 1, pageSize: number = 60): Promise<{ movies: Movie[], count: number }> {
+  if (!query || query.trim().length === 0) return { movies: [], count: 0 };
 
   try {
-    const { data: movieData, error } = await supabase
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data: movieData, error, count } = await supabase
       .from('movies')
-      .select('*, backdrop_path, release_date')
+      .select('*, backdrop_path, release_date', { count: 'exact' })
       .ilike('title', `%${query}%`)
       .order('popularity', { ascending: false })
-      .limit(300);
+      .range(from, to);
 
     if (error) throw error;
-    if (!movieData) return [];
+    if (!movieData) return { movies: [], count: 0 };
 
     // Enrich with quality info
     const enrichedMovies = movieData.map(movie => {
@@ -233,10 +236,10 @@ export async function searchMovies(query: string): Promise<Movie[]> {
       return { ...movie, quality: maxQuality };
     });
 
-    return enrichedMovies;
+    return { movies: enrichedMovies, count: count || 0 };
   } catch (err) {
     console.error('Error searching movies:', err);
-    return [];
+    return { movies: [], count: 0 };
   }
 }
 
