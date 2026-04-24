@@ -49,6 +49,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
   const lastX = useRef(0);
   const lastTime = useRef(0);
   const velocity = useRef(0);
+  const dragStartY = useRef(0);
 
 
   useEffect(() => {
@@ -101,22 +102,30 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
     isDragging.current = true;
     hasMoved.current = false;
     dragStartX.current = e.clientX;
+    dragStartY.current = e.clientY;
     dragStartTranslate.current = currentTranslateRef.current;
     lastX.current = e.clientX;
     lastTime.current = Date.now();
     velocity.current = 0;
     trackRef.current.style.transition = 'none';
-
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging.current || !trackRef.current) return;
     
     const deltaX = e.clientX - dragStartX.current;
+    const deltaY = e.clientY - dragStartY.current;
     
     if (!hasMoved.current && Math.abs(deltaX) > 15) {
-      hasMoved.current = true;
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      // Si el movimiento horizontal es mayor que el vertical, capturamos el drag
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        hasMoved.current = true;
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      } else {
+        // Es un scroll vertical, cancelamos nuestro drag
+        isDragging.current = false;
+        return;
+      }
     }
     
     if (hasMoved.current) {
@@ -194,7 +203,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        style={{ cursor: 'grab', touchAction: 'none' }}
+        style={{ cursor: 'grab', touchAction: 'pan-y' }}
       >
         <div ref={trackRef} className="carousel-track" style={{ transition: 'transform 0.5s cubic-bezier(0.2, 0, 0, 1)' }}>
           {movies.slice(0, 20).map((movie, cIndex) => (
