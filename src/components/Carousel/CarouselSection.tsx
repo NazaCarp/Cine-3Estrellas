@@ -46,6 +46,10 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
   const dragStartX = useRef(0);
   const dragStartTranslate = useRef(0);
   const hasMoved = useRef(false);
+  const lastX = useRef(0);
+  const lastTime = useRef(0);
+  const velocity = useRef(0);
+
 
   useEffect(() => {
     const updateTransform = () => {
@@ -98,7 +102,11 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
     hasMoved.current = false;
     dragStartX.current = e.clientX;
     dragStartTranslate.current = currentTranslateRef.current;
+    lastX.current = e.clientX;
+    lastTime.current = Date.now();
+    velocity.current = 0;
     trackRef.current.style.transition = 'none';
+
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
@@ -112,6 +120,17 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
     }
     
     if (hasMoved.current) {
+      const now = Date.now();
+      const dt = now - lastTime.current;
+      if (dt > 0) {
+        // Calculate velocity (pixels per ms)
+        const currentV = (e.clientX - lastX.current) / dt;
+        // Average with previous velocity for smoothing
+        velocity.current = velocity.current * 0.4 + currentV * 0.6;
+      }
+      lastX.current = e.clientX;
+      lastTime.current = now;
+
       let newTranslate = dragStartTranslate.current + deltaX;
       
       const containerWidth = trackRef.current.parentElement?.clientWidth || 0;
@@ -123,6 +142,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
       
       trackRef.current.style.transform = `translateX(${newTranslate}px)`;
     }
+
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -134,18 +154,26 @@ const CarouselSection: React.FC<CarouselSectionProps> = React.memo(({
       
       const style = window.getComputedStyle(trackRef.current);
       const matrix = new WebKitCSSMatrix(style.transform);
-      let finalTranslate = matrix.m41;
+      let currentPos = matrix.m41;
       
       const containerWidth = trackRef.current.parentElement?.clientWidth || 0;
       const totalWidth = trackRef.current.scrollWidth;
       const maxScroll = -(totalWidth - containerWidth);
       
-      finalTranslate = Math.min(0, Math.max(finalTranslate, Math.min(0, maxScroll)));
+      // Calculate momentum (velocity * damping factor)
+      // If velocity is low, it just snaps to the nearest bound
+      const momentumFactor = 250; 
+      let finalTranslate = currentPos + (velocity.current * momentumFactor);
+      
+      // Clamp final position
+      finalTranslate = Math.min(0, Math.max(finalTranslate, maxScroll));
       
       currentTranslateRef.current = finalTranslate;
-      trackRef.current.style.transition = 'transform 0.4s cubic-bezier(0.2, 0, 0, 1)';
+      // Use a longer, smoother transition for momentum
+      trackRef.current.style.transition = 'transform 0.7s cubic-bezier(0.1, 0.45, 0.1, 1)';
       trackRef.current.style.transform = `translateX(${finalTranslate}px)`;
     }
+
 
     setTimeout(() => {
       hasMoved.current = false;
