@@ -366,10 +366,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
     : `https://image.tmdb.org/t/p/original${movie.poster_path}`;
 
+  const isDirectLink = selectedUrl?.includes('.m3u8') || selectedUrl?.includes('.mp4') || selectedUrl?.includes('urlset');
+
   if (selectedUrl) {
     return (
       <div className="video-player-overlay" ref={containerRef}>
-        <iframe src={selectedUrl} className="video-element" allow="autoplay; fullscreen" allowFullScreen />
+        {isDirectLink ? (
+          <video 
+            src={selectedUrl} 
+            className="video-element" 
+            controls 
+            autoPlay 
+            playsInline
+            style={{ width: '100%', height: '100%', backgroundColor: '#000' }}
+          />
+        ) : (
+          <iframe src={selectedUrl} className="video-element" allow="autoplay; fullscreen" allowFullScreen />
+        )}
         
         <div className="player-controls-layer">
           <button 
@@ -552,7 +565,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                                   key={`${q.name}-${qidx}`} 
                                   className={`download-chip ${isFocused ? 'focused' : ''}`}
                                   onPointerEnter={() => setFocusIndex(absIdx)}
-                                  onClick={() => window.open(q.url, '_blank')}
+                                  onClick={() => handleSelect(q.url)}
                                 >
                                   <span className="chip-quality">{q.name}</span>
                                 </div>

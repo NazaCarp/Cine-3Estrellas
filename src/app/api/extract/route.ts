@@ -67,12 +67,20 @@ export async function GET(request: NextRequest) {
         }
     }
 
+    // Patrón 4: JWPlayer sources (Común en Vidmoly y otros)
     if (videos.length === 0) {
-      if (videoUrl.includes('vidmoly.')) {
-        return NextResponse.json({ 
-          error: 'Vidmoly no permite descargas directas automáticas por su protección contra robots. Usa el reproductor para ver el video.' 
-        }, { status: 403 });
+      const jwMatch = html.match(/sources:\s*\[\s*\{\s*file:\s*["']([^"']+)["']/);
+      if (jwMatch) {
+        // Intentar obtener la etiqueta de calidad si existe cerca
+        const labelMatch = html.match(/label:\s*["']([^"']+)["']/);
+        videos.push({
+          name: labelMatch ? labelMatch[1] : 'full',
+          url: jwMatch[1]
+        });
       }
+    }
+
+    if (videos.length === 0) {
       return NextResponse.json({ error: 'No se encontraron enlaces de descarga compatibles.' }, { status: 404 });
     }
 
