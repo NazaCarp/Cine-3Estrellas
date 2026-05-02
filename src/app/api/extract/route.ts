@@ -253,8 +253,10 @@ export async function GET(request: NextRequest) {
 
     // Patrón 5: VOE avanzado (Descifrador de símbolos)
     if (videos.length === 0 && (videoUrl.includes('voe.sx') || html.includes('voe.sx'))) {
+      console.log("[DEBUG VOE] Iniciando extracción...");
       const voeDataMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
       if (voeDataMatch) {
+        console.log("[DEBUG VOE] Bloque JSON encontrado");
         try {
           const jsonData = JSON.parse(voeDataMatch[1]);
           const encrypted = Array.isArray(jsonData) ? jsonData[0] : jsonData;
@@ -286,15 +288,29 @@ export async function GET(request: NextRequest) {
             };
 
             const decrypted = decodeVoe(encrypted);
+            console.log("[DEBUG VOE] Decodificado:", decrypted.substring(0, 60) + "...");
             const urlMatch = decrypted.match(/https?:\/\/[^"']+/);
             if (urlMatch) {
+              console.log("[DEBUG VOE] URL encontrada!");
               videos.push({ name: 'Original', url: urlMatch[0] });
             }
           }
         } catch (e) {
-          console.error("Error decodificando VOE:", e);
+          console.error("[DEBUG VOE] Error:", e);
         }
       }
+
+      // Búsqueda inversa (Fallback para VOE)
+      if (videos.length === 0) {
+        console.log("[DEBUG VOE] Probando búsqueda inversa...");
+        const reversedM3u8 = html.match(/[A-Za-z0-9\/\.\:\?\&\_]{20,}8u3m\./g);
+        if (reversedM3u8) {
+          const realUrl = reversedM3u8[0].split('').reverse().join('');
+          console.log("[DEBUG VOE] URL inversa detectada!");
+          videos.push({ name: 'Original', url: realUrl });
+        }
+      }
+    }
       
       // Fallback: Si no hay base64/JSON, buscar el patrón de fuentes de VOE normal
       if (videos.length === 0) {
