@@ -17,16 +17,20 @@ export async function GET(request: NextRequest) {
       }
       
       let referer = `${urlObj.protocol}//${urlObj.hostname}/`;
+      let finalProxyUrl = videoUrl;
       
-      // Ajustes específicos por servidor (Normalización de Referer)
+      // Ajustes específicos por servidor (Normalización de Referer y Mirroring en Proxy)
+      if (videoUrl.includes('voe.sx')) {
+        referer = 'https://richardquestionbuilding.com/';
+        finalProxyUrl = videoUrl.replace('voe.sx', 'richardquestionbuilding.com');
+      }
       if (videoUrl.includes('vidmoly.')) referer = 'https://vidmoly.biz/';
       if (videoUrl.includes('p2pplay.pro')) referer = 'https://gdtvid.p2pplay.pro/';
       if (videoUrl.includes('vidsonic.net')) referer = 'https://vidsonic.net/';
-      if (videoUrl.includes('voe.sx')) referer = 'https://voe.sx/';
       
-      const response = await fetch(videoUrl, {
+      const response = await fetch(finalProxyUrl, {
         headers: { 
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
           'Referer': referer,
           'Origin': referer.replace(/\/$/, '')
         }
@@ -395,10 +399,9 @@ export async function GET(request: NextRequest) {
       const idMatch = videoUrl.match(/\/e\/([a-zA-Z0-9]+)/);
       if (idMatch) {
         const id = idMatch[1];
-        const urlObj = new URL(videoUrl);
-        const domain = urlObj.hostname;
+        const domain = 'richardquestionbuilding.com'; // Forzamos el espejo conocido
 
-        // Intentamos con el dominio actual de forma dinámica
+        // Intentamos con el dominio espejo que es más permisivo
         videos.push({
           name: 'Directo (MP4)',
           url: `https://${domain}/d/${id}/video.mp4`
