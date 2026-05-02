@@ -81,10 +81,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       // Servidores con soporte para extracción (evita anuncios y permite autoplay)
       setExtracting(true);
       try {
-        // Normalizamos la URL: Vidmoly necesita preparePlayerUrl, Gdtvid necesita limpiar el '#'
+        // Normalizamos la URL: Vidmoly necesita preparePlayerUrl, Gdtvid necesita quitar el '#'
         let finalUrlToExtract = url;
         if (url.includes('p2pplay.pro')) {
-          finalUrlToExtract = url.replace('#', '/');
+          finalUrlToExtract = url.replace('#', '');
         } else if (url.includes('vidmoly.')) {
           finalUrlToExtract = preparePlayerUrl(url);
         }
