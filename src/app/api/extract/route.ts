@@ -8,26 +8,34 @@ export async function GET(request: NextRequest) {
   // Si se solicita como proxy, actuamos como puente total
   if (isProxy && videoUrl) {
     try {
-      // Determinamos el Referer correcto según el servidor de origen
-      let referer = 'https://vidmoly.biz/';
+      // Determinamos el Referer correcto dinámicamente
+      const urlObj = new URL(videoUrl);
+      let referer = `${urlObj.protocol}//${urlObj.hostname}/`;
+      
+      // Ajustes específicos por servidor
+      if (videoUrl.includes('vidmoly.')) referer = 'https://vidmoly.biz/';
       if (videoUrl.includes('p2pplay.pro')) referer = 'https://gdtvid.p2pplay.pro/';
       if (videoUrl.includes('vidsonic.net')) referer = 'https://vidsonic.net/';
       
       const response = await fetch(videoUrl, {
         headers: { 
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': referer
+          'Referer': referer,
+          'Origin': referer.slice(0, -1)
         }
       });
 
-      if (!response.ok) return new Response('Error en servidor origen', { status: response.status });
+      if (!response.ok) {
+        return new Response(`Error origen: ${response.status}`, { status: response.status });
+      }
 
       // Si es un archivo de video (.ts), lo devolvemos como binario
-      if (videoUrl.includes('.ts') || response.headers.get('Content-Type')?.includes('video')) {
+      const contentType = response.headers.get('Content-Type') || '';
+      if (videoUrl.includes('.ts') || contentType.includes('video') || contentType.includes('octet-stream')) {
         const buffer = await response.arrayBuffer();
         return new Response(buffer, {
           headers: { 
-            'Content-Type': response.headers.get('Content-Type') || 'video/mp2t',
+            'Content-Type': contentType || 'video/mp2t',
             'Access-Control-Allow-Origin': '*',
             'Cache-Control': 'public, max-age=3600'
           }
@@ -38,15 +46,23 @@ export async function GET(request: NextRequest) {
       
       // Si es un manifiesto m3u8, reescribimos absolutamente todos los enlaces (recursivo total)
       if (text.includes('#EXTM3U')) {
-        // Limpiamos la URL de parámetros para obtener la base correcta
-        const urlWithoutQuery = videoUrl.split('?')[0];
-        const baseUrl = urlWithoutQuery.substring(0, urlWithoutQuery.lastIndexOf('/') + 1);
+        // Extraemos la base de la URL ignorando el nombre del archivo y los parámetros
+        const urlPath = urlObj.origin + urlObj.pathname;
+        const baseUrl = urlPath.substring(0, urlPath.lastIndexOf('/') + 1);
         const origin = request.nextUrl.origin;
         
         text = text.split('\n').map(line => {
           const trimmed = line.trim();
           if (trimmed && !trimmed.startsWith('#')) {
-            const absoluteUrl = trimmed.startsWith('http') ? trimmed : baseUrl + trimmed;
+            let absoluteUrl = trimmed;
+            if (!trimmed.startsWith('http')) {
+              // Si es relativo, unimos baseUrl + path. Si el path empieza con /, usamos origin.
+              if (trimmed.startsWith('/')) {
+                absoluteUrl = urlObj.origin + trimmed;
+              } else {
+                absoluteUrl = baseUrl + trimmed;
+              }
+            }
             return `${origin}/api/extract?proxy=true&url=${encodeURIComponent(absoluteUrl)}`;
           }
           return line;
@@ -56,12 +72,11 @@ export async function GET(request: NextRequest) {
       return new Response(text, {
         headers: { 
           'Content-Type': 'application/vnd.apple.mpegurl',
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'public, max-age=3600'
+          'Access-Control-Allow-Origin': '*'
         }
       });
-    } catch (e) {
-      return new Response('Error en proxy', { status: 500 });
+    } catch (e: any) {
+      return new Response(`Error en proxy: ${e.message}`, { status: 500 });
     }
   }
 
