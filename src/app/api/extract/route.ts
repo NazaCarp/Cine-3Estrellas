@@ -85,11 +85,18 @@ export async function GET(request: NextRequest) {
         return `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(segmentUrl)}`;
       });
 
+      const finalHeaders: any = {
+        'Content-Type': 'application/vnd.apple.mpegurl',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=3600'
+      };
+      
+      if (isDownload) {
+        finalHeaders['Content-Disposition'] = `attachment; filename="playlist-${Date.now()}.m3u8"`;
+      }
+
       return new Response(processedLines.join('\n'), {
-        headers: {
-          'Content-Type': 'application/vnd.apple.mpegurl',
-          'Access-Control-Allow-Origin': '*'
-        }
+        headers: finalHeaders
       });
 
     } catch (error: any) {
