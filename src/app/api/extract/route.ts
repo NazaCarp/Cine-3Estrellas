@@ -179,13 +179,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Ajustes específicos por servidor (Normalización de Referer y Mirroring)
+    let finalUrlToFetch = videoUrl;
+    if (videoUrl.includes('voe.sx')) {
+      finalUrlToFetch = videoUrl.replace('voe.sx', 'richardquestionbuilding.com');
+    }
+
     // Determinamos el Referer correcto para la extracción
     let extractionReferer = 'https://vidmoly.biz/';
-    if (videoUrl.includes('p2pplay.pro')) extractionReferer = 'https://gdtvid.p2pplay.pro/';
-    if (videoUrl.includes('vidsonic.net')) extractionReferer = 'https://vidsonic.net/';
-    if (videoUrl.includes('voe.sx')) extractionReferer = 'https://voe.sx/';
+    if (finalUrlToFetch.includes('p2pplay.pro')) extractionReferer = 'https://gdtvid.p2pplay.pro/';
+    if (finalUrlToFetch.includes('vidsonic.net')) extractionReferer = 'https://vidsonic.net/';
+    if (finalUrlToFetch.includes('richardquestionbuilding.com') || finalUrlToFetch.includes('voe.sx')) {
+      extractionReferer = 'https://richardquestionbuilding.com/';
+    }
 
-    const response = await fetch(videoUrl, {
+    const response = await fetch(finalUrlToFetch, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': extractionReferer,
