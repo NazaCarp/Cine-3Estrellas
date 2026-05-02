@@ -433,7 +433,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         {isDirectLink ? (
           <>
             {/* Cargamos Hls.js de forma segura */}
-            <script 
+            <Script 
               src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js" 
               strategy="afterInteractive" 
               onLoad={() => {
