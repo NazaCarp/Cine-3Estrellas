@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import Script from 'next/script';
 import { Movie } from '@/types';
 import { extractQuality, preparePlayerUrl } from '@/lib/utils';
 
@@ -399,18 +400,55 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
 
   const isDirectLink = selectedUrl?.includes('.m3u8') || selectedUrl?.includes('.mp4') || selectedUrl?.includes('urlset');
 
+  // Referencia para el elemento de video
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (selectedUrl && isDirectLink && videoRef.current) {
+      const video = videoRef.current;
+      
+      // Si el navegador soporta HLS nativamente (Safari, Android, Smart TV)
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = selectedUrl;
+      } 
+      // Si no, usamos Hls.js (Chrome, Firefox en PC)
+      else if ((window as any).Hls) {
+        const Hls = (window as any).Hls;
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(selectedUrl);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.play().catch(() => {});
+          });
+          return () => hls.destroy();
+        }
+      }
+    }
+  }, [selectedUrl, isDirectLink]);
+
   if (selectedUrl) {
     return (
       <div className="video-player-overlay" ref={containerRef}>
         {isDirectLink ? (
-          <video 
-            src={selectedUrl} 
-            className="video-element" 
-            controls 
-            autoPlay 
-            playsInline
-            style={{ width: '100%', height: '100%', backgroundColor: '#000' }}
-          />
+          <>
+            {/* Cargamos Hls.js de forma segura */}
+            <script 
+              src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js" 
+              strategy="afterInteractive" 
+              onLoad={() => {
+                 // Disparar un re-render o efecto si es necesario
+              }}
+            />
+            <video 
+              ref={videoRef}
+              className="video-element" 
+              controls 
+              autoPlay 
+              playsInline
+              style={{ width: '100%', height: '100%', backgroundColor: '#000' }}
+            />
+          </>
         ) : (
           <iframe src={selectedUrl} className="video-element" allow="autoplay; fullscreen" allowFullScreen />
         )}
