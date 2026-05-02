@@ -402,30 +402,37 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
 
   // Referencia para el elemento de video
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [hlsReady, setHlsReady] = useState(false);
 
   useEffect(() => {
     if (selectedUrl && isDirectLink && videoRef.current) {
       const video = videoRef.current;
+      console.log("--- DEBUG PLAYER ---");
+      console.log("URL:", selectedUrl);
       
       // Si el navegador soporta HLS nativamente (Safari, Android, Smart TV)
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        console.log("Modo: HLS Nativo");
         video.src = selectedUrl;
       } 
       // Si no, usamos Hls.js (Chrome, Firefox en PC)
       else if ((window as any).Hls) {
+        console.log("Modo: Hls.js");
         const Hls = (window as any).Hls;
         if (Hls.isSupported()) {
           const hls = new Hls();
           hls.loadSource(selectedUrl);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(() => {});
+            video.play().catch(err => console.warn("Autoplay bloqueado, esperando click del usuario."));
           });
           return () => hls.destroy();
         }
+      } else {
+        console.log("Modo: Esperando librería Hls.js...");
       }
     }
-  }, [selectedUrl, isDirectLink]);
+  }, [selectedUrl, isDirectLink, hlsReady]);
 
   if (selectedUrl) {
     return (
@@ -437,7 +444,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js" 
               strategy="afterInteractive" 
               onLoad={() => {
-                 // Disparar un re-render o efecto si es necesario
+                 console.log("Hls.js cargado correctamente desde CDN");
+                 setHlsReady(true);
               }}
             />
             <video 
