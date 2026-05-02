@@ -70,9 +70,39 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     }
   }, [movie.versions]);
 
-  const handleSelect = (url: string) => {
-    setSelectedUrl(preparePlayerUrl(url));
-    // Auto-fullscreen on select (user gesture)
+  const handleSelect = async (url: string) => {
+    // Si ya es un enlace directo, reproducir inmediatamente
+    const isDirect = url.includes('.m3u8') || url.includes('.mp4') || url.includes('urlset');
+    
+    if (isDirect) {
+      setSelectedUrl(url);
+    } else if (url.includes('vidmoly.')) {
+      // Es Vidmoly: Intentamos extraer el link directo para evitar el iframe con anuncios
+      setExtracting(true);
+      try {
+        const res = await fetch(`/api/extract?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
+        
+        if (res.ok && data.qualities?.length > 0) {
+          // Éxito: Usamos el enlace directo (la mejor calidad disponible)
+          setSelectedUrl(data.qualities[0].url);
+          // También guardamos las calidades por si el usuario quiere cambiarlas luego
+          setDownloadQualities(data.qualities.map((q: any) => ({ ...q, version: 'AUTO' })));
+        } else {
+          // Fallback: Si falla la extracción, usamos el iframe normal
+          setSelectedUrl(preparePlayerUrl(url));
+        }
+      } catch (e) {
+        setSelectedUrl(preparePlayerUrl(url));
+      } finally {
+        setExtracting(false);
+      }
+    } else {
+      // Otros servidores: Usar iframe normal
+      setSelectedUrl(preparePlayerUrl(url));
+    }
+
+    // Auto-fullscreen al seleccionar
     setTimeout(() => {
       if (containerRef.current && !document.fullscreenElement) {
         containerRef.current.requestFullscreen().catch(() => {});
