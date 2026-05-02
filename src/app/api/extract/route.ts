@@ -395,20 +395,19 @@ export async function GET(request: NextRequest) {
     }
 
     if (videos.length === 0) {
-      console.log("[DEBUG VOE] No se encontró nada. Probando reconstrucción manual...");
+      console.log("[DEBUG VOE] No se encontró nada. Probando ráfaga de rutas manuales...");
       const idMatch = videoUrl.match(/\/e\/([a-zA-Z0-9]+)/);
       if (idMatch) {
         const id = idMatch[1];
-        const domain = 'richardquestionbuilding.com'; // Forzamos el espejo conocido
-
-        // Intentamos con el dominio espejo que es más permisivo
-        videos.push({
-          name: 'Directo (MP4)',
-          url: `https://${domain}/d/${id}/video.mp4`
-        });
-        videos.push({
-          name: 'Manual (HLS)',
-          url: `https://${domain}/engine/hls/${id}/master.m3u8`
+        const domains = ['richardquestionbuilding.com', 'voe.sx'];
+        
+        domains.forEach(domain => {
+          // Ruta MP4 Directa
+          videos.push({ name: `MP4 (${domain})`, url: `https://${domain}/d/${id}/video.mp4` });
+          // Ruta HLS Estándar
+          videos.push({ name: `HLS (${domain})`, url: `https://${domain}/hls/${id}/master.m3u8` });
+          // Ruta Engine HLS
+          videos.push({ name: `Engine (${domain})`, url: `https://${domain}/engine/hls/${id}/master.m3u8` });
         });
       }
     }
