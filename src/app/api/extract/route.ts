@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const videoUrl = searchParams.get('url');
   const isProxy = searchParams.get('proxy') === 'true';
 
-  // Si se solicita como proxy, actuamos como puente para el archivo .m3u8
+  // Si se solicita como proxy, actuamos como puente total
   if (isProxy && videoUrl) {
     try {
       const response = await fetch(videoUrl, {
@@ -14,9 +14,22 @@ export async function GET(request: NextRequest) {
           'Referer': 'https://vidmoly.biz/' 
         }
       });
+
+      // Si es un archivo de video (.ts), lo devolvemos como binario
+      if (videoUrl.includes('.ts') || response.headers.get('Content-Type')?.includes('video')) {
+        const buffer = await response.arrayBuffer();
+        return new Response(buffer, {
+          headers: { 
+            'Content-Type': response.headers.get('Content-Type') || 'video/mp2t',
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'public, max-age=3600'
+          }
+        });
+      }
+
       let text = await response.text();
       
-      // Si es un manifiesto m3u8, reescribimos los enlaces para que usen nuestro proxy recursivamente
+      // Si es un manifiesto m3u8, reescribimos absolutamente todos los enlaces (recursivo total)
       if (text.includes('#EXTM3U') && !videoUrl.includes('google.com')) {
         const baseUrl = videoUrl.substring(0, videoUrl.lastIndexOf('/') + 1);
         const origin = request.nextUrl.origin;
@@ -25,11 +38,7 @@ export async function GET(request: NextRequest) {
           const trimmed = line.trim();
           if (trimmed && !trimmed.startsWith('#')) {
             const absoluteUrl = trimmed.startsWith('http') ? trimmed : baseUrl + trimmed;
-            // Solo pasamos por proxy los archivos de lista (.m3u8) para no saturar el servidor con video (.ts)
-            if (absoluteUrl.includes('.m3u8')) {
-              return `${origin}/api/extract?proxy=true&url=${encodeURIComponent(absoluteUrl)}`;
-            }
-            return absoluteUrl;
+            return `${origin}/api/extract?proxy=true&url=${encodeURIComponent(absoluteUrl)}`;
           }
           return line;
         }).join('\n');
