@@ -69,6 +69,13 @@ export async function GET(request: NextRequest) {
                 absoluteUrl = baseUrl + trimmed;
               }
             }
+            
+            // Para Vidsonic, intentamos devolver la URL directa si es un sub-manifiesto o segmento,
+            // ya que sus CDNs suelen tener CORS abierto y así evitamos el error 500 del proxy recursivo.
+            if (videoUrl.includes('vidsonic.net')) {
+              return absoluteUrl;
+            }
+
             return `${origin}/api/extract?proxy=true&url=${encodeURIComponent(absoluteUrl)}`;
           }
           return line;
