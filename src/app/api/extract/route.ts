@@ -3,6 +3,41 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const videoUrl = searchParams.get('url');
+  const isProxy = searchParams.get('proxy') === 'true';
+
+  // Si se solicita como proxy, actuamos como puente para el archivo .m3u8
+  if (isProxy && videoUrl) {
+    try {
+      const response = await fetch(videoUrl, {
+        headers: { 
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://vidmoly.biz/' 
+        }
+      });
+      let text = await response.text();
+      
+      // Si es un m3u8, intentamos que los enlaces internos sean absolutos para que no fallen
+      if (text.includes('#EXTM3U') && !videoUrl.includes('google.com')) {
+        const baseUrl = videoUrl.substring(0, videoUrl.lastIndexOf('/') + 1);
+        text = text.split('\n').map(line => {
+          if (line.trim() && !line.startsWith('#') && !line.startsWith('http')) {
+            return baseUrl + line;
+          }
+          return line;
+        }).join('\n');
+      }
+
+      return new Response(text, {
+        headers: { 
+          'Content-Type': 'application/vnd.apple.mpegurl',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, max-age=3600'
+        }
+      });
+    } catch (e) {
+      return new Response('Error en proxy', { status: 500 });
+    }
+  }
 
   if (!videoUrl) {
     return NextResponse.json({ error: 'Falta la URL del video' }, { status: 400 });
@@ -11,7 +46,8 @@ export async function GET(request: NextRequest) {
   try {
     const response = await fetch(videoUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://vidmoly.biz/'
       }
     });
 
@@ -84,7 +120,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No se encontraron enlaces de descarga compatibles.' }, { status: 404 });
     }
 
-    // Mapear calidades a nombres amigables
+    // Mapear calidades a nombres amigables y envolver en proxy
     const qualities = videos.map((v: any) => ({
       name: v.name === 'mobile' ? '144p' : 
             v.name === 'lowest' ? '240p' : 
@@ -94,8 +130,8 @@ export async function GET(request: NextRequest) {
             v.name === 'full' ? '1080p' : 
             v.name === 'quad' ? '2K' : 
             v.name === 'ultra' ? '4K' : v.name,
-      url: v.url
-    })).reverse(); // De mayor a menor calidad
+      url: `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(v.url)}`
+    })).reverse(); 
 
     return NextResponse.json({ qualities });
 
