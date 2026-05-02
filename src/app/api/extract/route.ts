@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
   if (isProxy && videoUrl) {
     try {
       // Determinamos el Referer correcto según el servidor de origen
-      const referer = videoUrl.includes('p2pplay.pro') ? 'https://gdtvid.p2pplay.pro/' : 'https://vidmoly.biz/';
+      let referer = 'https://vidmoly.biz/';
+      if (videoUrl.includes('p2pplay.pro')) referer = 'https://gdtvid.p2pplay.pro/';
+      if (videoUrl.includes('vidsonic.net')) referer = 'https://vidsonic.net/';
       
       const response = await fetch(videoUrl, {
         headers: { 
@@ -17,6 +19,8 @@ export async function GET(request: NextRequest) {
           'Referer': referer
         }
       });
+
+      if (!response.ok) return new Response('Error en servidor origen', { status: response.status });
 
       // Si es un archivo de video (.ts), lo devolvemos como binario
       if (videoUrl.includes('.ts') || response.headers.get('Content-Type')?.includes('video')) {
@@ -33,8 +37,10 @@ export async function GET(request: NextRequest) {
       let text = await response.text();
       
       // Si es un manifiesto m3u8, reescribimos absolutamente todos los enlaces (recursivo total)
-      if (text.includes('#EXTM3U') && !videoUrl.includes('google.com')) {
-        const baseUrl = videoUrl.substring(0, videoUrl.lastIndexOf('/') + 1);
+      if (text.includes('#EXTM3U')) {
+        // Limpiamos la URL de parámetros para obtener la base correcta
+        const urlWithoutQuery = videoUrl.split('?')[0];
+        const baseUrl = urlWithoutQuery.substring(0, urlWithoutQuery.lastIndexOf('/') + 1);
         const origin = request.nextUrl.origin;
         
         text = text.split('\n').map(line => {
