@@ -251,15 +251,35 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Patrón 5: VOE específico (hls: "..." o sources: { hls: "..." })
-    if (videos.length === 0) {
-      const voeMatch = html.match(/["']hls["']:\s*["']([^"']+)["']/i) || 
-                       html.match(/["']mp4["']:\s*["']([^'"]+)["']/i);
-      if (voeMatch) {
-        videos.push({
-          name: 'Original',
-          url: voeMatch[1]
-        });
+    // Patrón 5: VOE específico (Decodificación de Base64 en el HTML)
+    if (videos.length === 0 && (videoUrl.includes('voe.sx') || html.includes('voe.sx'))) {
+      // VOE suele esconder el link en Base64. Buscamos cadenas largas que parezcan Base64
+      const b64Matches = html.match(/[A-Za-z0-9+/]{30,}/g);
+      if (b64Matches) {
+        for (const b64 of b64Matches) {
+          try {
+            const decoded = Buffer.from(b64, 'base64').toString('utf-8');
+            if (decoded.includes('http') && (decoded.includes('.m3u8') || decoded.includes('.mp4'))) {
+              const urlMatch = decoded.match(/https?:\/\/[^"']+/);
+              if (urlMatch) {
+                videos.push({
+                  name: 'Original',
+                  url: urlMatch[0]
+                });
+                break; // Encontramos el primero y salimos
+              }
+            }
+          } catch (e) {}
+        }
+      }
+      
+      // Fallback: Si no hay base64, buscar el patrón de fuentes de VOE
+      if (videos.length === 0) {
+        const voeMatch = html.match(/["']hls["']:\s*["']([^"']+)["']/i) || 
+                         html.match(/["']mp4["']:\s*["']([^'"]+)["']/i);
+        if (voeMatch) {
+          videos.push({ name: 'Original', url: voeMatch[1] });
+        }
       }
     }
 
@@ -267,7 +287,6 @@ export async function GET(request: NextRequest) {
     if (videos.length === 0) {
       const deepMatch = html.match(/https?:\/\/[^"']+\.m3u8[^"']*/g);
       if (deepMatch) {
-        // Filtramos el enlace de prueba de Big Buck Bunny que VOE usa como señuelo
         const realLinks = deepMatch.filter(l => !l.includes('test-videos.co.uk') && !l.includes('bunny'));
         if (realLinks.length > 0) {
           videos.push({
