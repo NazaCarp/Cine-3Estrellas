@@ -395,7 +395,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
           } else if (isGrid) {
             const qualityIdx = focusIndex - gridStartIdx;
             if (activeQualities[qualityIdx]) {
-              handleSelect(activeQualities[qualityIdx].url, activeQualities[qualityIdx].version);
+              const q = activeQualities[qualityIdx];
+              const downloadUrl = q.url.includes('proxy=true') ? `${q.url}&download=true` : q.url;
+              window.open(downloadUrl, '_blank');
             }
           }
           break;
@@ -891,7 +893,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                                   key={`${q.name}-${qidx}`} 
                                   className={`download-chip ${isFocused ? 'focused' : ''}`}
                                   onPointerEnter={() => setFocusIndex(absIdx)}
-                                  onClick={() => handleSelect(q.url, q.version)}
+                                  onClick={() => {
+                                    const downloadUrl = q.url.includes('proxy=true') ? `${q.url}&download=true` : q.url;
+                                    window.open(downloadUrl, '_blank');
+                                  }}
                                 >
                                   <span className="chip-quality">{q.name}</span>
                                 </div>

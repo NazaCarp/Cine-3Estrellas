@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
       const contentRange = response.headers.get('Content-Range');
       const contentLength = response.headers.get('Content-Length');
       const acceptRanges = response.headers.get('Accept-Ranges');
+      const isDownload = searchParams.get('download') === 'true';
 
       if (videoUrl.includes('.ts') || contentType.includes('video') || contentType.includes('octet-stream')) {
         const headers: any = {
@@ -56,6 +57,11 @@ export async function GET(request: NextRequest) {
         };
         if (contentRange) headers['Content-Range'] = contentRange;
         if (contentLength) headers['Content-Length'] = contentLength;
+        
+        if (isDownload) {
+          const ext = contentType.includes('mp4') ? 'mp4' : 'ts';
+          headers['Content-Disposition'] = `attachment; filename="video-${Date.now()}.${ext}"`;
+        }
 
         return new Response(response.body, {
           status: response.status,
