@@ -64,17 +64,34 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Caso especial: Gdtvid / P2PPlay (no necesita scraping de HTML, tiene API directa)
+    // Caso especial: Gdtvid / P2PPlay (ahora con soporte para respuesta JSON)
     if (videoUrl.includes('p2pplay.pro')) {
       const id = videoUrl.split('#')[1] || videoUrl.split('/').pop();
       if (id && id.length > 3) {
-        const streamUrl = `https://gdtvid.p2pplay.pro/api/source/${id}`;
-        return NextResponse.json({
-          qualities: [{
-            name: 'Auto',
-            url: `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(streamUrl)}`
-          }]
-        });
+        const apiUrl = `https://gdtvid.p2pplay.pro/api/source/${id}`;
+        try {
+          const apiRes = await fetch(apiUrl, {
+            headers: { 
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Referer': 'https://gdtvid.p2pplay.pro/' 
+            }
+          });
+          const apiData = await apiRes.json();
+          
+          // El enlace real suele estar en data[0].file
+          const realFileUrl = apiData.data?.[0]?.file || apiData.file;
+          
+          if (realFileUrl) {
+            return NextResponse.json({
+              qualities: [{
+                name: 'Auto',
+                url: `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(realFileUrl)}`
+              }]
+            });
+          }
+        } catch (e) {
+          console.error("Error al parsear JSON de Gdtvid:", e);
+        }
       }
     }
 
