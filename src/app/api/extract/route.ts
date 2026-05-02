@@ -16,12 +16,20 @@ export async function GET(request: NextRequest) {
       });
       let text = await response.text();
       
-      // Si es un m3u8, intentamos que los enlaces internos sean absolutos para que no fallen
+      // Si es un manifiesto m3u8, reescribimos los enlaces para que usen nuestro proxy recursivamente
       if (text.includes('#EXTM3U') && !videoUrl.includes('google.com')) {
         const baseUrl = videoUrl.substring(0, videoUrl.lastIndexOf('/') + 1);
+        const origin = request.nextUrl.origin;
+        
         text = text.split('\n').map(line => {
-          if (line.trim() && !line.startsWith('#') && !line.startsWith('http')) {
-            return baseUrl + line;
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith('#')) {
+            const absoluteUrl = trimmed.startsWith('http') ? trimmed : baseUrl + trimmed;
+            // Solo pasamos por proxy los archivos de lista (.m3u8) para no saturar el servidor con video (.ts)
+            if (absoluteUrl.includes('.m3u8')) {
+              return `${origin}/api/extract?proxy=true&url=${encodeURIComponent(absoluteUrl)}`;
+            }
+            return absoluteUrl;
           }
           return line;
         }).join('\n');
