@@ -81,8 +81,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       // Servidores con soporte para extracción (evita anuncios y permite autoplay)
       setExtracting(true);
       try {
-        // Usamos preparePlayerUrl para enviar la versión .biz/embed- que es más estable para la extracción
-        const res = await fetch(`/api/extract?url=${encodeURIComponent(preparePlayerUrl(url))}`);
+        // Solo normalizamos la URL para Vidmoly; para otros servidores (como Gdtvid) usamos la original
+        const finalUrlToExtract = url.includes('vidmoly.') ? preparePlayerUrl(url) : url;
+        const res = await fetch(`/api/extract?url=${encodeURIComponent(finalUrlToExtract)}`);
         const data = await res.json();
         
         if (res.ok && data.qualities?.length > 0) {

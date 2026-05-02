@@ -8,10 +8,13 @@ export async function GET(request: NextRequest) {
   // Si se solicita como proxy, actuamos como puente total
   if (isProxy && videoUrl) {
     try {
+      // Determinamos el Referer correcto según el servidor de origen
+      const referer = videoUrl.includes('p2pplay.pro') ? 'https://gdtvid.p2pplay.pro/' : 'https://vidmoly.biz/';
+      
       const response = await fetch(videoUrl, {
         headers: { 
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': 'https://vidmoly.biz/' 
+          'Referer': referer
         }
       });
 
@@ -78,7 +81,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(videoUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://vidmoly.biz/'
+        'Referer': videoUrl.includes('p2pplay.pro') ? 'https://gdtvid.p2pplay.pro/' : 'https://vidmoly.biz/'
       }
     });
 
