@@ -66,14 +66,20 @@ export async function GET(request: NextRequest) {
   try {
     // Caso especial: Gdtvid / P2PPlay (ahora con soporte para respuesta JSON)
     if (videoUrl.includes('p2pplay.pro')) {
-      const id = videoUrl.split('#')[1] || videoUrl.split('/').pop();
+      // Extraemos el ID del hash, manejando tanto '#' como '%23' (codificado)
+      let id = '';
+      if (videoUrl.includes('#')) id = videoUrl.split('#')[1];
+      else if (videoUrl.includes('%23')) id = videoUrl.split('%23')[1];
+      else id = videoUrl.split('/').pop() || '';
+
       if (id && id.length > 3) {
         const apiUrl = `https://gdtvid.p2pplay.pro/api/source/${id}`;
         try {
           const apiRes = await fetch(apiUrl, {
             headers: { 
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              'Referer': 'https://gdtvid.p2pplay.pro/' 
+              'Referer': 'https://gdtvid.p2pplay.pro/',
+              'Origin': 'https://gdtvid.p2pplay.pro'
             }
           });
           const apiData = await apiRes.json();
@@ -90,7 +96,8 @@ export async function GET(request: NextRequest) {
             });
           }
         } catch (e) {
-          console.error("Error al parsear JSON de Gdtvid:", e);
+          console.error("Error al extraer Gdtvid:", e);
+          // Si falla la API específica, dejamos que intente el scraping normal (aunque sea difícil)
         }
       }
     }
