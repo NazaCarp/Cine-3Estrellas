@@ -410,26 +410,25 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       console.log("--- DEBUG PLAYER ---");
       console.log("URL:", selectedUrl);
       
-      // Si el navegador soporta HLS nativamente (Safari, Android, Smart TV)
-      if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        console.log("Modo: HLS Nativo");
+      // PRIORIDAD 1: Hls.js (Mejor para PC: Chrome, Opera, Firefox)
+      if ((window as any).Hls && (window as any).Hls.isSupported()) {
+        console.log("Modo: Hls.js (Forzado)");
+        const Hls = (window as any).Hls;
+        const hls = new Hls();
+        hls.loadSource(selectedUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(err => console.warn("Autoplay bloqueado, esperando click."));
+        });
+        return () => hls.destroy();
+      } 
+      // PRIORIDAD 2: HLS Nativo (Solo para Safari, iPhone y algunas Smart TV)
+      else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        console.log("Modo: HLS Nativo (Fallback)");
         video.src = selectedUrl;
       } 
-      // Si no, usamos Hls.js (Chrome, Firefox en PC)
-      else if ((window as any).Hls) {
-        console.log("Modo: Hls.js");
-        const Hls = (window as any).Hls;
-        if (Hls.isSupported()) {
-          const hls = new Hls();
-          hls.loadSource(selectedUrl);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(err => console.warn("Autoplay bloqueado, esperando click del usuario."));
-          });
-          return () => hls.destroy();
-        }
-      } else {
-        console.log("Modo: Esperando librería Hls.js...");
+      else {
+        console.log("Modo: Esperando librería o sin soporte HLS.");
       }
     }
   }, [selectedUrl, isDirectLink, hlsReady]);
