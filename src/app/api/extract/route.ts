@@ -368,16 +368,21 @@ export async function GET(request: NextRequest) {
       const idMatch = videoUrl.match(/\/e\/([a-zA-Z0-9]+)/);
       if (idMatch) {
         const id = idMatch[1];
-        // Intentamos con el dominio actual que vimos en el navegador
+        // Intentamos con la ruta de descarga directa que suele ser más estable
         videos.push({
-          name: 'Manual (Beta)',
+          name: 'Directo (MP4)',
+          url: `https://richardquestionbuilding.com/d/${id}/video.mp4`
+        });
+        // También probamos la ruta de motor HLS por si acaso
+        videos.push({
+          name: 'Manual (HLS)',
           url: `https://richardquestionbuilding.com/engine/hls/${id}/master.m3u8`
         });
       }
     }
 
     if (videos.length === 0) {
-      console.log("[DEBUG VOE] Fallo total. Cuerpo del HTML (primeros 200 caracteres):", html.substring(0, 200));
+      console.log("[DEBUG VOE] Fallo total.");
       return NextResponse.json({ error: 'No se encontraron enlaces de descarga compatibles.' }, { status: 404 });
     }
 
