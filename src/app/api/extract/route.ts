@@ -395,26 +395,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (videos.length === 0) {
-      console.log("[DEBUG VOE] No se encontró nada. Probando ráfaga de rutas manuales...");
-      const idMatch = videoUrl.match(/\/e\/([a-zA-Z0-9]+)/);
-      if (idMatch) {
-        const id = idMatch[1];
-        const domains = ['richardquestionbuilding.com', 'voe.sx'];
-        
-        domains.forEach(domain => {
-          // Ruta MP4 Directa
-          videos.push({ name: `MP4 (${domain})`, url: `https://${domain}/d/${id}/video.mp4` });
-          // Ruta HLS Estándar
-          videos.push({ name: `HLS (${domain})`, url: `https://${domain}/hls/${id}/master.m3u8` });
-          // Ruta Engine HLS
-          videos.push({ name: `Engine (${domain})`, url: `https://${domain}/engine/hls/${id}/master.m3u8` });
-        });
-      }
-    }
-
-    if (videos.length === 0) {
-      console.log("[DEBUG VOE] Fallo total.");
-      return NextResponse.json({ error: 'No se encontraron enlaces de descarga compatibles.' }, { status: 404 });
+      console.log(`[DEBUG VOE] No se encontraron enlaces tras el descifrado maestro. Status: ${response.status}`);
+      return NextResponse.json({ error: 'VOE requiere validación humana o el enlace ha caducado.' }, { status: 404 });
     }
 
     // Mapear calidades a nombres amigables y envolver en proxy
