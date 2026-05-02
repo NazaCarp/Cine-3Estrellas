@@ -142,9 +142,12 @@ export async function GET(request: NextRequest) {
               'low': '240p',
               'lowest_hd': '360p',
               'low_hd': '480p',
-              'sd': '480p',    // En OK.ru 'sd' suele ser 480p
-              'hd': '720p',    // En OK.ru 'hd' es 720p
-              'full_hd': '1080p' // En OK.ru 'full_hd' es 1080p
+              'sd': '480p',
+              'hd': '720p',
+              'full': '1080p',    // OK.ru usa 'full' para 1080p
+              'full_hd': '1080p', 
+              'quad_hd': '2K',
+              'ultra_hd': '4K'
             };
             if (v.url) videos.push({ name: qualityNames[v.name] || v.name, url: v.url });
           });
