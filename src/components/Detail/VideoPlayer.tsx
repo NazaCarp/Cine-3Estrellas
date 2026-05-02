@@ -399,7 +399,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
     : `https://image.tmdb.org/t/p/original${movie.poster_path}`;
 
-  const isDirectLink = selectedUrl?.includes('.m3u8') || selectedUrl?.includes('.mp4') || selectedUrl?.includes('urlset');
+  // Detectamos si es un link directo o si es un link procesado por nuestro proxy
+  const isDirectLink = selectedUrl?.includes('.m3u8') || 
+                       selectedUrl?.includes('.mp4') || 
+                       selectedUrl?.includes('urlset') ||
+                       selectedUrl?.includes('proxy=true');
 
   // Referencia para el elemento de video
   const videoRef = useRef<HTMLVideoElement>(null);
