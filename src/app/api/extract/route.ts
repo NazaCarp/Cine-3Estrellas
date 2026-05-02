@@ -368,15 +368,17 @@ export async function GET(request: NextRequest) {
       const idMatch = videoUrl.match(/\/e\/([a-zA-Z0-9]+)/);
       if (idMatch) {
         const id = idMatch[1];
-        // Intentamos con la ruta de descarga directa que suele ser más estable
+        const urlObj = new URL(videoUrl);
+        const domain = urlObj.hostname;
+
+        // Intentamos con el dominio actual de forma dinámica
         videos.push({
           name: 'Directo (MP4)',
-          url: `https://richardquestionbuilding.com/d/${id}/video.mp4`
+          url: `https://${domain}/d/${id}/video.mp4`
         });
-        // También probamos la ruta de motor HLS por si acaso
         videos.push({
           name: 'Manual (HLS)',
-          url: `https://richardquestionbuilding.com/engine/hls/${id}/master.m3u8`
+          url: `https://${domain}/engine/hls/${id}/master.m3u8`
         });
       }
     }
