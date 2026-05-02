@@ -64,14 +64,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Caso especial: Gdtvid / P2PPlay (ahora con soporte para respuesta JSON)
+    // Caso especial: Gdtvid / P2PPlay (Versión Ultra-Robusta)
     if (videoUrl.includes('p2pplay.pro')) {
-      // Extraemos el ID de forma robusta (el último segmento de la URL ignorando barras dobles)
-      const id = videoUrl.split('/').filter(p => p && p !== '#').pop() || '';
+      const segments = videoUrl.split('/').filter(Boolean);
+      const id = segments[segments.length - 1];
 
       if (id && id.length > 3) {
-        const apiUrl = `https://gdtvid.p2pplay.pro/api/source/${id}`;
         try {
+          const apiUrl = `https://gdtvid.p2pplay.pro/api/source/${id}`;
           const apiRes = await fetch(apiUrl, {
             headers: { 
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -80,22 +80,21 @@ export async function GET(request: NextRequest) {
             }
           });
           
-          if (!apiRes.ok) throw new Error(`Error API Gdtvid: ${apiRes.status}`);
-          
-          const apiData = await apiRes.json();
-          // El enlace real suele estar en data[0].file
-          const realFileUrl = apiData.data?.[0]?.file || apiData.file;
-          
-          if (realFileUrl) {
-            return NextResponse.json({
-              qualities: [{
-                name: 'Auto',
-                url: `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(realFileUrl)}`
-              }]
-            });
+          if (apiRes.ok) {
+            const apiData = await apiRes.json();
+            const realFileUrl = apiData.data?.[0]?.file || apiData.file;
+            
+            if (realFileUrl) {
+              return NextResponse.json({
+                qualities: [{
+                  name: 'Original',
+                  url: `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(realFileUrl)}`
+                }]
+              });
+            }
           }
         } catch (e) {
-          console.error("Error al extraer Gdtvid:", e);
+          console.error("Fallo extracción Gdtvid:", e);
         }
       }
     }
