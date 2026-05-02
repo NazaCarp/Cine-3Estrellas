@@ -25,7 +25,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const toggleFullscreen = () => {
@@ -79,11 +78,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         containerRef.current.requestFullscreen().catch(() => {});
       }
     }, 100);
-
-    // Auto-focus the iframe after a short delay to ensure it's rendered
-    setTimeout(() => {
-      iframeRef.current?.focus();
-    }, 500);
   };
 
 
@@ -245,14 +239,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       return;
     }
 
-    if (selectedUrl) {
-      // If playing, Space/Enter should ensure the iframe has focus
-      if (e.key === 'Enter' || e.key === ' ') {
-        iframeRef.current?.focus();
-      }
-      return;
-    }
-
 
     if (!selectedUrl) {
       const vCount = versions.length;
@@ -383,13 +369,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   if (selectedUrl) {
     return (
       <div className="video-player-overlay" ref={containerRef}>
-        <iframe 
-          ref={iframeRef}
-          src={selectedUrl} 
-          className="video-element" 
-          allow="autoplay; fullscreen" 
-          allowFullScreen 
-        />
+        <iframe src={selectedUrl} className="video-element" allow="autoplay; fullscreen" allowFullScreen />
         
         <div className="player-controls-layer">
           <button 

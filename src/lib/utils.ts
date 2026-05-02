@@ -64,8 +64,8 @@ export function preparePlayerUrl(url: string): string {
     if (idMatch) {
       const id = idMatch[1];
       // User reported that .biz works while .me shows 'Video not found'
-      // We'll normalize to .biz for better reliability and add autoplay=1
-      return `https://vidmoly.biz/embed-${id}.html?autoplay=1`;
+      // We'll normalize to .biz for better reliability
+      return `https://vidmoly.biz/embed-${id}.html`;
     }
   }
   
