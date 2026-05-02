@@ -9,10 +9,16 @@ export async function GET(request: NextRequest) {
   if (isProxy && videoUrl) {
     try {
       // Determinamos el Referer correcto dinámicamente
-      const urlObj = new URL(videoUrl);
+      let urlObj;
+      try {
+        urlObj = new URL(videoUrl);
+      } catch (e) {
+        return new Response('URL inválida', { status: 400 });
+      }
+      
       let referer = `${urlObj.protocol}//${urlObj.hostname}/`;
       
-      // Ajustes específicos por servidor
+      // Ajustes específicos por servidor (Normalización de Referer)
       if (videoUrl.includes('vidmoly.')) referer = 'https://vidmoly.biz/';
       if (videoUrl.includes('p2pplay.pro')) referer = 'https://gdtvid.p2pplay.pro/';
       if (videoUrl.includes('vidsonic.net')) referer = 'https://vidsonic.net/';
@@ -21,7 +27,7 @@ export async function GET(request: NextRequest) {
         headers: { 
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Referer': referer,
-          'Origin': referer.slice(0, -1)
+          'Origin': referer.replace(/\/$/, '')
         }
       });
 
