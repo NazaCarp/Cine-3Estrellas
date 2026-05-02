@@ -267,7 +267,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Patrón 5: VOE avanzado (Descifrador de símbolos)
+    // Patrón 5: VOE avanzado (Descifrador Maestro de 7 capas)
     if (videos.length === 0 && (videoUrl.includes('voe.sx') || html.includes('voe.sx'))) {
       console.log("[DEBUG VOE] Iniciando extracción...");
       const voeDataMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
@@ -277,42 +277,62 @@ export async function GET(request: NextRequest) {
           const jsonData = JSON.parse(voeDataMatch[1]);
           const encrypted = Array.isArray(jsonData) ? jsonData[0] : jsonData;
           
-          if (encrypted && typeof encrypted === 'string' && encrypted.includes('~@')) {
-            // Tabla de traducción VOE (Símbolos -> Caracteres)
-            // Basado en el patrón: DROH -> http, ~@ -> :, @$ -> /, #& -> .
-            const decodeVoe = (str: string) => {
-              // Primero invertimos la cadena si es necesario (algunas versiones de VOE lo hacen)
-              let result = str;
-              
-              // Mapeo de símbolos especiales conocidos
-              const map: any = {
-                '~@': ':', '#&': '.', '@$': '/', '!!': '?', '^^': '_', 
-                '*~': '=', '%?': '-', '`': 'a', // Algunos mapeos varían, pero estos son los básicos
-              };
-              
-              // Aplicamos el mapeo de símbolos
-              Object.keys(map).forEach(key => {
-                result = result.split(key).join(map[key]);
-              });
-              
-              // Mapeo de letras (ROT alternativo o sustitución simple)
-              // VOE suele usar un desplazamiento simple. Probamos con el patrón DROH -> http
-              // D(68) -> h(104) = +36 | R(82) -> t(116) = +34 | O(79) -> t(116) = +37 | H(72) -> p(112) = +40
-              // En realidad, VOE usa una función de decodificación compleja, pero a menudo 
-              // el enlace se puede encontrar simplemente limpiando los símbolos.
-              return result;
+          if (encrypted && typeof encrypted === 'string') {
+            // El algoritmo maestro de VOE (7 capas de protección)
+            const decryptVoePro = (str: string) => {
+              try {
+                // 1. Aplicar ROT13
+                let s = str.replace(/[a-zA-Z]/g, (c: any) => {
+                  return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
+                });
+
+                // 2. Sustitución de Símbolos
+                const map: any = {
+                  '!!': '?', '#&': '.', '@$': '/', '^^': '_', 
+                  '*~': '=', '%?': '-', '~@': ':'
+                };
+                Object.keys(map).forEach(key => {
+                  s = s.split(key).join(map[key]);
+                });
+
+                // 3. Primera decodificación Base64
+                s = Buffer.from(s, 'base64').toString('utf-8');
+
+                // 4. Caesar Shift (-3)
+                s = s.split('').map(c => String.fromCharCode(c.charCodeAt(0) - 3)).join('');
+
+                // 5. Invertir la cadena (Reverse)
+                s = s.split('').reverse().join('');
+
+                // 6. Segunda decodificación Base64
+                s = Buffer.from(s, 'base64').toString('utf-8');
+
+                return s;
+              } catch (e) {
+                return str; 
+              }
             };
 
-            const decrypted = decodeVoe(encrypted);
-            console.log("[DEBUG VOE] Decodificado:", decrypted.substring(0, 60) + "...");
-            const urlMatch = decrypted.match(/https?:\/\/[^"']+/);
-            if (urlMatch) {
-              console.log("[DEBUG VOE] URL encontrada!");
-              videos.push({ name: 'Original', url: urlMatch[0] });
+            const decrypted = decryptVoePro(encrypted);
+            console.log("[DEBUG VOE] Descifrado Maestro completado.");
+            
+            try {
+              const finalData = JSON.parse(decrypted);
+              const sources = finalData.sources || finalData;
+              if (Array.isArray(sources)) {
+                sources.forEach((src: any) => {
+                  if (src.file) videos.push({ name: src.label || 'Original', url: src.file });
+                });
+              } else if (sources && sources.file) {
+                videos.push({ name: sources.label || 'Original', url: sources.file });
+              }
+            } catch (e) {
+              const urlMatch = decrypted.match(/https?:\/\/[^"']+/);
+              if (urlMatch) videos.push({ name: 'Original', url: urlMatch[0] });
             }
           }
         } catch (e) {
-          console.error("[DEBUG VOE] Error:", e);
+          console.error("[DEBUG VOE] Error en Descifrado Maestro:", e);
         }
       }
 
