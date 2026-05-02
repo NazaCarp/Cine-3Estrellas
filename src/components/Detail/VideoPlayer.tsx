@@ -918,13 +918,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                   )}
                 </div>
               )}
-              </div>
 
             </div>
           </div>
         </div>
 
-        {/* LADO DERECHO: Info (Ahora aquí) */}
+        {/* LADO DERECHO: Info */}
         <div className="player-split-left">
           <h1 className="split-movie-title">{movie.title}</h1>
         </div>
