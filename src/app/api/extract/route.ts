@@ -137,15 +137,13 @@ export async function GET(request: NextRequest) {
           // Específico para OK.ru
           metadata.videos.forEach((v: any) => {
             const qualityNames: Record<string, string> = {
-              'mobile': 'Mobile',
-              'lowest': '144p',
-              'low': '240p',
-              'lowest_hd': '360p',
-              'low_hd': '480p',
+              'mobile': '144p',
+              'lowest': '240p',
+              'low': '360p',
               'sd': '480p',
               'hd': '720p',
-              'full': '1080p',    // OK.ru usa 'full' para 1080p
-              'full_hd': '1080p', 
+              'full': '1080p',
+              'full_hd': '1080p',
               'quad_hd': '2K',
               'ultra_hd': '4K'
             };
