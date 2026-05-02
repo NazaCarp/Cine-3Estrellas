@@ -77,7 +77,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     
     if (isDirect) {
       setSelectedUrl(url);
-    } else if (url.includes('vidmoly.') || url.includes('p2pplay.pro') || url.includes('vidsonic.net') || url.includes('voe.sx')) {
+    } else if (url.includes('vidmoly.') || url.includes('p2pplay.pro') || url.includes('vidsonic.net')) {
       // Servidores con soporte para extracción (evita anuncios y permite autoplay)
       setExtracting(true);
       try {
@@ -85,7 +85,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         let finalUrlToExtract = url;
         if (url.includes('p2pplay.pro')) {
           finalUrlToExtract = url.replace('#', '');
-        } else if (url.includes('vidmoly.') || url.includes('vidsonic.net') || url.includes('voe.sx')) {
+        } else if (url.includes('vidmoly.') || url.includes('vidsonic.net')) {
           finalUrlToExtract = preparePlayerUrl(url);
         }
         
