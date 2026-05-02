@@ -91,7 +91,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     
     if (isDirect) {
       setSelectedUrl(url);
-    } else if (url.includes('vidmoly.') || url.includes('p2pplay.pro') || url.includes('vidsonic.net')) {
+    } else if (url.includes('vidmoly.') || url.includes('p2pplay.pro') || url.includes('vidsonic.net') || url.includes('ok.ru')) {
       // Servidores con soporte para extracción (evita anuncios y permite autoplay)
       setExtracting(true);
       try {

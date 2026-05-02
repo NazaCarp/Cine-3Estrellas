@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       if (videoUrl.includes('vidmoly.')) referer = 'https://vidmoly.biz/';
       if (videoUrl.includes('p2pplay.pro')) referer = 'https://gdtvid.p2pplay.pro/';
       if (videoUrl.includes('vidsonic.net')) referer = 'https://vidsonic.net/';
+      if (videoUrl.includes('ok.ru')) referer = 'https://ok.ru/';
       
       const response = await fetch(videoUrl, {
         headers: { 
@@ -80,7 +81,9 @@ export async function GET(request: NextRequest) {
 
   // --- MODO EXTRACCIÓN ---
   try {
-    const extractionReferer = videoUrl.includes('vidsonic.net') ? 'https://vidsonic.net/' : 'https://vidmoly.biz/';
+    let extractionReferer = 'https://vidmoly.biz/';
+    if (videoUrl.includes('vidsonic.net')) extractionReferer = 'https://vidsonic.net/';
+    if (videoUrl.includes('ok.ru')) extractionReferer = 'https://ok.ru/';
     
     const response = await fetch(videoUrl, {
       headers: {
@@ -96,15 +99,42 @@ export async function GET(request: NextRequest) {
     const html = await response.text();
     let videos: any[] = [];
 
-    // Patrón 1: metadata en data-options (Vidsonic)
+    // Patrón 1: metadata en data-options (Vidsonic y OK.ru)
     const dataOptionsMatch = html.match(/data-options=["'](\{.*?\})["']/);
     if (dataOptionsMatch) {
       try {
         const options = JSON.parse(dataOptionsMatch[1].replace(/&quot;/g, '"'));
-        const metadata = options.flashvars?.metadata || options.metadata;
+        
+        // Caso A: Estructura Vidsonic
+        let metadata = options.flashvars?.metadata || options.metadata;
+        
+        // Caso B: Estructura OK.ru (metadata es un string JSON dentro de data-options)
+        if (!metadata && options.flashvars?.metadata) {
+          metadata = options.flashvars.metadata;
+        }
+        
+        if (typeof metadata === 'string') {
+          try { metadata = JSON.parse(metadata); } catch(e) {}
+        }
+
         if (metadata && Array.isArray(metadata)) {
           metadata.forEach((m: any) => {
             if (m.file) videos.push({ name: m.label || 'Video', url: m.file });
+          });
+        } else if (metadata && metadata.videos && Array.isArray(metadata.videos)) {
+          // Específico para OK.ru
+          metadata.videos.forEach((v: any) => {
+            const qualityNames: Record<string, string> = {
+              'mobile': 'Mobile',
+              'lowest': '144p',
+              'low': '240p',
+              'lowest_hd': '360p',
+              'low_hd': '480p',
+              'sd': '720p',
+              'hd': '1080p',
+              'full_hd': '4K'
+            };
+            if (v.url) videos.push({ name: qualityNames[v.name] || v.name, url: v.url });
           });
         }
       } catch (e) {}
