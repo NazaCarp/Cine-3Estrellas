@@ -22,10 +22,10 @@ export async function GET(request: NextRequest) {
       let referer = `${urlObj.protocol}//${urlObj.hostname}/`;
       
       // Ajustes específicos por servidor (Normalización de Referer)
-      if (videoUrl.includes('vidmoly.')) referer = 'https://vidmoly.biz/';
+      if (videoUrl.includes('vidmoly.') || videoUrl.includes('vmwesa.online')) referer = 'https://vidmoly.biz/';
       if (videoUrl.includes('p2pplay.pro')) referer = 'https://gdtvid.p2pplay.pro/';
       if (videoUrl.includes('vidsonic.net')) referer = 'https://vidsonic.net/';
-      if (videoUrl.includes('ok.ru')) referer = 'https://ok.ru/';
+      if (videoUrl.includes('ok.ru') || videoUrl.includes('okcdn.ru')) referer = 'https://ok.ru/';
       
       // Soporte para Range Requests (Seek en MP4)
       const rangeHeader = request.headers.get('range');
