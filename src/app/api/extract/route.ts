@@ -310,8 +310,6 @@ export async function GET(request: NextRequest) {
           videos.push({ name: 'Original', url: realUrl });
         }
       }
-    }
-      
       // Fallback: Si no hay base64/JSON, buscar el patrón de fuentes de VOE normal
       if (videos.length === 0) {
         const b64Matches = html.match(/[A-Za-z0-9+/]{50,}/g);
