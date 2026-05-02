@@ -364,19 +364,26 @@ export async function GET(request: NextRequest) {
     }
 
     if (videos.length === 0) {
+      console.log("[DEBUG VOE] No se encontró nada. Probando reconstrucción manual...");
+      const idMatch = videoUrl.match(/\/e\/([a-zA-Z0-9]+)/);
+      if (idMatch) {
+        const id = idMatch[1];
+        // Intentamos con el dominio actual que vimos en el navegador
+        videos.push({
+          name: 'Manual (Beta)',
+          url: `https://richardquestionbuilding.com/engine/hls/${id}/master.m3u8`
+        });
+      }
+    }
+
+    if (videos.length === 0) {
+      console.log("[DEBUG VOE] Fallo total. Cuerpo del HTML (primeros 200 caracteres):", html.substring(0, 200));
       return NextResponse.json({ error: 'No se encontraron enlaces de descarga compatibles.' }, { status: 404 });
     }
 
     // Mapear calidades a nombres amigables y envolver en proxy
     const qualities = videos.map((v: any) => ({
-      name: v.name === 'mobile' ? '144p' : 
-            v.name === 'lowest' ? '240p' : 
-            v.name === 'low' ? '360p' : 
-            v.name === 'sd' ? '480p' : 
-            v.name === 'hd' ? '720p' : 
-            v.name === 'full' ? '1080p' : 
-            v.name === 'quad' ? '2K' : 
-            v.name === 'ultra' ? '4K' : v.name,
+      name: v.name,
       url: `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(v.url)}`
     })).reverse(); 
 
