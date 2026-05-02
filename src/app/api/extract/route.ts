@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       let finalProxyUrl = videoUrl;
       
       // Ajustes específicos por servidor (Normalización de Referer y Mirroring en Proxy)
-      if (videoUrl.includes('voe.sx')) {
+      if (videoUrl.includes('voe.sx') || videoUrl.includes('richardquestionbuilding.com')) {
         referer = 'https://richardquestionbuilding.com/';
         finalProxyUrl = videoUrl.replace('voe.sx', 'richardquestionbuilding.com');
       }
