@@ -63,9 +63,9 @@ export function preparePlayerUrl(url: string): string {
     const idMatch = url.match(/(?:\/v\/|embed-)([a-zA-Z0-9]+)/);
     if (idMatch) {
       const id = idMatch[1];
-      const domainMatch = url.match(/vidmoly\.[a-z]+/);
-      const domain = domainMatch ? domainMatch[0] : 'vidmoly.me';
-      return `https://${domain}/embed-${id}.html`;
+      // User reported that .biz works while .me shows 'Video not found'
+      // We'll normalize to .biz for better reliability
+      return `https://vidmoly.biz/embed-${id}.html`;
     }
   }
   
