@@ -278,15 +278,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Patrón 5: VOE avanzado (Descifrador Maestro de 7 capas)
-    if (videos.length === 0 && (videoUrl.includes('voe.sx') || html.includes('voe.sx'))) {
-      console.log("[DEBUG VOE] Iniciando extracción...");
-      const voeDataMatch = html.match(/<script type="application\/json">([\s\S]*?)<\/script>/);
-      if (voeDataMatch) {
-        console.log("[DEBUG VOE] Bloque JSON encontrado");
+    // Patrón 5: VOE avanzado (Descifrador Maestro de 7 capas - Extracción Ultra-Agresiva)
+    if (videos.length === 0 && (videoUrl.includes('voe.sx') || html.includes('voe.sx') || html.includes('richardquestionbuilding.com'))) {
+      console.log("[DEBUG VOE] Iniciando extracción ultra-agresiva...");
+      
+      // Buscamos la cadena que empieza por DROH en cualquier parte del HTML
+      const drohMatch = html.match(/["'](DROH[a-zA-Z0-9\!\#\&\@\$\^\*\~\%\?\~]+)["']/);
+      
+      if (drohMatch) {
+        console.log("[DEBUG VOE] Cadena DROH encontrada!");
         try {
-          const jsonData = JSON.parse(voeDataMatch[1]);
-          const encrypted = Array.isArray(jsonData) ? jsonData[0] : jsonData;
+          const encrypted = drohMatch[1];
           
           if (encrypted && typeof encrypted === 'string') {
             // El algoritmo maestro de VOE (7 capas de protección)
