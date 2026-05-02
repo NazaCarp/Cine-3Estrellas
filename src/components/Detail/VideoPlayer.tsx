@@ -77,8 +77,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     
     if (isDirect) {
       setSelectedUrl(url);
-    } else if (url.includes('vidmoly.')) {
-      // Es Vidmoly: Intentamos extraer el link directo para evitar el iframe con anuncios
+    } else if (url.includes('vidmoly.') || url.includes('p2pplay.pro')) {
+      // Servidores con soporte para extracción (evita anuncios y permite autoplay)
       setExtracting(true);
       try {
         // Usamos preparePlayerUrl para enviar la versión .biz/embed- que es más estable para la extracción

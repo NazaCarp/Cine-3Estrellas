@@ -61,6 +61,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Caso especial: Gdtvid / P2PPlay (no necesita scraping de HTML, tiene API directa)
+    if (videoUrl.includes('p2pplay.pro')) {
+      const id = videoUrl.split('#')[1] || videoUrl.split('/').pop();
+      if (id && id.length > 3) {
+        const streamUrl = `https://gdtvid.p2pplay.pro/api/source/${id}`;
+        return NextResponse.json({
+          qualities: [{
+            name: 'Auto',
+            url: `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(streamUrl)}`
+          }]
+        });
+      }
+    }
+
     const response = await fetch(videoUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
