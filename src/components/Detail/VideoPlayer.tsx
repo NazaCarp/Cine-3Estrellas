@@ -27,6 +27,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // --- ESTADOS REPRODUCTOR PERSONALIZADO ---
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [lastVolume, setLastVolume] = useState(1);
+  const [showVolumeIndicator, setShowVolumeIndicator] = useState(false);
+  const [volumeIndicatorValue, setVolumeIndicatorValue] = useState(0);
+  const volumeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -414,77 +428,295 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hlsReady, setHlsReady] = useState(false);
 
+  // --- LÓGICA REPRODUCTOR PERSONALIZADO ---
+  const handlePlayPause = useCallback(() => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+    } else {
+      videoRef.current.pause();
+    }
+  }, []);
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!videoRef.current || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    videoRef.current.currentTime = pos * duration;
+  };
+
+  const handleSkip = (seconds: number) => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = Math.min(Math.max(0, videoRef.current.currentTime + seconds), duration);
+    resetControlsTimeout();
+  };
+
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    if (isMuted) {
+      videoRef.current.volume = lastVolume;
+      setIsMuted(false);
+    } else {
+      setLastVolume(videoRef.current.volume);
+      videoRef.current.volume = 0;
+      setIsMuted(true);
+    }
+  };
+
+  const changeVolume = (delta: number) => {
+    if (!videoRef.current) return;
+    const newVol = Math.min(Math.max(0, videoRef.current.volume + delta), 1);
+    videoRef.current.volume = newVol;
+    setVolume(newVol);
+    setIsMuted(newVol === 0);
+    
+    // Mostrar indicador
+    setVolumeIndicatorValue(Math.round(newVol * 100));
+    setShowVolumeIndicator(true);
+    if (volumeTimerRef.current) clearTimeout(volumeTimerRef.current);
+    volumeTimerRef.current = setTimeout(() => setShowVolumeIndicator(false), 1000);
+    
+    resetControlsTimeout();
+  };
+
+  const resetControlsTimeout = useCallback(() => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (isPlaying) setShowControls(false);
+    }, 3500);
+  }, [isPlaying]);
+
+  const formatTime = (time: number) => {
+    const h = Math.floor(time / 3600);
+    const m = Math.floor((time % 3600) / 60);
+    const s = Math.floor(time % 60);
+    return h > 0 
+      ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+      : `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     if (selectedUrl && isDirectLink && videoRef.current) {
       const video = videoRef.current;
+      
+      const onPlay = () => { setIsPlaying(true); resetControlsTimeout(); };
+      const onPause = () => { setIsPlaying(false); setShowControls(true); };
+      const onTimeUpdate = () => setCurrentTime(video.currentTime);
+      const onDurationChange = () => setDuration(video.duration);
+      const onWaiting = () => setIsBuffering(true);
+      const onPlaying = () => setIsBuffering(false);
+      const onVolumeChange = () => {
+        setVolume(video.volume);
+        setIsMuted(video.muted || video.volume === 0);
+      };
+
+      video.addEventListener('play', onPlay);
+      video.addEventListener('pause', onPause);
+      video.addEventListener('timeupdate', onTimeUpdate);
+      video.addEventListener('durationchange', onDurationChange);
+      video.addEventListener('waiting', onWaiting);
+      video.addEventListener('playing', onPlaying);
+      video.addEventListener('volumechange', onVolumeChange);
+
+      // Mouse movement to show controls
+      const onMouseMove = () => resetControlsTimeout();
+      window.addEventListener('mousemove', onMouseMove);
+
       console.log("--- DEBUG PLAYER ---");
       console.log("URL:", selectedUrl);
       
-      // PRIORIDAD 1: Hls.js (Mejor para PC: Chrome, Opera, Firefox)
+      let hls: any = null;
+
       if ((window as any).Hls && (window as any).Hls.isSupported()) {
-        console.log("Modo: Hls.js (Forzado)");
         const Hls = (window as any).Hls;
-        const hls = new Hls();
+        hls = new Hls({
+          capLevelToPlayerSize: true,
+          autoStartLoad: true
+        });
         hls.loadSource(selectedUrl);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.play().catch(err => console.warn("Autoplay bloqueado, esperando click."));
+          video.play().catch(() => {});
         });
-        return () => hls.destroy();
-      } 
-      // PRIORIDAD 2: HLS Nativo (Solo para Safari, iPhone y algunas Smart TV)
-      else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        console.log("Modo: HLS Nativo (Fallback)");
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = selectedUrl;
       } 
-      else {
-        console.log("Modo: Esperando librería o sin soporte HLS.");
-      }
+
+      return () => {
+        video.removeEventListener('play', onPlay);
+        video.removeEventListener('pause', onPause);
+        video.removeEventListener('timeupdate', onTimeUpdate);
+        video.removeEventListener('durationchange', onDurationChange);
+        video.removeEventListener('waiting', onWaiting);
+        video.removeEventListener('playing', onPlaying);
+        video.removeEventListener('volumechange', onVolumeChange);
+        window.removeEventListener('mousemove', onMouseMove);
+        if (hls) hls.destroy();
+      };
     }
-  }, [selectedUrl, isDirectLink, hlsReady]);
+  }, [selectedUrl, isDirectLink, hlsReady, resetControlsTimeout]);
+
+  // Manejo de teclado para el reproductor (Soporte TV/Remoto)
+  useEffect(() => {
+    const handlePlayerKeys = (e: KeyboardEvent) => {
+      if (!selectedUrl || !isDirectLink) return;
+
+      switch (e.key) {
+        case ' ':
+        case 'Enter':
+          if (e.target === document.body || (e.target as HTMLElement).tagName === 'VIDEO') {
+            e.preventDefault();
+            handlePlayPause();
+          }
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          handleSkip(-10);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          handleSkip(10);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          changeVolume(0.05);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          changeVolume(-0.05);
+          break;
+        case 'm':
+        case 'M':
+          e.preventDefault();
+          toggleMute();
+          break;
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+      }
+    };
+
+    if (selectedUrl) {
+      window.addEventListener('keydown', handlePlayerKeys);
+    }
+    return () => window.removeEventListener('keydown', handlePlayerKeys);
+  }, [selectedUrl, isDirectLink, handlePlayPause, duration]);
 
   if (selectedUrl) {
     return (
-      <div className="video-player-overlay" ref={containerRef}>
+      <div className="video-player-overlay" ref={containerRef} onMouseMove={resetControlsTimeout} onClick={resetControlsTimeout}>
         {isDirectLink ? (
           <>
-            {/* Cargamos Hls.js de forma segura */}
             <Script 
               src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js" 
               strategy="afterInteractive" 
-              onLoad={() => {
-                 console.log("Hls.js cargado correctamente desde CDN");
-                 setHlsReady(true);
-              }}
+              onLoad={() => setHlsReady(true)}
             />
             <video 
               ref={videoRef}
               className="video-element" 
-              controls 
               autoPlay 
               playsInline
-              style={{ width: '100%', height: '100%', backgroundColor: '#000' }}
+              onClick={handlePlayPause}
             />
+
+            {/* INTERFAZ PERSONALIZADA */}
+            <div className={`player-controls-layer ${!showControls && isPlaying ? 'hidden' : ''}`}>
+              
+              {/* Overlay de Título (Arriba) */}
+              <div className="video-title-overlay">
+                <h2>{movie.title}</h2>
+                <p>Reproduciendo ahora</p>
+              </div>
+
+              {/* Botón de Cierre */}
+              <button 
+                className="detail-btn btn-close"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (document.fullscreenElement) document.exitFullscreen();
+                  setSelectedUrl(null);
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="3" fill="none">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+
+              {/* Buffering Loader */}
+              {isBuffering && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+
+              {/* Barra de Controles (Abajo) */}
+              <div className={`video-controls ${!showControls && isPlaying ? 'hidden' : ''}`}>
+                
+                {/* Barra de Progreso */}
+                <div className="progress-container" onClick={(e) => { e.stopPropagation(); handleSeek(e); }}>
+                  <div className="progress-bar" style={{ width: `${(currentTime / duration) * 100}%` }}>
+                    <div className="progress-knob" />
+                  </div>
+                </div>
+
+                <div className="controls-main">
+                  <div className="controls-left">
+                    <button className="control-btn" onClick={handlePlayPause}>
+                      {isPlaying ? (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                      ) : (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      )}
+                    </button>
+                    
+                    <button className="control-btn" onClick={() => handleSkip(-10)}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+                    </button>
+                    
+                    <button className="control-btn" onClick={() => handleSkip(10)}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
+                    </button>
+
+                    <div className="time-display">
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </div>
+                  </div>
+
+                  <div className="controls-right">
+                    <div className="flex items-center gap-3">
+                      <button className="control-btn" onClick={toggleMute}>
+                        {isMuted ? (
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM19 12c0 3.12-1.66 5.85-4.12 7.37l1.06 1.06C19.16 18.57 21 15.5 21 12s-1.84-6.57-5.06-8.43l-1.06 1.06C17.34 6.15 19 8.88 19 12zM3 9v6h4l5 5V4L7 9H3z"/></svg>
+                        ) : (
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        )}
+                      </button>
+                    </div>
+
+                    <button className="control-btn" onClick={toggleFullscreen}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Indicador de Volumen */}
+            {showVolumeIndicator && (
+              <div className="volume-indicator">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                <span className="text-xl font-bold">{volumeIndicatorValue}%</span>
+              </div>
+            )}
           </>
         ) : (
           <iframe src={selectedUrl} className="video-element" allow="autoplay; fullscreen" allowFullScreen />
         )}
-        
-        <div className="player-controls-layer">
-          <button 
-            className="detail-btn btn-close"
-            onClick={() => {
-              if (document.fullscreenElement) document.exitFullscreen();
-              setSelectedUrl(null);
-            }}
-            title="Cerrar reproductor"
-          >
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="3" fill="none">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
       </div>
     );
   }
