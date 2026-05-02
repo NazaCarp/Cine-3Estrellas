@@ -77,15 +77,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     
     if (isDirect) {
       setSelectedUrl(url);
-    } else if (url.includes('vidmoly.') || url.includes('p2pplay.pro')) {
+    } else if (url.includes('vidmoly.') || url.includes('p2pplay.pro') || url.includes('vidsonic.net')) {
       // Servidores con soporte para extracción (evita anuncios y permite autoplay)
       setExtracting(true);
       try {
-        // Normalizamos la URL: Vidmoly necesita preparePlayerUrl, Gdtvid necesita quitar el '#'
+        // Normalizamos la URL
         let finalUrlToExtract = url;
         if (url.includes('p2pplay.pro')) {
           finalUrlToExtract = url.replace('#', '');
-        } else if (url.includes('vidmoly.')) {
+        } else if (url.includes('vidmoly.') || url.includes('vidsonic.net')) {
           finalUrlToExtract = preparePlayerUrl(url);
         }
         

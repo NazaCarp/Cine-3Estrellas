@@ -64,6 +64,41 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Caso especial: Vidsonic (Decodificador Inverso)
+    if (videoUrl.includes('vidsonic.net')) {
+      try {
+        const response = await fetch(videoUrl, {
+          headers: { 
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': 'https://vidsonic.net/'
+          }
+        });
+        
+        const html = await response.text();
+        const hexMatch = html.match(/_0x1\s*=\s*['"]([^'"]+)['"]/);
+        
+        if (hexMatch) {
+          const hex = hexMatch[1].split('|').join('');
+          let decoded = '';
+          for (let i = 0; i < hex.length; i += 2) {
+            decoded += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+          }
+          const realUrl = decoded.split('').reverse().join('');
+          
+          if (realUrl.startsWith('http')) {
+            return NextResponse.json({
+              qualities: [{
+                name: 'Auto',
+                url: `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(realUrl)}`
+              }]
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Fallo extracción Vidsonic:", e);
+      }
+    }
+
     // Caso especial: Gdtvid / P2PPlay (Versión Final Blindada)
     if (videoUrl.includes('p2pplay.pro')) {
       const segments = videoUrl.split('/').filter(Boolean);
