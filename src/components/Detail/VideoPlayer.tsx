@@ -85,7 +85,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     }
   }, [movie.versions]);
 
-  const handleSelect = async (url: string) => {
+  const handleSelect = async (url: string, versionName?: string) => {
     // Si ya es un enlace directo, reproducir inmediatamente
     const isDirect = url.includes('.m3u8') || url.includes('.mp4') || url.includes('urlset');
     
@@ -109,7 +109,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         if (res.ok && data.qualities?.length > 0) {
           // Éxito: Usamos el enlace directo (la mejor calidad disponible)
           setSelectedUrl(data.qualities[0].url);
-          setDownloadQualities(data.qualities.map((q: any) => ({ ...q, version: 'AUTO' })));
+          setDownloadQualities(data.qualities.map((q: any) => ({ ...q, version: versionName?.toUpperCase() || 'AUTO' })));
         } else {
           // Fallback: Si falla la extracción, usamos el iframe normal
           setSelectedUrl(preparePlayerUrl(url));
@@ -389,13 +389,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
           } else if (isRepro) {
             const key = versions[focusIndex];
             const val = movie.versions![key];
-            handleSelect(typeof val === 'object' ? (val as any).url : val);
+            handleSelect(typeof val === 'object' ? (val as any).url : val, key);
           } else if (downloadQualities.length === 0 && focusIndex === vCount) {
              handleExtractAll(versions);
           } else if (isGrid) {
             const qualityIdx = focusIndex - gridStartIdx;
             if (activeQualities[qualityIdx]) {
-              window.open(activeQualities[qualityIdx].url, '_blank');
+              handleSelect(activeQualities[qualityIdx].url, activeQualities[qualityIdx].version);
             }
           }
           break;
@@ -764,18 +764,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               <div className="glass-section">
                 <h3 className="glass-section-title">REPRODUCCIÓN</h3>
                 <div className="glass-list">
-                  {versions.map((v, idx) => {
-                    const isActive = focusIndex === idx;
+                  {versions.map((v, i) => {
+                    const val = movie.versions![v];
                     const details = getVersionDetails(v);
+                    const isActive = selectedUrl === (typeof val === 'object' ? (val as any).url : val) || 
+                                     (selectedUrl?.includes('proxy=true') && selectedUrl?.includes(encodeURIComponent(typeof val === 'object' ? (val as any).url : val)));
+                    
                     return (
                       <div 
                         key={v} 
-                        className={`glass-option-row ${isActive ? 'focused' : ''}`}
-                        onPointerEnter={() => setFocusIndex(idx)}
-                        onClick={() => {
-                          const val = movie.versions![v];
-                          handleSelect(typeof val === 'object' ? (val as any).url : val);
-                        }}
+                        className={`glass-option-row ${isActive ? 'active' : ''} ${focusIndex === i ? 'focused' : ''}`}
+                        onPointerEnter={() => setFocusIndex(i)}
+                        onClick={() => handleSelect(typeof val === 'object' ? (val as any).url : val, v)}
                       >
                         <div className="glass-option-icon">{details.flag}</div>
                         <div className="glass-option-text">
@@ -891,7 +891,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                                   key={`${q.name}-${qidx}`} 
                                   className={`download-chip ${isFocused ? 'focused' : ''}`}
                                   onPointerEnter={() => setFocusIndex(absIdx)}
-                                  onClick={() => handleSelect(q.url)}
+                                  onClick={() => handleSelect(q.url, q.version)}
                                 >
                                   <span className="chip-quality">{q.name}</span>
                                 </div>
