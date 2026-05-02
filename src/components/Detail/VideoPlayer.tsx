@@ -647,10 +647,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                 </svg>
               </button>
 
-              {/* Loader Premium */}
+              {/* Loader Premium (Stars) */}
               {isBuffering && (
                 <div className="premium-loader-container">
-                  <div className="premium-loader" />
+                  <div className="stars-loader">
+                    <div className="star-loader-item" />
+                    <div className="star-loader-item" />
+                    <div className="star-loader-item" />
+                  </div>
                   <span className="loader-text">Cargando</span>
                 </div>
               )}
