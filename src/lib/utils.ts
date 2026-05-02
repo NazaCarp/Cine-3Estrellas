@@ -50,3 +50,27 @@ export function normalizeCertification(c: string | undefined): string {
   
   return upper;
 }
+
+/**
+ * Prepares a video URL for playback in an iframe.
+ * Specifically converts Vidmoly standard links to their embed counterparts.
+ */
+export function preparePlayerUrl(url: string): string {
+  if (!url) return '';
+  
+  // Handle Vidmoly (me, biz, etc.)
+  if (url.includes('vidmoly.') && (url.includes('/v/') || url.includes('/embed-'))) {
+    const idMatch = url.match(/(?:\/v\/|embed-)([a-zA-Z0-9]+)/);
+    if (idMatch) {
+      const id = idMatch[1];
+      const domainMatch = url.match(/vidmoly\.[a-z]+/);
+      const domain = domainMatch ? domainMatch[0] : 'vidmoly.me';
+      return `https://${domain}/embed-${id}.html`;
+    }
+  }
+  
+  // Add other transformations here if needed (e.g. ok.ru, etc.)
+  
+  return url;
+}
+

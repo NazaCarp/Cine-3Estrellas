@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Movie } from '@/types';
-import { extractQuality } from '@/lib/utils';
+import { extractQuality, preparePlayerUrl } from '@/lib/utils';
 
 interface VideoPlayerProps {
   movie: Movie;
@@ -71,7 +71,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   }, [movie.versions]);
 
   const handleSelect = (url: string) => {
-    setSelectedUrl(url);
+    setSelectedUrl(preparePlayerUrl(url));
     // Auto-fullscreen on select (user gesture)
     setTimeout(() => {
       if (containerRef.current && !document.fullscreenElement) {

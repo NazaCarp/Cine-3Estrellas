@@ -68,6 +68,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (videos.length === 0) {
+      if (videoUrl.includes('vidmoly.')) {
+        return NextResponse.json({ 
+          error: 'Vidmoly no permite descargas directas automáticas por su protección contra robots. Usa el reproductor para ver el video.' 
+        }, { status: 403 });
+      }
       return NextResponse.json({ error: 'No se encontraron enlaces de descarga compatibles.' }, { status: 404 });
     }
 
