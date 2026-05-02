@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
       if (videoUrl.includes('vidmoly.')) referer = 'https://vidmoly.biz/';
       if (videoUrl.includes('p2pplay.pro')) referer = 'https://gdtvid.p2pplay.pro/';
       if (videoUrl.includes('vidsonic.net')) referer = 'https://vidsonic.net/';
+      if (videoUrl.includes('voe.sx')) referer = 'https://voe.sx/';
       
       const response = await fetch(videoUrl, {
         headers: { 
@@ -247,6 +248,33 @@ export async function GET(request: NextRequest) {
           name: labelMatch ? labelMatch[1] : 'full',
           url: jwMatch[1]
         });
+      }
+    }
+
+    // Patrón 5: VOE específico (hls: "..." o sources: { hls: "..." })
+    if (videos.length === 0) {
+      const voeMatch = html.match(/["']hls["']:\s*["']([^"']+)["']/i) || 
+                       html.match(/["']mp4["']:\s*["']([^'"]+)["']/i);
+      if (voeMatch) {
+        videos.push({
+          name: 'Original',
+          url: voeMatch[1]
+        });
+      }
+    }
+
+    // Patrón 6: Búsqueda profunda de m3u8 (Último recurso)
+    if (videos.length === 0) {
+      const deepMatch = html.match(/https?:\/\/[^"']+\.m3u8[^"']*/g);
+      if (deepMatch) {
+        // Filtramos el enlace de prueba de Big Buck Bunny que VOE usa como señuelo
+        const realLinks = deepMatch.filter(l => !l.includes('test-videos.co.uk') && !l.includes('bunny'));
+        if (realLinks.length > 0) {
+          videos.push({
+            name: 'Directo',
+            url: realLinks[0]
+          });
+        }
       }
     }
 

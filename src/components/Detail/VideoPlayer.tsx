@@ -77,7 +77,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     
     if (isDirect) {
       setSelectedUrl(url);
-    } else if (url.includes('vidmoly.') || url.includes('p2pplay.pro') || url.includes('vidsonic.net')) {
+    } else if (url.includes('vidmoly.') || url.includes('p2pplay.pro') || url.includes('vidsonic.net') || url.includes('voe.sx')) {
       // Servidores con soporte para extracción (evita anuncios y permite autoplay)
       setExtracting(true);
       try {
@@ -85,7 +85,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         let finalUrlToExtract = url;
         if (url.includes('p2pplay.pro')) {
           finalUrlToExtract = url.replace('#', '');
-        } else if (url.includes('vidmoly.') || url.includes('vidsonic.net')) {
+        } else if (url.includes('vidmoly.') || url.includes('vidsonic.net') || url.includes('voe.sx')) {
           finalUrlToExtract = preparePlayerUrl(url);
         }
         
@@ -95,7 +95,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         if (res.ok && data.qualities?.length > 0) {
           // Éxito: Usamos el enlace directo (la mejor calidad disponible)
           setSelectedUrl(data.qualities[0].url);
-          // También guardamos las calidades por si el usuario quiere cambiarlas luego
           setDownloadQualities(data.qualities.map((q: any) => ({ ...q, version: 'AUTO' })));
         } else {
           // Fallback: Si falla la extracción, usamos el iframe normal
