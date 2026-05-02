@@ -27,26 +27,39 @@ export async function GET(request: NextRequest) {
       if (videoUrl.includes('vidsonic.net')) referer = 'https://vidsonic.net/';
       if (videoUrl.includes('ok.ru')) referer = 'https://ok.ru/';
       
-      const response = await fetch(videoUrl, {
-        headers: { 
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': referer,
-          'Origin': referer.replace(/\/$/, '')
-        }
-      });
+      // Soporte para Range Requests (Seek en MP4)
+      const rangeHeader = request.headers.get('range');
+      const fetchHeaders: any = { 
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': referer,
+        'Origin': referer.replace(/\/$/, '')
+      };
+      if (rangeHeader) fetchHeaders['Range'] = rangeHeader;
+      
+      const response = await fetch(videoUrl, { headers: fetchHeaders });
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 206) {
         return new Response(`Error origen: ${response.status}`, { status: response.status });
       }
 
       const contentType = response.headers.get('Content-Type') || '';
+      const contentRange = response.headers.get('Content-Range');
+      const contentLength = response.headers.get('Content-Length');
+      const acceptRanges = response.headers.get('Accept-Ranges');
+
       if (videoUrl.includes('.ts') || contentType.includes('video') || contentType.includes('octet-stream')) {
+        const headers: any = {
+          'Content-Type': contentType,
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, max-age=3600',
+          'Accept-Ranges': acceptRanges || 'bytes',
+        };
+        if (contentRange) headers['Content-Range'] = contentRange;
+        if (contentLength) headers['Content-Length'] = contentLength;
+
         return new Response(response.body, {
-          headers: {
-            'Content-Type': contentType,
-            'Access-Control-Allow-Origin': '*',
-            'Cache-Control': 'public, max-age=3600'
-          }
+          status: response.status,
+          headers: headers
         });
       }
 
