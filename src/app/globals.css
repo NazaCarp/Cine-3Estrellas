@@ -314,7 +314,7 @@ html, body {
   display: flex;
   gap: 20px;
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-  padding-right: 120px; /* Espacio extra al final para que el último item no se corte */
+  padding-right: 120px; /* Espacio extra al final para que el Ãºltimo item no se corte */
 }
 
 .carousel-item {
@@ -442,7 +442,7 @@ html, body {
   /* Removed scale to prevent poster clipping */
 }
 
-/* Ver Más Card */
+/* Ver MÃ¡s Card */
 .see-more-card {
   flex: 0 0 180px;
   height: 270px;
@@ -2239,7 +2239,7 @@ body .btn-secondary.focused {
   color: var(--accent-color) !important;
   opacity: 1 !important;
   transform: translateX(-3px);
-  /* Pequeño micro-movimiento sugestivo */
+  /* PequeÃ±o micro-movimiento sugestivo */
 }
 
 /* RESPONSIVE ADJUSTMENTS FOR MOBILE & TABLET */
@@ -2874,5 +2874,4 @@ body .btn-secondary.focused {
   text-transform: uppercase;
   opacity: 0.5;
   margin-left: 6px; /* Offset for centering text with wide spacing */
-}
 }
