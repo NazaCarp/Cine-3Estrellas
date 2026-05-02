@@ -41,8 +41,7 @@ export async function GET(request: NextRequest) {
 
       const contentType = response.headers.get('Content-Type') || '';
       if (videoUrl.includes('.ts') || contentType.includes('video') || contentType.includes('octet-stream')) {
-        const buffer = await response.arrayBuffer();
-        return new Response(buffer, {
+        return new Response(response.body, {
           headers: {
             'Content-Type': contentType,
             'Access-Control-Allow-Origin': '*',

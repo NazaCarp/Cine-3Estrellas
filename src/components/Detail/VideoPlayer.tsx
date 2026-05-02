@@ -528,7 +528,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       
       let hls: any = null;
 
-      if ((window as any).Hls && (window as any).Hls.isSupported()) {
+      const isHls = selectedUrl.toLowerCase().includes('m3u8');
+      if (isHls && (window as any).Hls && (window as any).Hls.isSupported()) {
         const Hls = (window as any).Hls;
         hls = new Hls({
           capLevelToPlayerSize: true,
@@ -539,8 +540,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           video.play().catch(() => {});
         });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      } else {
         video.src = selectedUrl;
+        video.play().catch(() => {});
       } 
 
       return () => {
