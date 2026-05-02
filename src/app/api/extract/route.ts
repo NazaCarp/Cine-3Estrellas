@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Caso especial: Gdtvid / P2PPlay (Versión Ultra-Robusta)
+    // Caso especial: Gdtvid / P2PPlay (Versión Final Blindada)
     if (videoUrl.includes('p2pplay.pro')) {
       const segments = videoUrl.split('/').filter(Boolean);
       const id = segments[segments.length - 1];
@@ -76,7 +76,8 @@ export async function GET(request: NextRequest) {
             headers: { 
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
               'Referer': 'https://gdtvid.p2pplay.pro/',
-              'Origin': 'https://gdtvid.p2pplay.pro'
+              'Origin': 'https://gdtvid.p2pplay.pro',
+              'Accept': 'application/json'
             }
           });
           
@@ -93,8 +94,11 @@ export async function GET(request: NextRequest) {
               });
             }
           }
+          // Si la API falla, retornamos error controlado en lugar de dejar que explote el servidor
+          return NextResponse.json({ error: 'El servidor de Gdtvid no respondió correctamente.' }, { status: 403 });
         } catch (e) {
-          console.error("Fallo extracción Gdtvid:", e);
+          console.error("Fallo crítico Gdtvid:", e);
+          return NextResponse.json({ error: 'Error de conexión con Gdtvid.' }, { status: 502 });
         }
       }
     }
