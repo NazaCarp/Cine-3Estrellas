@@ -429,6 +429,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   // Referencia para el elemento de video
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hlsReady, setHlsReady] = useState(false);
+  
+  // Verificamos si todos los servidores son Vidmoly para ocultar descargas
+  const allAreVidmoly = versions.length > 0 && versions.every(v => {
+    const val = movie.versions?.[v];
+    const url = typeof val === 'object' ? (val as any).url : val;
+    return url && url.includes('vidmoly.');
+  });
 
   // --- LÓGICA REPRODUCTOR PERSONALIZADO ---
   const handlePlayPause = useCallback(() => {
@@ -798,116 +805,119 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                 </div>
               </div>
 
-              {/* Descargas */}
-              <div className="glass-section" style={{ marginTop: '40px' }}>
-                <h3 className="glass-section-title">DESCARGA DIRECTA</h3>
-                
-                {extracting ? (
-                  <div className="glass-list">
-                    <div className="glass-option-row loading">
-                      <div className="extraction-loader"><div className="extraction-loader-bar" /></div>
-                    </div>
-                  </div>
-                ) : !hasDownloads ? (
-                  <>
+              {/* Descargas (Solo si hay servidores que no sean Vidmoly) */}
+              {!allAreVidmoly && (
+                <div className="glass-section" style={{ marginTop: '40px' }}>
+                  <h3 className="glass-section-title">DESCARGA DIRECTA</h3>
+                  
+                  {extracting ? (
                     <div className="glass-list">
-                      <div 
-                        className={`glass-option-row ${focusIndex === vCount ? 'focused' : ''}`}
-                        onPointerEnter={() => setFocusIndex(vCount)}
-                        onClick={() => handleExtractAll(versions)}
-                      >
-                        <div className="glass-option-icon">
-                          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                          </svg>
-                        </div>
-                        <div className="glass-option-text">
-                          <span className="lang-label">{error ? 'REINTENTAR' : 'OBTENER ENLACES'}</span>
-                        </div>
-                        <div className="glass-option-action">
-                          {focusIndex === vCount && !error && (
-                             <span style={{ fontSize: '1.2rem' }}>↵</span>
-                          )}
-                          {error && (
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
-                              <path d="M23 4v6h-6"></path>
-                              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                            </svg>
-                          )}
-                        </div>
+                      <div className="glass-option-row loading">
+                        <div className="extraction-loader"><div className="extraction-loader-bar" /></div>
                       </div>
                     </div>
-                    
-                    {error && (
-                      <div className="extraction-error-inline">
-                        <div className="extraction-error-icon">
-                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                            <line x1="12" y1="9" x2="12" y2="13"></line>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                          </svg>
-                        </div>
-                        <div className="extraction-error-content">
-                          <span className="error-label">Aviso</span>
-                          <span className="error-message">{error}</span>
+                  ) : !hasDownloads ? (
+                    <>
+                      <div className="glass-list">
+                        <div 
+                          className={`glass-option-row ${focusIndex === vCount ? 'focused' : ''}`}
+                          onPointerEnter={() => setFocusIndex(vCount)}
+                          onClick={() => handleExtractAll(versions)}
+                        >
+                          <div className="glass-option-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                              <polyline points="7 10 12 15 17 10"></polyline>
+                              <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                          </div>
+                          <div className="glass-option-text">
+                            <span className="lang-label">{error ? 'REINTENTAR' : 'OBTENER ENLACES'}</span>
+                          </div>
+                          <div className="glass-option-action">
+                            {focusIndex === vCount && !error && (
+                               <span style={{ fontSize: '1.2rem' }}>↵</span>
+                            )}
+                            {error && (
+                              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                              </svg>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="download-tabs-system">
-                    {(() => {
-                      const grouped = getGroupedDownloads();
-                      const tabKeys = Object.keys(grouped);
                       
-                      return (
-                        <>
-                          <div className="download-tabs">
-                            {tabKeys.map((tk, tidx) => {
-                              const absIdx = vCount + tidx;
-                              const isActive = activeDownloadTab === tk;
-                              const isFocused = focusIndex === absIdx;
-                              const details = getVersionDetails(tk);
-                              return (
-                                <div 
-                                  key={tk} 
-                                  className={`download-tab-btn ${isActive ? 'active' : ''} ${isFocused ? 'focused' : ''}`}
-                                  onPointerEnter={() => setFocusIndex(absIdx)}
-                                  onClick={() => setActiveDownloadTab(tk)}
-                                >
-                                  <div className="tab-flag">{details.flag}</div>
-                                  <span className="tab-label">{details.code || details.label}</span>
-                                </div>
-                              );
-                            })}
+                      {error && (
+                        <div className="extraction-error-inline">
+                          <div className="extraction-error-icon">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                              <line x1="12" y1="9" x2="12" y2="13"></line>
+                              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
                           </div>
-                          
-                          <div className="download-grid tab-content" key={activeDownloadTab}>
-                            {(grouped[activeDownloadTab!] || []).map((q, qidx) => {
-                              const absIdx = vCount + tabKeys.length + qidx;
-                              const isFocused = focusIndex === absIdx;
-                              return (
-                                <div 
-                                  key={`${q.name}-${qidx}`} 
-                                  className={`download-chip ${isFocused ? 'focused' : ''}`}
-                                  onPointerEnter={() => setFocusIndex(absIdx)}
-                                  onClick={() => {
-                                    const downloadUrl = q.url.includes('proxy=true') ? `${q.url}&download=true` : q.url;
-                                    window.open(downloadUrl, '_blank');
-                                  }}
-                                >
-                                  <span className="chip-quality">{q.name}</span>
-                                </div>
-                              );
-                            })}
+                          <div className="extraction-error-content">
+                            <span className="error-label">Aviso</span>
+                            <span className="error-message">{error}</span>
                           </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                )}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="download-tabs-system">
+                      {(() => {
+                        const grouped = getGroupedDownloads();
+                        const tabKeys = Object.keys(grouped);
+                        
+                        return (
+                          <>
+                            <div className="download-tabs">
+                              {tabKeys.map((tk, tidx) => {
+                                const absIdx = vCount + tidx;
+                                const isActive = activeDownloadTab === tk;
+                                const isFocused = focusIndex === absIdx;
+                                const details = getVersionDetails(tk);
+                                return (
+                                  <div 
+                                    key={tk} 
+                                    className={`download-tab-btn ${isActive ? 'active' : ''} ${isFocused ? 'focused' : ''}`}
+                                    onPointerEnter={() => setFocusIndex(absIdx)}
+                                    onClick={() => setActiveDownloadTab(tk)}
+                                  >
+                                    <div className="tab-flag">{details.flag}</div>
+                                    <span className="tab-label">{details.code || details.label}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            
+                            <div className="download-grid tab-content" key={activeDownloadTab}>
+                              {(grouped[activeDownloadTab!] || []).map((q, qidx) => {
+                                const absIdx = vCount + tabKeys.length + qidx;
+                                const isFocused = focusIndex === absIdx;
+                                return (
+                                  <div 
+                                    key={`${q.name}-${qidx}`} 
+                                    className={`download-chip ${isFocused ? 'focused' : ''}`}
+                                    onPointerEnter={() => setFocusIndex(absIdx)}
+                                    onClick={() => {
+                                      const downloadUrl = q.url.includes('proxy=true') ? `${q.url}&download=true` : q.url;
+                                      window.open(downloadUrl, '_blank');
+                                    }}
+                                  >
+                                    <span className="chip-quality">{q.name}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              )}
               </div>
 
             </div>
