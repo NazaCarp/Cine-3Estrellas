@@ -80,7 +80,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       // Es Vidmoly: Intentamos extraer el link directo para evitar el iframe con anuncios
       setExtracting(true);
       try {
-        const res = await fetch(`/api/extract?url=${encodeURIComponent(url)}`);
+        // Usamos preparePlayerUrl para enviar la versión .biz/embed- que es más estable para la extracción
+        const res = await fetch(`/api/extract?url=${encodeURIComponent(preparePlayerUrl(url))}`);
         const data = await res.json();
         
         if (res.ok && data.qualities?.length > 0) {
