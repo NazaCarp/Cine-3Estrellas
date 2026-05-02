@@ -557,7 +557,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         if (hls) hls.destroy();
       };
     }
-  }, [selectedUrl, isDirectLink, hlsReady, resetControlsTimeout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUrl, isDirectLink, hlsReady]);
 
   // Manejo de teclado para el reproductor (Soporte TV/Remoto)
   useEffect(() => {
