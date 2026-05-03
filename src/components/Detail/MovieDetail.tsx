@@ -468,6 +468,7 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
                   }}
                 />
               ))}
+              <div className="carousel-spacer" style={{ flex: '0 0 120px', width: '120px' }} />
             </div>
           </div>
         </div>
