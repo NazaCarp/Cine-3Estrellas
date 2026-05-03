@@ -41,6 +41,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const [showVolumeIndicator, setShowVolumeIndicator] = useState(false);
   const [volumeIndicatorValue, setVolumeIndicatorValue] = useState(0);
   const volumeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragTime, setDragTime] = useState(0);
+
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -451,10 +454,48 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     if (!videoRef.current || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const clientX = (e as any).clientX || ((e as any).touches && (e as any).touches[0].clientX) || ((e as any).nativeEvent as any).clientX;
-    const pos = (clientX - rect.left) / rect.width;
-    videoRef.current.currentTime = Math.min(Math.max(0, pos), 1) * duration;
+    const pos = Math.min(Math.max(0, (clientX - rect.left) / rect.width), 1);
+    const newTime = pos * duration;
+    
+    videoRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
     resetControlsTimeout();
   };
+
+  const handleProgressPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!duration) return;
+    e.stopPropagation();
+    setIsDragging(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pos = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
+    const newTime = pos * duration;
+    setDragTime(newTime);
+    
+    // Capturar puntero para drag fuera de la barra
+    e.currentTarget.setPointerCapture(e.pointerId);
+    resetControlsTimeout();
+  };
+
+  const handleProgressPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pos = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
+    const newTime = pos * duration;
+    setDragTime(newTime);
+    resetControlsTimeout();
+  };
+
+  const handleProgressPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (videoRef.current) {
+      videoRef.current.currentTime = dragTime;
+      setCurrentTime(dragTime);
+    }
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    resetControlsTimeout();
+  };
+
 
   const handleSkip = (seconds: number) => {
     if (!videoRef.current) return;
@@ -701,8 +742,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               <div className={`video-controls ${!showControls && isPlaying ? 'hidden' : ''}`}>
                 
                 {/* Barra de Progreso */}
-                <div className="progress-container" onPointerDown={(e) => { e.stopPropagation(); handleSeek(e); }}>
-                  <div className="progress-bar" style={{ width: `${(currentTime / duration) * 100}%` }}>
+                <div 
+                  className="progress-container" 
+                  onPointerDown={handleProgressPointerDown}
+                  onPointerMove={handleProgressPointerMove}
+                  onPointerUp={handleProgressPointerUp}
+                  onPointerCancel={handleProgressPointerUp}
+                >
+                  <div 
+                    className="progress-bar" 
+                    style={{ width: `${((isDragging ? dragTime : currentTime) / duration) * 100}%` }}
+                  >
                     <div className="progress-knob" />
                   </div>
                 </div>
@@ -726,7 +776,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                     </button>
 
                     <div className="time-display">
-                      {formatTime(currentTime)} / {formatTime(duration)}
+                      {formatTime(isDragging ? dragTime : currentTime)} / {formatTime(duration)}
                     </div>
                   </div>
 
