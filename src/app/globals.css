@@ -1039,8 +1039,8 @@ body .btn-secondary.focused {
 
 .detail-btn.btn-close {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 15px;
+  right: 15px;
   width: 50px;
   height: 50px;
   padding: 0;
@@ -1054,7 +1054,7 @@ body .btn-secondary.focused {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 80px 20px 20px;
+  padding: 60px 40px 25px;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0) 100%);
   display: flex;
   flex-direction: column;
@@ -1145,8 +1145,8 @@ body .btn-secondary.focused {
 
 .video-title-overlay {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 15px;
+  left: 15px;
   z-index: 10;
   transition: opacity 0.5s ease, transform 0.5s ease;
   pointer-events: none;
