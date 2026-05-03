@@ -179,11 +179,26 @@ export async function GET(request: NextRequest) {
 
     // Patrón 2: Base64 sources (Vidmoly)
     if (videos.length === 0) {
-      const b64Match = html.match(/sources:\s*["']([A-Za-z0-9+/=]+)["']/);
+      const b64Match = html.match(/sources:\s*["']([A-Za-z0-9+/=]{20,})["']/);
       if (b64Match) {
         try {
           const decoded = Buffer.from(b64Match[1], 'base64').toString('utf-8');
           const sources = JSON.parse(decoded);
+          if (Array.isArray(sources)) {
+            sources.forEach((s: any) => {
+              if (s.file) videos.push({ name: s.label || 'Video', url: s.file });
+            });
+          }
+        } catch (e) {}
+      }
+    }
+
+    // Patrón 2.1: Sources en variables de script (Vidsonic/Vidmoly)
+    if (videos.length === 0) {
+      const varSourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
+      if (varSourcesMatch) {
+        try {
+          const sources = JSON.parse(varSourcesMatch[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":'));
           if (Array.isArray(sources)) {
             sources.forEach((s: any) => {
               if (s.file) videos.push({ name: s.label || 'Video', url: s.file });
@@ -215,6 +230,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (videos.length === 0) {
+      console.log(`[Extracción Fallida] URL: ${videoUrl} | HTML: ${html.substring(0, 300).replace(/\n/g, ' ')}`);
       return NextResponse.json({ error: 'No se encontraron enlaces de video compatibles.' }, { status: 404 });
     }
 
