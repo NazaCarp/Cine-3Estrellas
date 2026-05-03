@@ -939,7 +939,73 @@ body .btn-secondary.focused {
   flex-shrink: 0;
 }
 
+.detail-certification-badge {
+  background: rgba(255, 215, 0, 0.15);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  text-transform: uppercase;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.detail-languages {
+  font-size: 1rem;
+  color: #9ca3af;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 15px;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.languages-label {
+  color: var(--accent-color);
+  font-weight: 800;
+  margin-right: 10px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.detail-similar-section {
+  margin-top: clamp(20px, 4vh, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+.similar-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.similar-track-wrapper {
+  overflow: hidden;
+  margin: 0 -40px;
+  padding: 20px 40px;
+}
+
+.similar-track {
+  display: flex;
+  gap: 20px;
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.movie-detail-overlay.loading .similar-track {
+  opacity: 0.5;
+}
+
+.movie-detail-overlay.loading .detail-content>*:not(.detail-title):not(.detail-overview) {
+  opacity: 0.2;
+}
+
 .detail-btn {
+
   padding: 14px 34px;
   border-radius: 10px;
   font-size: 1.1rem;
