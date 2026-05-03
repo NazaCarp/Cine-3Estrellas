@@ -643,9 +643,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               }}
             />
 
-            {/* Overlay de Pausa (Sutil y sin solapamiento) */}
+            {/* Capa de Pausa Cinemática (Lateral) */}
             {!isPlaying && !isBuffering && (
-              <div className="paused-cinematic-vignette" />
+              <div className="paused-side-panel">
+                <div className="side-panel-content">
+                  <div className="side-status">PAUSADO</div>
+                  <h1 className="side-title">{movie.title}</h1>
+                  <div className="side-meta">
+                    <span className="side-rating">★ {movie.vote_average?.toFixed(1)}</span>
+                    <span className="side-year">{movie.release_date?.split('-')[0]}</span>
+                  </div>
+                  <p className="side-hint">Pulsa ENTER para reanudar</p>
+                </div>
+              </div>
             )}
 
 
@@ -653,10 +663,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
             <div className={`player-controls-layer ${!showControls && isPlaying ? 'hidden' : ''}`}>
               
               {/* Overlay de Título (Arriba) */}
-              <div className="video-title-overlay">
+              <div className={`video-title-overlay ${!isPlaying && !isBuffering ? 'hidden' : ''}`}>
                 <div className="flex items-center gap-4">
                   <h2>{movie.title}</h2>
-                  {!isPlaying && !isBuffering && <span className="paused-glass-badge">PAUSADO</span>}
                 </div>
                 <p>Reproduciendo ahora</p>
               </div>
