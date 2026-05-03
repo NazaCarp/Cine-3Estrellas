@@ -195,7 +195,7 @@ export async function GET(request: NextRequest) {
 
     // Patrón 2.1: Sources en variables de script (Vidsonic/Vidmoly)
     if (videos.length === 0) {
-      const varSourcesMatch = html.match(/var\s+sources\s*=\s*(\[.*?\]);/s);
+      const varSourcesMatch = html.match(/var\s+sources\s*=\s*(\[[\s\S]*?\]);/);
       if (varSourcesMatch) {
         try {
           const sources = JSON.parse(varSourcesMatch[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":'));
