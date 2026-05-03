@@ -4,6 +4,8 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Script from 'next/script';
 import { Movie } from '@/types';
 import { extractQuality, preparePlayerUrl } from '@/lib/utils';
+import { useFocus } from '../../context/FocusContext';
+import './VideoPlayer.css';
 
 interface VideoPlayerProps {
   movie: Movie;
@@ -41,6 +43,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const [showVolumeIndicator, setShowVolumeIndicator] = useState(false);
   const [volumeIndicatorValue, setVolumeIndicatorValue] = useState(0);
   const [isScrubbing, setIsScrubbing] = useState(false);
+  const isScrubbingRef = useRef(false);
   const volumeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 
@@ -521,7 +524,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       const onPlay = () => { setIsPlaying(true); resetControlsTimeout(); };
       const onPause = () => { setIsPlaying(false); setShowControls(true); };
       const onTimeUpdate = () => {
-        if (!isScrubbing) {
+        if (!isScrubbingRef.current) {
           setCurrentTime(video.currentTime);
         }
       };
@@ -715,28 +718,40 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                 {/* Barra de Progreso */}
                 <div 
                   className="progress-container" 
-                  onPointerDown={(e) => { 
-                    e.stopPropagation(); 
-                    setIsScrubbing(true);
-                    handleSeek(e);
-                  }}
-                  onPointerMove={(e) => {
-                    if (isScrubbing && duration) {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const pos = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
-                      setCurrentTime(pos * duration); // Visual feedback during drag
-                    }
-                  }}
-                  onPointerUp={(e) => {
-                    if (isScrubbing) {
+                    onPointerDown={(e) => { 
+                      e.stopPropagation(); 
+                      const target = e.currentTarget as HTMLDivElement;
+                      target.setPointerCapture(e.pointerId);
+                      setIsScrubbing(true);
+                      isScrubbingRef.current = true;
                       handleSeek(e);
-                      setIsScrubbing(false);
-                    }
-                  }}
-                  onPointerLeave={() => {
-                    if (isScrubbing) setIsScrubbing(false);
-                  }}
+                    }}
+                    onPointerMove={(e) => {
+                      if (isScrubbingRef.current && duration) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const pos = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
+                        setCurrentTime(pos * duration);
+                      }
+                    }}
+                    onPointerUp={(e) => {
+                      if (isScrubbingRef.current) {
+                        const target = e.currentTarget as HTMLDivElement;
+                        target.releasePointerCapture(e.pointerId);
+                        handleSeek(e);
+                        setIsScrubbing(false);
+                        isScrubbingRef.current = false;
+                      }
+                    }}
+                    onPointerCancel={(e) => {
+                      if (isScrubbingRef.current) {
+                        const target = e.currentTarget as HTMLDivElement;
+                        target.releasePointerCapture(e.pointerId);
+                        setIsScrubbing(false);
+                        isScrubbingRef.current = false;
+                      }
+                    }}
                 >
+
                   <div className="progress-bar" style={{ width: `${(currentTime / duration) * 100}%` }}>
                     <div className="progress-knob" />
                   </div>
