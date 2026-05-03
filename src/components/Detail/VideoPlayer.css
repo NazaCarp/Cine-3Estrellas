@@ -69,6 +69,8 @@
   position: relative;
   transition: height 0.2s ease, transform 0.2s ease;
   z-index: 10;
+  touch-action: none;
+  user-select: none;
 }
 
 /* Área de impacto ampliada (invisible) */

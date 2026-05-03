@@ -713,7 +713,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               )}
 
               {/* Barra de Controles (Abajo) */}
-              <div className={`video-controls ${!showControls && isPlaying ? 'hidden' : ''}`}>
+              <div className={`video-controls ${(!showControls && isPlaying && !isScrubbing) ? 'hidden' : ''}`}>
                 
                 {/* Barra de Progreso */}
                 <div 
@@ -731,6 +731,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                         const rect = e.currentTarget.getBoundingClientRect();
                         const pos = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
                         setCurrentTime(pos * duration);
+                        resetControlsTimeout(); // Mantener controles visibles mientras se mueve
                       }
                     }}
                     onPointerUp={(e) => {
