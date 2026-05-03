@@ -4,7 +4,6 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Script from 'next/script';
 import { Movie } from '@/types';
 import { extractQuality, preparePlayerUrl } from '@/lib/utils';
-import { useFocus } from '../../context/FocusContext';
 import './VideoPlayer.css';
 
 interface VideoPlayerProps {
