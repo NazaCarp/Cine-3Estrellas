@@ -716,9 +716,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                     <div className="flex items-center gap-3">
                       <button className="control-btn" onClick={toggleMute}>
                         {isMuted ? (
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM19 12c0 3.12-1.66 5.85-4.12 7.37l1.06 1.06C19.16 18.57 21 15.5 21 12s-1.84-6.57-5.06-8.43l-1.06 1.06C17.34 6.15 19 8.88 19 12zM3 9v6h4l5 5V4L7 9H3z"/></svg>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+                            <line x1="23" y1="9" x2="17" y2="15"></line>
+                            <line x1="17" y1="9" x2="23" y2="15"></line>
+                          </svg>
                         ) : (
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                          </svg>
                         )}
                       </button>
                     </div>
@@ -734,7 +741,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
             {/* Indicador de Volumen */}
             {showVolumeIndicator && (
               <div className="volume-indicator">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
                 <span className="text-xl font-bold">{volumeIndicatorValue}%</span>
               </div>
             )}
