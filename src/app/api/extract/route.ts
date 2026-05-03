@@ -106,18 +106,29 @@ export async function GET(request: NextRequest) {
 
   // --- MODO EXTRACCIÓN ---
   try {
-    let extractionReferer = 'https://vidmoly.biz/';
+    let extractionReferer = '';
+    if (videoUrl.includes('vidmoly.')) extractionReferer = 'https://vidmoly.biz/';
     if (videoUrl.includes('vidsonic.net')) extractionReferer = 'https://vidsonic.net/';
     if (videoUrl.includes('ok.ru')) extractionReferer = 'https://ok.ru/';
     
     const response = await fetch(videoUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': extractionReferer
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+        'Referer': extractionReferer || videoUrl,
+        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="121", "Google Chrome";v="121"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1'
       }
     });
 
-    if (!response.ok) {
+    if (!response.ok && response.status !== 403 && response.status !== 401) {
       throw new Error(`Error del servidor externo (${response.status})`);
     }
 
@@ -193,10 +204,13 @@ export async function GET(request: NextRequest) {
 
     if (videos.length === 0) {
       // Búsqueda profunda de .m3u8 o .mp4
-      const deepMatch = html.match(/https?:\/\/[^"']+\.(m3u8|mp4)[^"']*/g);
+      const deepMatch = html.match(/https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*/g);
       if (deepMatch) {
-        const realLinks = deepMatch.filter(l => !l.includes('test-videos') && !l.includes('bunny'));
-        if (realLinks.length > 0) videos.push({ name: 'Directo', url: realLinks[0] });
+        const realLinks = deepMatch.filter(l => !l.includes('test-videos') && !l.includes('bunny') && !l.includes('analytics'));
+        if (realLinks.length > 0) {
+          // Tomamos el primer enlace que parezca ser el principal
+          videos.push({ name: 'Directo', url: realLinks[0] });
+        }
       }
     }
 
