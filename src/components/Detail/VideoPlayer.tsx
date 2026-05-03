@@ -643,17 +643,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               }}
             />
 
-            {/* Overlay de Pausa */}
-            <div className={`paused-overlay ${!isPlaying ? 'visible' : ''}`}>
-              <div className="paused-content">
-                <div className="paused-icon-circle">
-                  <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor">
-                    <polygon points="5 3 19 12 5 21 5 3"/>
-                  </svg>
-                </div>
-                <span className="paused-text">PAUSADO</span>
-              </div>
-            </div>
+            {/* Overlay de Pausa (Sutil y sin solapamiento) */}
+            {!isPlaying && !isBuffering && (
+              <div className="paused-cinematic-vignette" />
+            )}
 
 
             {/* INTERFAZ PERSONALIZADA */}
@@ -661,7 +654,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               
               {/* Overlay de Título (Arriba) */}
               <div className="video-title-overlay">
-                <h2>{movie.title}</h2>
+                <div className="flex items-center gap-4">
+                  <h2>{movie.title}</h2>
+                  {!isPlaying && !isBuffering && <span className="paused-glass-badge">PAUSADO</span>}
+                </div>
                 <p>Reproduciendo ahora</p>
               </div>
 
