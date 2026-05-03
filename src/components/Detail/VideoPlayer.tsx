@@ -40,7 +40,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const [lastVolume, setLastVolume] = useState(1);
   const [showVolumeIndicator, setShowVolumeIndicator] = useState(false);
   const [volumeIndicatorValue, setVolumeIndicatorValue] = useState(0);
+  const [isScrubbing, setIsScrubbing] = useState(false);
   const volumeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -451,8 +453,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     if (!videoRef.current || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const clientX = (e as any).clientX || ((e as any).touches && (e as any).touches[0].clientX) || ((e as any).nativeEvent as any).clientX;
-    const pos = (clientX - rect.left) / rect.width;
-    videoRef.current.currentTime = Math.min(Math.max(0, pos), 1) * duration;
+    const pos = Math.min(Math.max(0, (clientX - rect.left) / rect.width), 1);
+    const newTime = pos * duration;
+    
+    // Feedback visual inmediato para el usuario
+    setCurrentTime(newTime);
+    videoRef.current.currentTime = newTime;
+    
     resetControlsTimeout();
   };
 
@@ -513,7 +520,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       
       const onPlay = () => { setIsPlaying(true); resetControlsTimeout(); };
       const onPause = () => { setIsPlaying(false); setShowControls(true); };
-      const onTimeUpdate = () => setCurrentTime(video.currentTime);
+      const onTimeUpdate = () => {
+        if (!isScrubbing) {
+          setCurrentTime(video.currentTime);
+        }
+      };
+
       const onDurationChange = () => setDuration(video.duration);
       const onWaiting = () => setIsBuffering(true);
       const onPlaying = () => setIsBuffering(false);
@@ -701,7 +713,30 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               <div className={`video-controls ${!showControls && isPlaying ? 'hidden' : ''}`}>
                 
                 {/* Barra de Progreso */}
-                <div className="progress-container" onPointerDown={(e) => { e.stopPropagation(); handleSeek(e); }}>
+                <div 
+                  className="progress-container" 
+                  onPointerDown={(e) => { 
+                    e.stopPropagation(); 
+                    setIsScrubbing(true);
+                    handleSeek(e);
+                  }}
+                  onPointerMove={(e) => {
+                    if (isScrubbing && duration) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const pos = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
+                      setCurrentTime(pos * duration); // Visual feedback during drag
+                    }
+                  }}
+                  onPointerUp={(e) => {
+                    if (isScrubbing) {
+                      handleSeek(e);
+                      setIsScrubbing(false);
+                    }
+                  }}
+                  onPointerLeave={() => {
+                    if (isScrubbing) setIsScrubbing(false);
+                  }}
+                >
                   <div className="progress-bar" style={{ width: `${(currentTime / duration) * 100}%` }}>
                     <div className="progress-knob" />
                   </div>
