@@ -193,7 +193,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Patrón 2.1: Sources en variables de script (Vidsonic/Vidmoly)
+    // Patrón 3: Sources en variables de script (Vidmoly/JWPlayer)
     if (videos.length === 0) {
       const varSourcesMatch = html.match(/var\s+sources\s*=\s*(\[[\s\S]*?\]);/);
       if (varSourcesMatch) {
@@ -208,12 +208,40 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Patrón 3: JWPlayer sources estándar
+    // Patrón 4: Vidsonic Hex-encoded URL (Nuevo)
     if (videos.length === 0) {
-      const jwMatch = html.match(/sources:\s*\[\s*\{\s*file:\s*["']([^"']+)["']/);
-      if (jwMatch) {
-        const labelMatch = html.match(/label:\s*["']([^"']+)["']/);
-        videos.push({ name: labelMatch ? labelMatch[1] : 'Original', url: jwMatch[1] });
+      const vidsonicHexMatch = html.match(/['"]([a-f0-9]{2,}\|[a-f0-9|]{20,})['"]/);
+      if (vidsonicHexMatch) {
+        try {
+          const hex = vidsonicHexMatch[1].split('|').join('');
+          let decoded = '';
+          for (let i = 0; i < hex.length; i += 2) {
+            decoded += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+          }
+          const finalUrl = decoded.split('').reverse().join('');
+          if (finalUrl.startsWith('http')) {
+            videos.push({ name: 'HD', url: finalUrl });
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (videos.length === 0) {
+      // Patrón 5: Vidsonic data-vs (Base64)
+      const dataVsMatch = html.match(/data-vs=["']([A-Za-z0-9+/=]{20,})["']/);
+      if (dataVsMatch) {
+        try {
+          const decoded = Buffer.from(dataVsMatch[1], 'base64').toString('utf-8');
+          if (decoded.startsWith('http')) {
+            videos.push({ name: 'HD', url: decoded });
+          } else {
+            try {
+              const data = JSON.parse(decoded);
+              if (data.file) videos.push({ name: 'HD', url: data.file });
+              else if (data.url) videos.push({ name: 'HD', url: data.url });
+            } catch(e) {}
+          }
+        } catch (e) {}
       }
     }
 
@@ -221,16 +249,16 @@ export async function GET(request: NextRequest) {
       // Búsqueda profunda de .m3u8 o .mp4
       const deepMatch = html.match(/https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*/g);
       if (deepMatch) {
-        const realLinks = deepMatch.filter(l => !l.includes('test-videos') && !l.includes('bunny') && !l.includes('analytics'));
+        const forbidden = ['test-videos', 'bunny', 'analytics', 'doubleclick', 'google-analytics', 'hotjar'];
+        const realLinks = deepMatch.filter(l => !forbidden.some(f => l.includes(f)));
         if (realLinks.length > 0) {
-          // Tomamos el primer enlace que parezca ser el principal
           videos.push({ name: 'Directo', url: realLinks[0] });
         }
       }
     }
 
     if (videos.length === 0) {
-      console.log(`[Extracción Fallida] URL: ${videoUrl} | HTML: ${html.substring(0, 300).replace(/\n/g, ' ')}`);
+      console.log(`[Extracción Fallida] URL: ${videoUrl} | HTML: ${html.substring(0, 500).replace(/\n/g, ' ')}`);
       return NextResponse.json({ error: 'No se encontraron enlaces de video compatibles.' }, { status: 404 });
     }
 
