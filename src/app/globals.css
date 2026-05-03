@@ -956,7 +956,6 @@ body .btn-secondary.focused {
   pointer-events: auto;
 }
 
-
 .detail-btn.btn-play {
   background: rgba(255, 255, 255, 0.95);
   color: #000;
@@ -973,8 +972,8 @@ body .btn-secondary.focused {
 
 .detail-btn.btn-close {
   position: absolute;
-  top: 30px;
-  right: 30px;
+  top: 20px;
+  right: 20px;
   width: 50px;
   height: 50px;
   padding: 0;
@@ -982,187 +981,13 @@ body .btn-secondary.focused {
   justify-content: center;
   z-index: 100;
 }
-
-.detail-btn.btn-fullscreen {
-  position: absolute;
-  top: 30px;
-  right: 90px;
-  width: 50px;
-  height: 50px;
-  padding: 0;
-  border-radius: 50%;
-  justify-content: center;
-  z-index: 100;
-}
-
-
-.detail-btn.btn-close.focused {
-  background: linear-gradient(135deg, #fff6df 0%, #ffd700 100%) !important;
-  color: #3a3000 !important;
-  opacity: 1 !important;
-  transform: scale(1.1) rotate(90deg) !important;
-  border: none !important;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4) !important;
-}
-
-.detail-certification-badge {
-  background: rgba(255, 215, 0, 0.15);
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 800;
-  border: 1px solid var(--accent-color);
-  color: var(--accent-color);
-  text-transform: uppercase;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
-}
-
-.skeleton {
-  background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0.05) 25%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0.05) 75%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 2s infinite linear;
-  border-radius: 4px;
-  color: transparent !important;
-  pointer-events: none;
-}
-
-@keyframes skeleton-shimmer {
-  from {
-    background-position: 200% 0;
-  }
-
-  to {
-    background-position: -200% 0;
-  }
-}
-
-.movie-detail-overlay.loading .similar-track {
-  opacity: 0.5;
-}
-
-.detail-languages {
-  font-size: 1rem;
-  color: #9ca3af;
-  font-weight: 500;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 8px 15px;
-  border-radius: 8px;
-  width: fit-content;
-}
-
-.languages-label {
-  color: var(--accent-color);
-  font-weight: 800;
-  margin-right: 10px;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-}
-
-.detail-similar-section {
-  margin-top: clamp(20px, 4vh, 40px);
-  display: flex;
-  flex-direction: column;
-  gap: 0px; /* Reduced to match Home carousels */
-}
-
-/* RESPONSIVE ADJUSTMENTS FOR SMALL HEIGHTS (TVs, Landscape Mobile) */
-@media (max-height: 700px) {
-  .detail-content {
-    padding: 60px 80px 40px;
-    gap: 8px;
-  }
-
-  .detail-title {
-    font-size: 2.8rem;
-  }
-
-  .detail-meta {
-    font-size: 0.95rem;
-    gap: 10px;
-  }
-
-  .detail-genres {
-    margin-top: 10px;
-    padding: 6px 12px;
-    font-size: 0.9rem;
-  }
-
-  .similar-track {
-    padding: 10px 0;
-  }
-}
-
-.similar-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 0.5px;
-  margin: 0; /* Clear default margins */
-}
-
-.similar-track {
-  display: flex;
-  gap: 20px;
-  padding: 10px 0 20px; /* Reduced top padding */
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-/* Base fade for detail content when loading */
-.movie-detail-overlay.loading .detail-content>*:not(.detail-title):not(.detail-overview) {
-  opacity: 0.2;
-}
-
-/* VIDEO PLAYER STYLES */
-.video-player-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #000;
-  z-index: 20000;
-  overflow: hidden;
-  animation: playerFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes playerFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(1.05);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.video-element {
-  width: 100%;
-  height: 100%;
-  border: none;
-  background: #000;
-}.player-controls-layer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 20;
-}
-
-
 
 .video-controls {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 80px 60px 40px;
+  padding: 80px 20px 20px;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0) 100%);
   display: flex;
   flex-direction: column;
@@ -1253,8 +1078,8 @@ body .btn-secondary.focused {
 
 .video-title-overlay {
   position: absolute;
-  top: 40px;
-  left: 60px;
+  top: 20px;
+  left: 20px;
   z-index: 10;
   transition: opacity 0.5s ease, transform 0.5s ease;
   pointer-events: none;
@@ -1341,7 +1166,7 @@ body .btn-secondary.focused {
   z-index: 15;
   display: flex;
   align-items: center;
-  padding: 0 80px;
+  padding: 0 40px;
   animation: sidePanelSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   border-right: 1px solid rgba(255, 215, 0, 0.1);
 }
