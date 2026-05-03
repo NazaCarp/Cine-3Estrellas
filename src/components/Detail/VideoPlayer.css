@@ -100,29 +100,18 @@
   transition: width 0.1s linear;
 }
 
-.progress-handle {
-  position: absolute;
-  right: -6px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.progress-container:hover .progress-handle {
-  opacity: 1;
-}
-
-.controls-main-row {
+.controls-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 30px;
+  width: 100%;
+}
+
+.controls-left, .controls-right {
+  display: flex;
+  align-items: center;
+  gap: 25px;
 }
 
 .control-btn {
@@ -146,6 +135,27 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.8);
+  min-width: 120px;
+}
+
+.video-title-overlay {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.video-title-overlay h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.video-title-overlay p {
+  font-size: 0.75rem;
+  color: var(--accent-color);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 2px 0 0;
 }
 
 .premium-loader-container {
