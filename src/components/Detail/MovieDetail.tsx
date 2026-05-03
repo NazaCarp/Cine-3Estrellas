@@ -96,7 +96,7 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
         const margin = 100; // Courtesy margin
         
         const itemLeft = similarFocusIndex * itemWidth;
-        const itemRight = itemLeft + itemWidth;
+        const itemRight = itemLeft + itemWidth + 20; // Add gap to right calculation
         
         let newTranslate = currentTranslateRef.current;
         const viewLeft = -newTranslate;
@@ -108,7 +108,7 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movie: initialMovie, onClose 
           newTranslate = -(itemRight - containerWidth + margin);
         }
         
-        const maxScroll = -(totalWidth - containerWidth);
+        const maxScroll = -(totalWidth - containerWidth + 100); // 100px extra buffer
         
         if (similarFocusIndex === 0) {
           newTranslate = 0;

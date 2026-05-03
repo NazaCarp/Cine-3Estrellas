@@ -808,18 +808,18 @@ body .btn-secondary.focused {
   background: linear-gradient(0deg, rgba(15, 17, 21, 1) 15%, rgba(15, 17, 21, 0.7) 50%, rgba(15, 17, 21, 0) 100%);
   z-index: 2;
 }
-
-.detail-content {
+.detail-content {
   position: relative;
   z-index: 10;
   display: flex;
   flex-direction: column;
-  padding: clamp(60px, 12vh, 120px) clamp(40px, 8vw, 100px) clamp(40px, 8vh, 80px);
+  padding: clamp(40px, 8vh, 80px) 20px;
   max-width: 1400px;
   min-height: 100vh;
   gap: clamp(8px, 1.5vh, 12px);
   justify-content: flex-start;
 }
+
 
 .detail-title {
   font-size: clamp(2.5rem, 8vh, 4.5rem);
@@ -985,7 +985,7 @@ body .btn-secondary.focused {
 }
 
 .similar-track-wrapper {
-  overflow: hidden;
+  overflow: hidden; 
   margin: 0 -20px;
   padding: 20px 20px;
 }
@@ -994,7 +994,7 @@ body .btn-secondary.focused {
   display: flex;
   gap: 20px;
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-  padding-right: 150px; /* Espacio extra al final para que el último item no se corte */
+  padding-right: 200px; /* Mas espacio para evitar cortes */
 }
 
 .movie-detail-overlay.loading .similar-track {
