@@ -447,11 +447,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     }
   }, []);
 
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement> | React.PointerEvent<HTMLDivElement>) => {
     if (!videoRef.current || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
-    videoRef.current.currentTime = pos * duration;
+    const clientX = (e as any).clientX || ((e as any).touches && (e as any).touches[0].clientX) || ((e as any).nativeEvent as any).clientX;
+    const pos = (clientX - rect.left) / rect.width;
+    videoRef.current.currentTime = Math.min(Math.max(0, pos), 1) * duration;
+    resetControlsTimeout();
   };
 
   const handleSkip = (seconds: number) => {
@@ -632,7 +634,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               className="video-element" 
               autoPlay 
               playsInline
-              onClick={handlePlayPause}
+              onClick={(e) => {
+                if (!showControls) {
+                  resetControlsTimeout();
+                } else {
+                  handlePlayPause();
+                }
+              }}
             />
 
             {/* INTERFAZ PERSONALIZADA */}
@@ -675,7 +683,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               <div className={`video-controls ${!showControls && isPlaying ? 'hidden' : ''}`}>
                 
                 {/* Barra de Progreso */}
-                <div className="progress-container" onClick={(e) => { e.stopPropagation(); handleSeek(e); }}>
+                <div className="progress-container" onPointerDown={(e) => { e.stopPropagation(); handleSeek(e); }}>
                   <div className="progress-bar" style={{ width: `${(currentTime / duration) * 100}%` }}>
                     <div className="progress-knob" />
                   </div>
