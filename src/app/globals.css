@@ -986,14 +986,15 @@ body .btn-secondary.focused {
 
 .similar-track-wrapper {
   overflow: hidden;
-  margin: 0 -40px;
-  padding: 20px 40px;
+  margin: 0 -20px;
+  padding: 20px 20px;
 }
 
 .similar-track {
   display: flex;
   gap: 20px;
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  padding-right: 150px; /* Espacio extra al final para que el último item no se corte */
 }
 
 .movie-detail-overlay.loading .similar-track {
