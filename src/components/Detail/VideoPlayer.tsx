@@ -27,7 +27,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const [downloadQualities, setDownloadQualities] = useState<Quality[]>([]);
   const [activeDownloadTab, setActiveDownloadTab] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const playbackAbortRef = useRef<AbortController | null>(null);
+  const downloadAbortRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
@@ -112,7 +113,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
           finalUrlToExtract = preparePlayerUrl(url);
         }
         
-        const res = await fetch(`/api/extract?url=${encodeURIComponent(finalUrlToExtract)}`);
+        // Cancel previous playback extraction
+        if (playbackAbortRef.current) playbackAbortRef.current.abort();
+        playbackAbortRef.current = new AbortController();
+        
+        const res = await fetch(`/api/extract?url=${encodeURIComponent(finalUrlToExtract)}`, { 
+          signal: playbackAbortRef.current.signal 
+        });
         const data = await res.json();
         
         if (res.ok && data.qualities?.length > 0) {
@@ -222,11 +229,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const handleExtractAll = async (vKeys: string[]) => {
     try {
       // Cancel previous extraction if any
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      if (downloadAbortRef.current) {
+        downloadAbortRef.current.abort();
       }
-      abortControllerRef.current = new AbortController();
-      const signal = abortControllerRef.current.signal;
+      downloadAbortRef.current = new AbortController();
+      const signal = downloadAbortRef.current.signal;
 
       setExtractingDownloads(true);
       setError(null);
@@ -419,9 +426,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown, { capture: true });
       // Cancelar cualquier extracción pendiente al cerrar el reproductor
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      if (playbackAbortRef.current) playbackAbortRef.current.abort();
+      if (downloadAbortRef.current) downloadAbortRef.current.abort();
     };
   }, [handleKeyDown]);
 
