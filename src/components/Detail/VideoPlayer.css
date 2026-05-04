@@ -118,3 +118,23 @@
   align-items: center;
   gap: 15px;
 }
+
+/* Glass Option Row Loading State */
+.glass-option-row.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.glass-option-row.loading .glass-option-action {
+  opacity: 1 !important;
+  transform: translateX(0) !important;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

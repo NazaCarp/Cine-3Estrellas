@@ -22,6 +22,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   
   const [versions, setVersions] = useState<string[]>([]);
   const [extracting, setExtracting] = useState(false);
+  const [extractingVersion, setExtractingVersion] = useState<string | null>(null);
   const [extractingDownloads, setExtractingDownloads] = useState(false);
   const [downloadQualities, setDownloadQualities] = useState<Quality[]>([]);
   const [activeDownloadTab, setActiveDownloadTab] = useState<string | null>(null);
@@ -91,6 +92,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   }, [movie.versions]);
 
   const handleSelect = async (url: string, versionName?: string) => {
+    if (extracting) return;
+
     // Si ya es un enlace directo, reproducir inmediatamente
     const isDirect = url.includes('.m3u8') || url.includes('.mp4') || url.includes('urlset');
     
@@ -99,6 +102,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     } else if (url.includes('vidmoly.') || url.includes('p2pplay.pro') || url.includes('vidsonic.net') || url.includes('ok.ru')) {
       // Servidores con soporte para extracción (evita anuncios y permite autoplay)
       setExtracting(true);
+      setExtractingVersion(versionName || null);
       try {
         // Normalizamos la URL
         let finalUrlToExtract = url;
@@ -122,6 +126,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         setSelectedUrl(preparePlayerUrl(url));
       } finally {
         setExtracting(false);
+        setExtractingVersion(null);
       }
     } else {
       // Otros servidores: Usar iframe normal
@@ -869,7 +874,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                     return (
                       <div 
                         key={v} 
-                        className={`glass-option-row ${isActive ? 'active' : ''} ${focusIndex === i ? 'focused' : ''}`}
+                        className={`glass-option-row ${isActive ? 'active' : ''} ${focusIndex === i ? 'focused' : ''} ${extracting && extractingVersion === v ? 'loading' : ''}`}
                         onPointerEnter={() => setFocusIndex(i)}
                         onClick={() => handleSelect(typeof val === 'object' ? (val as any).url : val, v)}
                       >
@@ -880,7 +885,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                         </div>
                         <span className="quality-badge">{extractQuality(movie.versions![v])}</span>
                         <div className="glass-option-action">
-                          {isActive && (
+                          {extracting && extractingVersion === v ? (
+                            <svg className="animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+                              <line x1="12" y1="2" x2="12" y2="6"></line>
+                              <line x1="12" y1="18" x2="12" y2="22"></line>
+                              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                              <line x1="2" y1="12" x2="6" y2="12"></line>
+                              <line x1="18" y1="12" x2="22" y2="12"></line>
+                              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                            </svg>
+                          ) : isActive && (
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <polygon points="5 3 19 12 5 21 5 3"></polygon>
                             </svg>
