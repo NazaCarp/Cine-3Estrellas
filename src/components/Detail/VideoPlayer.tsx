@@ -22,6 +22,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   
   const [versions, setVersions] = useState<string[]>([]);
   const [extracting, setExtracting] = useState(false);
+  const [extractingDownloads, setExtractingDownloads] = useState(false);
   const [downloadQualities, setDownloadQualities] = useState<Quality[]>([]);
   const [activeDownloadTab, setActiveDownloadTab] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +114,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         if (res.ok && data.qualities?.length > 0) {
           // Éxito: Usamos el enlace directo (la mejor calidad disponible)
           setSelectedUrl(data.qualities[0].url);
-          setDownloadQualities(data.qualities.map((q: any) => ({ ...q, version: versionName?.toUpperCase() || 'AUTO' })));
         } else {
           // Fallback: Si falla la extracción, usamos el iframe normal
           setSelectedUrl(preparePlayerUrl(url));
@@ -223,7 +223,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       abortControllerRef.current = new AbortController();
       const signal = abortControllerRef.current.signal;
 
-      setExtracting(true);
+      setExtractingDownloads(true);
       setError(null);
       
       const extractionPromises = vKeys.map(async (vKey) => {
@@ -278,7 +278,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       if ((err as Error).name === 'AbortError') return;
       setError('Error de extracción.');
     } finally {
-      setExtracting(false);
+      setExtractingDownloads(false);
     }
   };
 
@@ -897,7 +897,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                 <div className="glass-section" style={{ marginTop: '40px' }}>
                   <h3 className="glass-section-title">DESCARGA DIRECTA</h3>
                   
-                  {extracting ? (
+                  {extractingDownloads ? (
                     <div className="glass-list">
                       <div className="glass-option-row loading">
                         <div className="extraction-loader"><div className="extraction-loader-bar" /></div>
