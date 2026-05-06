@@ -66,13 +66,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
         wasSpeedingRef.current = true;
         
         if (isLeft) {
-          // HTML5 no soporta velocidad negativa nativa. Simulamos rebobinado:
+          // HTML5 no soporta velocidad negativa nativa. Simulamos rebobinado saltando frames:
           videoRef.current.pause();
           rewindIntervalRef.current = setInterval(() => {
             if (videoRef.current) {
-              videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 0.5);
+              // Damos saltos más largos (1 seg) cada más tiempo (200ms) para darle tiempo
+              // al navegador de decodificar y renderizar el frame en pantalla.
+              videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 1.0);
             }
-          }, 100); // Retrocede 0.5s cada 100ms (aprox 5x de velocidad inversa visualmente)
+          }, 200); // Retrocede 1s cada 200ms (aprox 5x de velocidad inversa visualmente)
         } else {
           videoRef.current.playbackRate = 2.0;
           if (videoRef.current.paused) videoRef.current.play().catch(() => {});
