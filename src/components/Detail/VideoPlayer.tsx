@@ -47,6 +47,29 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const volumeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
+  const [seekRipple, setSeekRipple] = useState<'left' | 'right' | null>(null);
+
+  const handleDoubleTap = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!videoRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isLeft = e.clientX - rect.left < rect.width / 3;
+    const isRight = e.clientX - rect.left > (rect.width * 2) / 3;
+
+    if (isLeft) {
+      handleSkip(-10);
+      setSeekRipple('left');
+      setTimeout(() => setSeekRipple(null), 500);
+      if (videoRef.current.paused) videoRef.current.play();
+    } else if (isRight) {
+      handleSkip(10);
+      setSeekRipple('right');
+      setTimeout(() => setSeekRipple(null), 500);
+      if (videoRef.current.paused) videoRef.current.play();
+    } else {
+      toggleFullscreen();
+    }
+  };
 
 
   const toggleFullscreen = () => {
@@ -739,7 +762,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                   handlePlayPause();
                 }
               }}
+              onDoubleClick={handleDoubleTap}
             />
+
+            {/* Animación de Doble Toque */}
+            {seekRipple && (
+              <div className={`seek-ripple-container ${seekRipple}`}>
+                <div className="seek-ripple-circle">
+                  <span className="seek-ripple-text">
+                    {seekRipple === 'left' ? '« -10s' : '+10s »'}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Capa de Pausa Cinemática (Lateral) */}
             {!isPlaying && !isBuffering && (
