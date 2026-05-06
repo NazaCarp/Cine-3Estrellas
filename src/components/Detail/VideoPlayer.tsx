@@ -412,7 +412,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
             const qualityIdx = focusIndex - gridStartIdx;
             if (activeQualities[qualityIdx]) {
               const q = activeQualities[qualityIdx];
-              const downloadUrl = q.url.includes('proxy=true') ? `${q.url}&download=true` : q.url;
+              const downloadUrl = (q.url.includes('proxy=true') || q.url.includes('workers.dev')) ? `${q.url}&download=true` : q.url;
               window.open(downloadUrl, '_blank');
             }
           }
@@ -435,11 +435,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
     : `https://image.tmdb.org/t/p/original${movie.poster_path}`;
 
-  // Detectamos si es un link directo o si es un link procesado por nuestro proxy
+  // Detectamos si es un link directo o si es un link procesado por nuestro proxy (Cloudflare Worker)
   const isDirectLink = selectedUrl?.includes('.m3u8') || 
                        selectedUrl?.includes('.mp4') || 
                        selectedUrl?.includes('urlset') ||
-                       selectedUrl?.includes('proxy=true');
+                       selectedUrl?.includes('proxy=true') ||
+                       selectedUrl?.includes('workers.dev');
 
   // Referencia para el elemento de video
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -875,7 +876,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                     const val = movie.versions![v];
                     const details = getVersionDetails(v);
                     const isActive = selectedUrl === (typeof val === 'object' ? (val as any).url : val) || 
-                                     (selectedUrl?.includes('proxy=true') && selectedUrl?.includes(encodeURIComponent(typeof val === 'object' ? (val as any).url : val)));
+                                     ((selectedUrl?.includes('proxy=true') || selectedUrl?.includes('workers.dev')) && selectedUrl?.includes(encodeURIComponent(typeof val === 'object' ? (val as any).url : val)));
                     
                     return (
                       <div 
@@ -1011,7 +1012,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                                     className={`download-chip ${isFocused ? 'focused' : ''}`}
                                     onPointerEnter={() => setFocusIndex(absIdx)}
                                     onClick={() => {
-                                      const downloadUrl = q.url.includes('proxy=true') ? `${q.url}&download=true` : q.url;
+                                      const downloadUrl = (q.url.includes('proxy=true') || q.url.includes('workers.dev')) ? `${q.url}&download=true` : q.url;
                                       window.open(downloadUrl, '_blank');
                                     }}
                                   >
