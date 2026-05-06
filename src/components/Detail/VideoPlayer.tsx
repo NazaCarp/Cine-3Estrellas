@@ -68,6 +68,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       }
     } catch (err: any) {
       console.error(`Error fullscreen: ${err.message}`);
+      // Fallback para WebView (Telegram/iOS) que bloquean el fullscreen del div
+      if (videoRef.current) {
+        try {
+          if ((videoRef.current as any).webkitEnterFullscreen) {
+            (videoRef.current as any).webkitEnterFullscreen();
+          } else if (videoRef.current.requestFullscreen) {
+            await videoRef.current.requestFullscreen();
+          }
+        } catch (fallbackErr) {
+          console.error('Fallback fullscreen también falló:', fallbackErr);
+        }
+      }
     }
   };
 
