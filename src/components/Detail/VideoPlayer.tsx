@@ -844,9 +844,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
             {isSpeeding && (
               <div className="speed-indicator-overlay">
                 <div className="speed-indicator-pill">
-                  <span className="speed-icon" style={{ transform: isSpeeding === 'rewind' ? 'scaleX(-1)' : 'none', display: 'inline-block' }}>▶▶</span>
+                  <span className="speed-icon">
+                    {isSpeeding === 'fast' ? '▶▶' : '◀◀'}
+                  </span>
                   <span className="speed-text">
-                    {isSpeeding === 'fast' ? '2x Cámara Rápida' : '« Rebobinando'}
+                    {isSpeeding === 'fast' ? '2x Cámara Rápida' : 'Rebobinando'}
                   </span>
                 </div>
               </div>
