@@ -48,21 +48,35 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
   const [seekRipple, setSeekRipple] = useState<'left' | 'right' | null>(null);
-  const [isSpeeding, setIsSpeeding] = useState(false);
+  const [isSpeeding, setIsSpeeding] = useState<'fast' | 'rewind' | false>(false);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const rewindIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const wasSpeedingRef = useRef(false);
 
   const handleVideoPointerDown = (e: React.PointerEvent) => {
     if (!videoRef.current || (e.pointerType === 'mouse' && e.button !== 0)) return;
     
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isLeft = e.clientX - rect.left < rect.width / 2;
+
     // Iniciar temporizador para el long press
     longPressTimerRef.current = setTimeout(() => {
       if (videoRef.current) {
-        setIsSpeeding(true);
+        setIsSpeeding(isLeft ? 'rewind' : 'fast');
         wasSpeedingRef.current = true;
-        videoRef.current.playbackRate = 2.0;
-        // Si estaba pausado, lo reproducimos para que se note el 2x
-        if (videoRef.current.paused) videoRef.current.play();
+        
+        if (isLeft) {
+          // HTML5 no soporta velocidad negativa nativa. Simulamos rebobinado:
+          videoRef.current.pause();
+          rewindIntervalRef.current = setInterval(() => {
+            if (videoRef.current) {
+              videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 0.5);
+            }
+          }, 100); // Retrocede 0.5s cada 100ms (aprox 5x de velocidad inversa visualmente)
+        } else {
+          videoRef.current.playbackRate = 2.0;
+          if (videoRef.current.paused) videoRef.current.play().catch(() => {});
+        }
       }
     }, 500);
   };
@@ -72,10 +86,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    if (rewindIntervalRef.current) {
+      clearInterval(rewindIntervalRef.current);
+      rewindIntervalRef.current = null;
+    }
+
     if (isSpeeding || wasSpeedingRef.current) {
       setIsSpeeding(false);
       if (videoRef.current) {
         videoRef.current.playbackRate = 1.0;
+        // Volver a reproducir si veníamos de rebobinar
+        if (videoRef.current.paused) videoRef.current.play().catch(() => {});
       }
       // Evitar que el onClick pause el video justo después de soltar el long press
       setTimeout(() => {
@@ -817,12 +838,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               </div>
             )}
 
-            {/* Animación de Velocidad (2x) */}
+            {/* Animación de Velocidad */}
             {isSpeeding && (
               <div className="speed-indicator-overlay">
                 <div className="speed-indicator-pill">
-                  <span className="speed-icon">▶▶</span>
-                  <span className="speed-text">2x Reproduciendo</span>
+                  <span className="speed-icon" style={{ transform: isSpeeding === 'rewind' ? 'scaleX(-1)' : 'none', display: 'inline-block' }}>▶▶</span>
+                  <span className="speed-text">
+                    {isSpeeding === 'fast' ? '2x Cámara Rápida' : '« Rebobinando'}
+                  </span>
                 </div>
               </div>
             )}
