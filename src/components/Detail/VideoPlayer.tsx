@@ -126,19 +126,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
           // Éxito: Usamos el enlace directo (la mejor calidad disponible)
           setSelectedUrl(data.qualities[0].url);
         } else {
-          // Fallback: Si falla la extracción, usamos el iframe normal
-          setSelectedUrl(preparePlayerUrl(url));
+          // Bloqueado: No mostrar iframes con publicidad
+          setError('No se pudo extraer el video. El reproductor original tiene demasiada publicidad y ha sido bloqueado por seguridad.');
         }
       } catch (e) {
         if ((e as Error).name === 'AbortError') return;
-        setSelectedUrl(preparePlayerUrl(url));
+        // Bloqueado: Error de conexión, no mostrar iframes
+        setError('Error al intentar obtener un enlace limpio y sin publicidad.');
       } finally {
         setExtracting(false);
         setExtractingVersion(null);
       }
     } else {
-      // Otros servidores: Usar iframe normal
-      setSelectedUrl(preparePlayerUrl(url));
+      // Otros servidores: No soportan extracción, bloqueados preventivamente
+      setError('Este servidor no soporta extracción sin anuncios. Por tu seguridad, su iframe ha sido bloqueado.');
     }
 
     // Auto-fullscreen al seleccionar
