@@ -130,6 +130,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
           setSelectedUrl(preparePlayerUrl(url));
         }
       } catch (e) {
+        if ((e as Error).name === 'AbortError') return;
         setSelectedUrl(preparePlayerUrl(url));
       } finally {
         setExtracting(false);
