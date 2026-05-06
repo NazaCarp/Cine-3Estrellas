@@ -49,13 +49,25 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const [dragTime, setDragTime] = useState(0);
 
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-      });
-    } else {
-      document.exitFullscreen();
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        if (containerRef.current) {
+          await containerRef.current.requestFullscreen();
+          // Intentar forzar rotación horizontal en celulares
+          if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
+            window.screen.orientation.lock('landscape').catch(() => {});
+          }
+        }
+      } else {
+        await document.exitFullscreen();
+        // Restaurar rotación normal
+        if (window.screen && window.screen.orientation && window.screen.orientation.unlock) {
+          window.screen.orientation.unlock();
+        }
+      }
+    } catch (err: any) {
+      console.error(`Error fullscreen: ${err.message}`);
     }
   };
 
