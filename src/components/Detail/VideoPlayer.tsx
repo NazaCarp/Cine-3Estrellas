@@ -606,36 +606,51 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       
       let hls: any = null;
 
-      // Restaurar progreso guardado
+      // Obtener progreso guardado
       const savedProgress = localStorage.getItem(`progress_${movie.id}`);
-      if (savedProgress) {
-        const onLoadedMetadata = () => {
-          const time = parseFloat(savedProgress);
-          // Si quedaban menos de 5 minutos, empezar de cero (ya la terminó). Sino, restaurar.
-          if (time > 0 && time < video.duration - 300) {
-            video.currentTime = time;
-          } else if (time >= video.duration - 300) {
-            localStorage.removeItem(`progress_${movie.id}`);
+      const initialTime = savedProgress ? parseFloat(savedProgress) : 0;
+
+      const applyProgress = () => {
+        if (initialTime > 0) {
+          if (video.duration && initialTime >= video.duration - 300) {
+             localStorage.removeItem(`progress_${movie.id}`);
+             video.currentTime = 0;
+          } else {
+             video.currentTime = initialTime;
           }
-          video.removeEventListener('loadedmetadata', onLoadedMetadata);
-        };
-        video.addEventListener('loadedmetadata', onLoadedMetadata);
-      }
+        }
+      };
 
       const isHls = selectedUrl.toLowerCase().includes('m3u8');
       if (isHls && (window as any).Hls && (window as any).Hls.isSupported()) {
         const Hls = (window as any).Hls;
         hls = new Hls({
           capLevelToPlayerSize: true,
-          autoStartLoad: true
+          autoStartLoad: true,
+          startPosition: initialTime > 0 ? initialTime : -1
         });
         hls.loadSource(selectedUrl);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           video.play().catch(() => {});
         });
+        
+        // Si estaba casi al final, la reiniciamos
+        video.addEventListener('loadedmetadata', () => {
+           if (video.duration && initialTime >= video.duration - 300) {
+              video.currentTime = 0;
+           }
+        }, { once: true });
       } else {
         video.src = selectedUrl;
+        
+        // Manejo para MP4 directo
+        if (video.readyState >= 1) {
+          applyProgress();
+        } else {
+          video.addEventListener('loadedmetadata', applyProgress, { once: true });
+        }
+        
         video.play().catch(() => {});
       } 
 
