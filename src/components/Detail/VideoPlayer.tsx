@@ -574,7 +574,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       
       const onPlay = () => { setIsPlaying(true); resetControlsTimeout(); };
       const onPause = () => { setIsPlaying(false); setShowControls(true); };
-      const onTimeUpdate = () => setCurrentTime(video.currentTime);
+      const onTimeUpdate = () => {
+        setCurrentTime(video.currentTime);
+        // Guardar progreso cada vez que avance (después de los primeros 5 segundos)
+        if (video.currentTime > 5) {
+          localStorage.setItem(`progress_${movie.id}`, video.currentTime.toString());
+        }
+      };
       const onDurationChange = () => setDuration(video.duration);
       const onWaiting = () => setIsBuffering(true);
       const onPlaying = () => setIsBuffering(false);
@@ -599,6 +605,22 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
       console.log("URL:", selectedUrl);
       
       let hls: any = null;
+
+      // Restaurar progreso guardado
+      const savedProgress = localStorage.getItem(`progress_${movie.id}`);
+      if (savedProgress) {
+        const onLoadedMetadata = () => {
+          const time = parseFloat(savedProgress);
+          // Si quedaban menos de 5 minutos, empezar de cero (ya la terminó). Sino, restaurar.
+          if (time > 0 && time < video.duration - 300) {
+            video.currentTime = time;
+          } else if (time >= video.duration - 300) {
+            localStorage.removeItem(`progress_${movie.id}`);
+          }
+          video.removeEventListener('loadedmetadata', onLoadedMetadata);
+        };
+        video.addEventListener('loadedmetadata', onLoadedMetadata);
+      }
 
       const isHls = selectedUrl.toLowerCase().includes('m3u8');
       if (isHls && (window as any).Hls && (window as any).Hls.isSupported()) {
