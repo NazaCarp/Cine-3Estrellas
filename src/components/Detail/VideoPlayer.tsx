@@ -48,6 +48,41 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
   const [seekRipple, setSeekRipple] = useState<'left' | 'right' | null>(null);
+  const [isSpeeding, setIsSpeeding] = useState(false);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const wasSpeedingRef = useRef(false);
+
+  const handleVideoPointerDown = (e: React.PointerEvent) => {
+    if (!videoRef.current || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    
+    // Iniciar temporizador para el long press
+    longPressTimerRef.current = setTimeout(() => {
+      if (videoRef.current) {
+        setIsSpeeding(true);
+        wasSpeedingRef.current = true;
+        videoRef.current.playbackRate = 2.0;
+        // Si estaba pausado, lo reproducimos para que se note el 2x
+        if (videoRef.current.paused) videoRef.current.play();
+      }
+    }, 500);
+  };
+
+  const handleVideoPointerUpOrLeave = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    if (isSpeeding || wasSpeedingRef.current) {
+      setIsSpeeding(false);
+      if (videoRef.current) {
+        videoRef.current.playbackRate = 1.0;
+      }
+      // Evitar que el onClick pause el video justo después de soltar el long press
+      setTimeout(() => {
+        wasSpeedingRef.current = false;
+      }, 100);
+    }
+  };
 
   const handleDoubleTap = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -756,6 +791,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
               autoPlay 
               playsInline
               onClick={(e) => {
+                if (wasSpeedingRef.current) return;
                 if (!showControls) {
                   resetControlsTimeout();
                 } else {
@@ -763,6 +799,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                 }
               }}
               onDoubleClick={handleDoubleTap}
+              onPointerDown={handleVideoPointerDown}
+              onPointerUp={handleVideoPointerUpOrLeave}
+              onPointerCancel={handleVideoPointerUpOrLeave}
+              onPointerLeave={handleVideoPointerUpOrLeave}
+              onContextMenu={(e) => e.preventDefault()} // Evitar menú en celulares
             />
 
             {/* Animación de Doble Toque */}
@@ -772,6 +813,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
                   <span className="seek-ripple-text">
                     {seekRipple === 'left' ? '« -10s' : '+10s »'}
                   </span>
+                </div>
+              </div>
+            )}
+
+            {/* Animación de Velocidad (2x) */}
+            {isSpeeding && (
+              <div className="speed-indicator-overlay">
+                <div className="speed-indicator-pill">
+                  <span className="speed-icon">▶▶</span>
+                  <span className="speed-text">2x Reproduciendo</span>
                 </div>
               </div>
             )}

@@ -193,3 +193,47 @@
   20% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-10px) scale(0.8); }
 }
+
+/* Speed Indicator Animations */
+.speed-indicator-overlay {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.speed-indicator-pill {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  font-size: 1rem;
+  backdrop-filter: blur(8px);
+  animation: speedPillSlide 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.speed-icon {
+  font-size: 0.8rem;
+  color: var(--accent-color, #ffd700);
+  animation: pulseSpeed 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes speedPillSlide {
+  from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pulseSpeed {
+  0% { opacity: 0.3; transform: translateX(-2px); }
+  100% { opacity: 1; transform: translateX(2px); }
+}
