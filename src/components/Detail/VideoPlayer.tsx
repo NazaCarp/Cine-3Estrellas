@@ -427,11 +427,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ movie, onClose }) => {
     window.addEventListener('keydown', handleKeyDown, { capture: true });
     return () => {
       window.removeEventListener('keydown', handleKeyDown, { capture: true });
-      // Cancelar cualquier extracción pendiente al cerrar el reproductor
+    };
+  }, [handleKeyDown]);
+
+  // Cancelar cualquier extracción pendiente SOLO al desmontar el reproductor por completo
+  useEffect(() => {
+    return () => {
       if (playbackAbortRef.current) playbackAbortRef.current.abort();
       if (downloadAbortRef.current) downloadAbortRef.current.abort();
     };
-  }, [handleKeyDown]);
+  }, []);
 
   const backdropUrl = movie.backdrop_path 
     ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
