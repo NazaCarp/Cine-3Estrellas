@@ -3,106 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const videoUrl = searchParams.get('url');
-  const isProxy = searchParams.get('proxy') === 'true';
-
   if (!videoUrl) {
     return NextResponse.json({ error: 'URL no proporcionada.' }, { status: 400 });
   }
 
-  // Si se solicita como proxy, actuamos como puente total
-  if (isProxy && videoUrl) {
-    try {
-      let urlObj;
-      try {
-        urlObj = new URL(videoUrl);
-      } catch (e) {
-        return new Response('URL inválida', { status: 400 });
-      }
-      
-      let referer = `${urlObj.protocol}//${urlObj.hostname}/`;
-      
-      // Ajustes específicos por servidor (Normalización de Referer)
-      if (videoUrl.includes('vidmoly.') || videoUrl.includes('vmwesa.online')) referer = 'https://vidmoly.biz/';
-      if (videoUrl.includes('p2pplay.pro')) referer = 'https://gdtvid.p2pplay.pro/';
-      if (videoUrl.includes('vidsonic.net')) referer = 'https://vidsonic.net/';
-      if (videoUrl.includes('ok.ru') || videoUrl.includes('okcdn.ru')) referer = 'https://ok.ru/';
-      
-      // Soporte para Range Requests (Seek en MP4)
-      const rangeHeader = request.headers.get('range');
-      const fetchHeaders: any = { 
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': referer,
-        'Origin': referer.replace(/\/$/, '')
-      };
-      if (rangeHeader) fetchHeaders['Range'] = rangeHeader;
-      
-      const response = await fetch(videoUrl, { headers: fetchHeaders });
-
-      if (!response.ok && response.status !== 206) {
-        return new Response(`Error origen: ${response.status}`, { status: response.status });
-      }
-
-      const contentType = response.headers.get('Content-Type') || '';
-      const contentRange = response.headers.get('Content-Range');
-      const contentLength = response.headers.get('Content-Length');
-      const acceptRanges = response.headers.get('Accept-Ranges');
-      const isDownload = searchParams.get('download') === 'true';
-
-      if (videoUrl.includes('.ts') || contentType.includes('video') || contentType.includes('octet-stream')) {
-        const headers: any = {
-          'Content-Type': contentType,
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'public, max-age=3600',
-          'Accept-Ranges': acceptRanges || 'bytes',
-        };
-        if (contentRange) headers['Content-Range'] = contentRange;
-        if (contentLength) headers['Content-Length'] = contentLength;
-        
-        if (isDownload) {
-          const ext = contentType.includes('mp4') ? 'mp4' : 'ts';
-          headers['Content-Disposition'] = `attachment; filename="video-${Date.now()}.${ext}"`;
-        }
-
-        return new Response(response.body, {
-          status: response.status,
-          headers: headers
-        });
-      }
-
-      // Para archivos m3u8, procesamos los segmentos para que pasen por nuestro proxy
-      let text = await response.text();
-      const baseUrl = videoUrl.substring(0, videoUrl.lastIndexOf('/') + 1);
-      
-      const lines = text.split('\n');
-      const processedLines = lines.map(line => {
-        if (line.trim() === '' || line.startsWith('#')) return line;
-        
-        let segmentUrl = line.trim();
-        if (!segmentUrl.startsWith('http')) {
-          segmentUrl = new URL(segmentUrl, baseUrl).toString();
-        }
-        
-        return `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(segmentUrl)}`;
-      });
-
-      const finalHeaders: any = {
-        'Content-Type': 'application/vnd.apple.mpegurl',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=3600'
-      };
-      
-      if (isDownload) {
-        finalHeaders['Content-Disposition'] = `attachment; filename="playlist-${Date.now()}.m3u8"`;
-      }
-
-      return new Response(processedLines.join('\n'), {
-        headers: finalHeaders
-      });
-
-    } catch (error: any) {
-      return new Response(`Error proxy: ${error.message}`, { status: 500 });
-    }
-  }
+  // NOTA: El modo proxy interno ha sido ELIMINADO para proteger el ancho de banda de Vercel.
+  // Ahora TODO el tráfico de video proxy se enruta a través del Worker de Cloudflare.
 
   // --- MODO EXTRACCIÓN ---
   try {
@@ -262,9 +168,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No se encontraron enlaces de video compatibles.' }, { status: 404 });
     }
 
+    // Usamos ESTRICTAMENTE el Worker de Cloudflare.
+    const proxyBase = process.env.NEXT_PUBLIC_VIDEO_PROXY_URL;
+    
+    if (!proxyBase) {
+      throw new Error('ATENCIÓN: NEXT_PUBLIC_VIDEO_PROXY_URL no está configurado en .env. Debes configurar el Worker de Cloudflare para reproducir videos sin consumir el ancho de banda de Vercel.');
+    }
+
     const qualities = videos.map((v: any) => ({
       name: v.name,
-      url: `${request.nextUrl.origin}/api/extract?proxy=true&url=${encodeURIComponent(v.url)}`
+      url: `${proxyBase}${proxyBase.includes('?') ? '&' : '?'}url=${encodeURIComponent(v.url)}`
     })).reverse(); 
 
     return NextResponse.json({ qualities });
