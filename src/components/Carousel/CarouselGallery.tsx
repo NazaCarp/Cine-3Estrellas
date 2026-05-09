@@ -37,9 +37,7 @@ const CarouselGallery: React.FC<CarouselGalleryProps> = ({ initialCategories }) 
     .find(c => c.name.toLowerCase() === 'lo más visto')
     ?.movies?.slice(0, 7) || [];
 
-  const displayCategories = useMemo(() =>
-    initialCategories.filter(c => c.name.toLowerCase() !== 'lo más visto'),
-    [initialCategories]);
+  const displayCategories = initialCategories;
 
   const handleHeroSlideChange = useCallback((index: number) => {
     setLastColPerRow(prev => {
