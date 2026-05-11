@@ -10,8 +10,14 @@ export async function fetchHomeData(): Promise<Category[]> {
       .eq('show_in_home', true)
       .order('order', { ascending: true });
 
-    if (catError) throw catError;
-    if (!categoryData) return [];
+    if (catError) {
+      console.error('CRITICAL: Supabase Category Error:', catError);
+      throw catError;
+    }
+    if (!categoryData) {
+      console.warn('WARNING: No categories found in Supabase.');
+      return [];
+    }
 
     const categories: Category[] = categoryData;
 
