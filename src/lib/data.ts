@@ -21,7 +21,7 @@ export async function fetchHomeData(): Promise<Category[]> {
 
     const categories: Category[] = categoryData;
 
-    // 2. Fetch movies for each category
+    // 2. Fetch movies for each category.
     const categoriesWithMovies = await Promise.all(
       categories.map(async (cat) => {
         let query = supabase
