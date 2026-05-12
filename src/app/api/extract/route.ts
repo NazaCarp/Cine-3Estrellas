@@ -158,7 +158,29 @@ export async function GET(request: NextRequest) {
     // --- PROCESAMIENTO ---
     let videos = await processHtml(html, targetUrl);
 
-    // Si falló, intentamos una vez más con la URL original exacta si era distinta
+    // --- SEGUIMIENTO DE EMBED (Para Landing Pages de Vidmoly) ---
+    if (videos.length === 0 && html.includes('embed_url')) {
+      const embedMatch = html.match(/["']embed_url["']\s*:\s*["'](https?:\/\/[^"']+)["']/);
+      if (embedMatch) {
+        const embedUrl = embedMatch[1];
+        console.log('Siguiendo embed_url desde landing page:', embedUrl);
+        
+        // Usamos el mismo User-Agent que funcionó
+        const res = await fetch(embedUrl, {
+          headers: { 
+            'User-Agent': 'WhatsApp/2.21.12.21 A',
+            'Referer': targetUrl 
+          }
+        });
+        
+        if (res.ok) {
+          const embedHtml = await res.text();
+          videos = await processHtml(embedHtml, embedUrl);
+        }
+      }
+    }
+
+    // Si sigue fallando, intentamos una vez más con la URL original exacta
     if (videos.length === 0 && targetUrl !== videoUrl) {
       const res = await fetch(videoUrl);
       if (res.ok) {
