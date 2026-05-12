@@ -18,35 +18,39 @@ export async function GET(request: NextRequest) {
     let targetUrl = videoUrl;
     if (videoUrl.includes('vidmoly.')) {
       targetUrl = videoUrl.replace('http://', 'https://');
-      // Vidmoly prefiere .me actualmente, .biz a veces falla en ciertos servidores
-      if (videoUrl.includes('.biz')) {
-        targetUrl = targetUrl.replace('.biz', '.me');
+      if (videoUrl.includes('.biz')) targetUrl = targetUrl.replace('.biz', '.me');
+      // A veces /embed- es más permisivo que /e/
+      if (targetUrl.includes('/e/')) {
+        const id = targetUrl.split('/e/')[1].split('?')[0];
+        targetUrl = `https://vidmoly.me/embed-${id}.html`;
       }
     }
 
-    let extractionReferer = '';
-    if (targetUrl.includes('vidmoly.')) extractionReferer = 'https://vidmoly.me/';
-    if (targetUrl.includes('vidsonic.net')) extractionReferer = 'https://vidsonic.net/';
-    if (targetUrl.includes('ok.ru')) extractionReferer = 'https://ok.ru/';
+    // Usamos un User-Agent de iPhone moderno, que suele saltarse mejor los retos de Cloudflare
+    const mobileUA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1';
     
     let response = await fetch(targetUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        'Referer': extractionReferer || targetUrl,
+        'User-Agent': mobileUA,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://www.google.com/',
         'Cache-Control': 'no-cache'
       }
     });
 
-    // Si falla con la normalización, probamos con la URL original exacta
-    if (!response.ok && targetUrl !== videoUrl) {
-      response = await fetch(videoUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Referer': extractionReferer || videoUrl
-        }
-      });
+    // Si detectamos el "Security Check", intentamos una última vez con la URL original
+    if (response.ok) {
+      const initialHtml = await response.clone().text();
+      if (initialHtml.includes('Security Check') || initialHtml.includes('challenges.cloudflare.com')) {
+        console.log('Detectado Security Check, reintentando con URL original...');
+        response = await fetch(videoUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Referer': 'https://vidmoly.me/'
+          }
+        });
+      }
     }
 
     if (!response.ok) {
