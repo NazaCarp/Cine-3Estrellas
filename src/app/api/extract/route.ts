@@ -24,7 +24,7 @@ async function processHtml(html: string) {
   // Patrones de búsqueda ultra-amplios
   const patterns = [
     /["']?(?:file|src|url|sources?)["']?\s*[:=]\s*["']?((?:https?:)?\/\/[^"']+\.(?:m3u8|mp4|urlset|mkv)[^"']*)["']?/gi,
-    /["']?sources["']?\s*:\s*(\[[^\]]+\])/i,
+    /["']?sources["']?\s*:\s*(\[[^\]]+\])/gi,
     /https?:\/\/[^"'\s<>|]+\.(m3u8|mp4|urlset)(?:[^"'\s<>|]*)?/gi
   ];
 
