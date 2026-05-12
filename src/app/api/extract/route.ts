@@ -19,24 +19,28 @@ function unPack(code: string): string {
 
 async function processHtml(html: string) {
   let videos: any[] = [];
-  const cleanHtml = unPack(html);
+  // Limpiamos el HTML de posibles escapes de JSON (\/) para que los regex funcionen mejor
+  const cleanHtml = unPack(html).replace(/\\\/|\\/g, '/');
 
   const patterns = [
-    // 1. Buscador de fuentes en JSON o variables JS
+    // 1. Buscador de fuentes explícitas (file, src, url)
     /(?:file|src|url|sources?)["']?\s*[:=]\s*["']?((?:https?:)?\/\/[^"']+\.(?:m3u8|mp4|urlset|mkv)[^"']*)["']?/gi,
-    // 2. Buscador de dominios de video de Vidmoly
+    // 2. Buscador de dominios de video de Vidmoly (vmwesa, moly.io)
     /(https?:\/\/[^"'\s<>|]+(?:vmwesa\.online|moly\.io|vidmoly\.me\/hls)[^"'\s<>|]+)/gi,
-    // 3. Cualquier link m3u8
-    /https?:\/\/[^"'\s<>|]+\.m3u8(?:[^"'\s<>|]*)?/gi
+    // 3. Cualquier link m3u8 o mp4 en el código
+    /https?:\/\/[^"'\s<>|]+\.(?:m3u8|mp4|urlset)(?:[^"'\s<>|]*)?/gi
   ];
 
   for (const p of patterns) {
     const matches = cleanHtml.matchAll(p);
     for (const match of matches) {
-      const url = (match[1] || match[0]).replace(/\\/g, '');
-      if (url.includes('http') && !url.includes('staticmoly')) {
+      const url = match[1] || match[0];
+      if (url && url.includes('http') && !url.includes('staticmoly') && !url.includes('hotjar')) {
         const isMaster = url.includes('master.m3u8') || url.includes('.urlset');
-        videos.push({ name: isMaster ? 'Vidmoly HD' : 'Video', url });
+        videos.push({ 
+          name: isMaster ? 'Vidmoly HD' : 'Video', 
+          url: url.startsWith('//') ? `https:${url}` : url 
+        });
       }
     }
   }
@@ -56,54 +60,55 @@ export async function GET(request: NextRequest) {
     let statusLog = '';
 
     if (id) {
-      // PROBAMOS CON VARIOS PROXIES Y DOMINIOS
+      // PROBAMOS PRIMERO CON .TO (Suele tener menos protección que .me)
       const targets = [
         `https://vidmoly.to/e/${id}`,
-        `https://vidmoly.me/e/${id}`,
-        `https://vidmoly.org/e/${id}`
+        `https://vidmoly.me/e/${id}`
       ];
 
       for (const target of targets) {
         try {
-          // Intentamos con Codetabs Proxy (Muy efectivo)
+          // Usamos Codetabs con Referer de la propia web para evitar redirecciones
           const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`;
-          const res = await fetch(proxyUrl);
+          const res = await fetch(proxyUrl, { 
+            headers: { 'Referer': 'https://vidmoly.me/' } 
+          });
           if (res.ok) {
             const text = await res.text();
-            if (text && text.length > 1000 && !text.includes('Security Check')) {
+            if (text && text.length > 500) {
               html = text;
               statusLog = `Exito vía Codetabs (${target})`;
               break;
             }
           }
         } catch (e) {}
-
-        if (!html) {
-           // Fallback a AllOrigins Raw
-           try {
-             const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`);
-             if (res.ok) {
-               const text = await res.text();
-               if (text && text.length > 1000 && !text.includes('Security Check')) {
-                 html = text;
-                 statusLog = `Exito vía AllOrigins (${target})`;
-                 break;
-               }
-             }
-           } catch (e) {}
-        }
       }
     }
 
-    if (!html) {
-      return NextResponse.json({ error: 'Todos los proxies han sido bloqueados por Vidmoly.', debug: { id } }, { status: 403 });
+    if (!html || html.includes('Security Check')) {
+      return NextResponse.json({ error: 'Bloqueo de Vidmoly infranqueable por ahora.', debug: { id } }, { status: 403 });
     }
 
     let videos = await processHtml(html);
 
+    // Si aún no hay videos, buscamos en los datos de Nuxt (Base64)
+    if (videos.length === 0) {
+      const b64Regex = /[A-Za-z0-9+/]{100,}/g;
+      const matches = html.match(b64Regex) || [];
+      for (const b64 of matches) {
+        try {
+          const decoded = atob(b64);
+          if (decoded.includes('http')) {
+            const more = await processHtml(decoded);
+            videos = [...videos, ...more];
+          }
+        } catch (e) {}
+      }
+    }
+
     if (videos.length === 0) {
       return NextResponse.json({ 
-        error: 'Estamos dentro, pero el link del video no se encuentra en el HTML.', 
+        error: 'Estamos dentro, pero el link no aparece. Probablemente se genere dinámicamente.', 
         debug: { id, log: statusLog, html_size: html.length, snippet: html.substring(0, 300) } 
       }, { status: 404 });
     }
