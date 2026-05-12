@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
              debugInfo.proxy_status = 'Bloqueo detectado en Proxy';
           }
         }
-      } catch (e) { debugInfo.proxy_error = e.message; }
+      } catch (e: any) { debugInfo.proxy_error = e.message; }
     }
 
     // 3. FALLBACK A LA LANDING PAGE SI EL DIRECTO FALLA
