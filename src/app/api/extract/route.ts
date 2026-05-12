@@ -171,16 +171,22 @@ export async function GET(request: NextRequest) {
 
     // Patrón 5: Búsqueda profunda de .m3u8 o .mp4 (Mejorado para master.m3u8 y parámetros de token)
     if (videos.length === 0) {
-      // Regex mejorada para capturar URLs que contienen m3u8 incluso con tokens largos después del ?
-      const deepMatch = html.match(/https?:\/\/[^"']+\.(m3u8|mp4|urlset)(?:\?[^"']*)?/g);
-      if (deepMatch) {
-        const forbidden = ['test-videos', 'bunny', 'analytics', 'doubleclick', 'google-analytics', 'hotjar'];
-        const realLinks = deepMatch.filter(l => !forbidden.some(f => l.includes(f)));
+      // Regex de "Fuerza Bruta": busca cualquier URL que parezca un video en todo el documento
+      const bruteMatch = html.match(/https?:\/\/[^"'\s<>|]+\.(m3u8|mp4|urlset)(?:\?[^"'\s<>|]*)?/gi);
+      if (bruteMatch) {
+        const forbidden = ['test-videos', 'bunny', 'analytics', 'doubleclick', 'google-analytics', 'hotjar', 'staticmoly'];
+        const realLinks = bruteMatch.filter(l => !forbidden.some(f => l.includes(f)));
         
-        if (realLinks.length > 0) {
-          const master = realLinks.find(l => l.includes('master.m3u8') || l.includes('.urlset'));
-          videos.push({ name: 'HD', url: master || realLinks[0] });
-        }
+        // Eliminar duplicados
+        const uniqueLinks = Array.from(new Set(realLinks));
+        
+        uniqueLinks.forEach((link, index) => {
+          const isMaster = link.includes('master.m3u8') || link.includes('.urlset');
+          videos.push({ 
+            name: isMaster ? `Vidmoly HD ${index + 1}` : `Video ${index + 1}`, 
+            url: link 
+          });
+        });
       }
     }
 
@@ -226,8 +232,17 @@ export async function GET(request: NextRequest) {
     }
 
     if (videos.length === 0) {
-      console.log(`[Extracción Fallida] URL: ${videoUrl} | HTML: ${html.substring(0, 500).replace(/\n/g, ' ')}`);
-      return NextResponse.json({ error: 'No se encontraron enlaces de video compatibles.' }, { status: 404 });
+      console.log(`[Extracción Fallida] URL: ${videoUrl}`);
+      return NextResponse.json({ 
+        error: 'No se encontraron enlaces de video compatibles.',
+        debug: {
+          url_solicitada: videoUrl,
+          url_final: targetUrl,
+          html_inicio: html.substring(0, 500),
+          html_longitud: html.length,
+          status_externo: response.status
+        }
+      }, { status: 404 });
     }
 
     // Usamos ESTRICTAMENTE el Worker de Cloudflare.
