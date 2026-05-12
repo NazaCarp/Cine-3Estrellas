@@ -20,7 +20,7 @@ async function processHtml(html: string) {
   let videos: any[] = [];
   const cleanHtml = unPack(html);
 
-  // Patrones de búsqueda (JWPlayer, Base64, Master M3U8)
+  // Patrones de búsqueda ultra-agresivos
   const patterns = [
     /file\s*:\s*["'](https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*)["']/i,
     /sources:\s*["']([A-Za-z0-9+/=]{20,})["']/,
@@ -40,7 +40,7 @@ async function processHtml(html: string) {
         const links = p.global ? match : [match[1]];
         // @ts-ignore
         links.forEach((link: string) => {
-          if (link.includes('http') && !link.includes('staticmoly')) {
+          if (link.includes('http') && !link.includes('staticmoly') && !link.includes('hotjar')) {
             const isMaster = link.includes('master.m3u8') || link.includes('.urlset');
             videos.push({ name: isMaster ? 'Vidmoly HD' : 'Video', url: link });
           }
@@ -56,62 +56,66 @@ export async function GET(request: NextRequest) {
   if (!videoUrl) return NextResponse.json({ error: 'URL faltante' }, { status: 400 });
 
   try {
-    // Normalizamos a la Landing Page (/v/) porque es la que NO tiene bloqueo
+    // 1. EXTRAER EL ID DEL VIDEO
     let id = '';
-    const idMatch = videoUrl.match(/\/(?:v|e|embed-)?([a-zA-Z0-9]{8,15})/);
+    const idMatch = videoUrl.match(/\/(?:v|e|embed-|embed\/)?([a-zA-Z0-9]{8,15})/);
     if (idMatch) id = idMatch[1];
-    
-    const landingUrl = id ? `https://vidmoly.me/v/${id}` : videoUrl.replace('.biz', '.me');
-    let html = '';
-
-    // 1. INTENTO VÍA ALLORIGINS A LA LANDING PAGE
-    try {
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(landingUrl)}`;
-      const res = await fetch(proxyUrl);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.contents && !data.contents.includes('Security Check')) html = data.contents;
-      }
-    } catch (e) {}
-
-    // 2. FALLBACK A FETCH DIRECTO CON IDENTIDAD WHATSAPP
-    if (!html) {
-      const res = await fetch(landingUrl, { headers: { 'User-Agent': 'WhatsApp/2.21.12.21 A' } });
-      if (res.ok) {
-        const text = await res.text();
-        if (!text.includes('Security Check')) html = text;
-      }
+    if (!id && videoUrl.includes('vidmoly')) {
+       // Intento de emergencia por split
+       id = videoUrl.split('/').pop()?.split('.')[0] || '';
     }
 
-    if (!html) return NextResponse.json({ error: 'Bloqueo de seguridad persistente.', debug: { url: landingUrl } }, { status: 403 });
+    let videos: any[] = [];
+    let debugInfo: any = { id_detectado: id };
 
-    // 3. PROCESAR EL EMBED SI ESTAMOS EN LA LANDING
-    let videos = await processHtml(html);
-    if (videos.length === 0 && (html.includes('embed_url') || html.includes('embed-'))) {
-      const embedMatch = html.match(/["\\]+embed_url["\\]+\s*:\s*["\\]+(https?:\/\/[^"\\]+)["\\]+/i) ||
-                         html.match(/["'](https?:\/\/[^"']+\/embed-[^"']+)["']/i);
-      
-      if (embedMatch) {
-        const embedUrl = embedMatch[1].replace(/\\/g, '');
-        console.log('Siguiendo embed vía puente AllOrigins:', embedUrl);
-        
-        try {
-          const embedProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(embedUrl)}`;
-          const res = await fetch(embedProxyUrl);
-          if (res.ok) {
-            const data = await res.json();
-            const embedHtml = data.contents;
-            if (embedHtml) {
-              videos = await processHtml(embedHtml);
-            }
+    // 2. INTENTO DIRECTO AL REPRODUCTOR VÍA PROXY (AllOrigins)
+    if (id) {
+      const directEmbedUrl = `https://vidmoly.me/e/${id}`;
+      console.log('Acceso directo al reproductor:', directEmbedUrl);
+      try {
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(directEmbedUrl)}`;
+        const res = await fetch(proxyUrl);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.contents && !data.contents.includes('Security Check')) {
+            videos = await processHtml(data.contents);
+          } else {
+             debugInfo.proxy_status = 'Bloqueo detectado en Proxy';
           }
-        } catch (e) {
-          console.error('Fallo AllOrigins en el embed:', e);
         }
-      }
+      } catch (e) { debugInfo.proxy_error = e.message; }
     }
 
-    if (videos.length === 0) return NextResponse.json({ error: 'No se encontraron videos.', debug: { url: landingUrl, html: html.substring(0, 500) } }, { status: 404 });
+    // 3. FALLBACK A LA LANDING PAGE SI EL DIRECTO FALLA
+    if (videos.length === 0 && id) {
+      const landingUrl = `https://vidmoly.me/v/${id}`;
+      try {
+        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(landingUrl)}`);
+        if (res.ok) {
+          const data = await res.json();
+          const html = data.contents;
+          // Si aquí encontramos el m3u8 directamente (raro pero posible)
+          videos = await processHtml(html);
+          
+          // O si encontramos el embed_url real
+          if (videos.length === 0 && html.includes('embed_url')) {
+             const embedMatch = html.match(/embed_url["\\]+:\s*["\\]+(https?:\/\/[^"\\]+)/i);
+             if (embedMatch) {
+                const realEmbed = embedMatch[1].replace(/\\/g, '');
+                const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(realEmbed)}`);
+                if (res2.ok) {
+                   const data2 = await res2.json();
+                   videos = await processHtml(data2.contents);
+                }
+             }
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (videos.length === 0) {
+      return NextResponse.json({ error: 'No se encontraron videos.', debug: debugInfo }, { status: 404 });
+    }
 
     const proxyBase = process.env.NEXT_PUBLIC_VIDEO_PROXY_URL;
     const qualities = videos.map((v: any) => ({
