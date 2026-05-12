@@ -2,85 +2,64 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-// Función para procesar el HTML y extraer los videos
+// Función para decodificar Packer (p,a,c,k,e,d)
+function unPack(code: string) {
+  try {
+    const p = /eval\(function\(p,a,c,k,e,d\)\{.*return p\}\('(.*)',(\d+),(\d+),'(.*)'\.split\('\|'\)\)\)/;
+    const match = code.match(p);
+    if (!match) return code;
+
+    let [_, payload, aStr, cStr, keyStr] = match;
+    let a = parseInt(aStr), c = parseInt(cStr);
+    let k = keyStr.split('|');
+    let e = (c: number): string => (c < a ? '' : e(Math.floor(c / a))) + String.fromCharCode((c % a) + (c % a > 35 ? 29 : 39));
+    
+    while (c--) {
+      if (k[c]) payload = payload.replace(new RegExp('\\b' + e(c) + '\\b', 'g'), k[c]);
+    }
+    return payload;
+  } catch (e) { return code; }
+}
+
 async function processHtml(html: string, videoUrl: string) {
   let videos: any[] = [];
+  const cleanHtml = unPack(html);
 
-  // Patrón 1: metadata en data-options (Vidsonic y OK.ru)
-  const dataOptionsMatch = html.match(/data-options=["'](\{.*?\})["']/);
-  if (dataOptionsMatch) {
-    try {
-      const options = JSON.parse(dataOptionsMatch[1].replace(/&quot;/g, '"'));
-      let metadata = options.flashvars?.metadata || options.metadata;
-      if (!metadata && options.flashvars?.metadata) metadata = options.flashvars.metadata;
-      if (typeof metadata === 'string') {
-        try { metadata = JSON.parse(metadata); } catch (e) { }
-      }
+  // Patrón 1: JWPlayer / Script vars (Base64 o Directo)
+  const jwPatterns = [
+    /file\s*:\s*["'](https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*)["']/i,
+    /["']?file["']?\s*:\s*["'](https?:\/\/[^"']+)["']/i,
+    /sources:\s*["']([A-Za-z0-9+/=]{20,})["']/
+  ];
 
-      if (metadata && Array.isArray(metadata)) {
-        metadata.forEach((m: any) => {
-          if (m.file) videos.push({ name: m.label || 'Video', url: m.file });
-        });
-      } else if (metadata && metadata.videos && Array.isArray(metadata.videos)) {
-        metadata.videos.forEach((v: any) => {
-          const qualityNames: Record<string, string> = {
-            'mobile': '144p', 'lowest': '240p', 'low': '360p', 'sd': '480p',
-            'hd': '720p', 'full': '1080p', 'full_hd': '1080p', 'quad_hd': '2K', 'ultra_hd': '4K'
-          };
-          if (v.url) videos.push({ name: qualityNames[v.name] || v.name, url: v.url });
-        });
-      }
-    } catch (e) { }
-  }
-
-  // Patrón 2: Base64 sources (Vidmoly)
-  if (videos.length === 0) {
-    const b64Match = html.match(/sources:\s*["']([A-Za-z0-9+/=]{20,})["']/);
-    if (b64Match) {
-      try {
-        const decoded = Buffer.from(b64Match[1], 'base64').toString('utf-8');
-        const sources = JSON.parse(decoded);
-        if (Array.isArray(sources)) {
-          sources.forEach((s: any) => {
-            if (s.file) videos.push({ name: s.label || 'Video', url: s.file });
-          });
-        }
-      } catch (e) { }
-    }
-  }
-
-  // Patrón 3: Sources en variables de script (Vidmoly/JWPlayer)
-  if (videos.length === 0) {
-    const jwPatterns = [
-      /file\s*:\s*["'](https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*)["']/i,
-      /["']?file["']?\s*:\s*["'](https?:\/\/[^"']+)["']/i,
-      /source\s*:\s*["'](https?:\/\/[^"']+)["']/i
-    ];
-    for (const pattern of jwPatterns) {
-      const match = html.match(pattern);
-      if (match && (match[1].includes('.m3u8') || match[1].includes('.urlset') || match[1].includes('.mp4'))) {
+  for (const pattern of jwPatterns) {
+    const match = cleanHtml.match(pattern);
+    if (match) {
+      if (pattern.source.includes('sources')) {
+        try {
+          const decoded = Buffer.from(match[1], 'base64').toString('utf-8');
+          const sources = JSON.parse(decoded);
+          if (Array.isArray(sources)) sources.forEach((s: any) => { if (s.file) videos.push({ name: s.label || 'Video', url: s.file }); });
+        } catch (e) { }
+      } else if (match[1].includes('http')) {
         videos.push({ name: 'Vidmoly HD', url: match[1] });
-        break;
       }
     }
   }
 
-  // Patrón 4: Fuerza Bruta
+  // Patrón 2: Fuerza Bruta Extrema
   if (videos.length === 0) {
-    const bruteMatch = html.match(/https?:\/\/[^"'\s<>|]+\.(m3u8|mp4|urlset)(?:\?[^"'\s<>|]*)?/gi);
+    const bruteMatch = cleanHtml.match(/https?:\/\/[^"'\s<>|]+\.(m3u8|mp4|urlset)(?:[^"'\s<>|]*)?/gi);
     if (bruteMatch) {
-      const forbidden = ['test-videos', 'bunny', 'analytics', 'doubleclick', 'staticmoly'];
-      const realLinks = bruteMatch.filter(l => !forbidden.some(f => l.includes(f)));
-      const uniqueLinks = Array.from(new Set(realLinks));
-      uniqueLinks.forEach((link, index) => {
+      const forbidden = ['test-videos', 'bunny', 'analytics', 'staticmoly'];
+      const uniqueLinks = Array.from(new Set(bruteMatch.filter(l => !forbidden.some(f => l.includes(f)))));
+      uniqueLinks.forEach((link, i) => {
         const isMaster = link.includes('master.m3u8') || link.includes('.urlset');
-        videos.push({ name: isMaster ? 'Vidmoly HD' : `Video ${index + 1}`, url: link });
+        videos.push({ name: isMaster ? 'Vidmoly HD' : `Opción ${i + 1}`, url: link });
       });
     }
   }
 
-  // Si no hay videos y es landing de Vidmoly, este código se llama recursivamente desde GET si es necesario, 
-  // pero aquí devolvemos lo que tengamos.
   return videos;
 }
 
@@ -88,127 +67,49 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const videoUrl = searchParams.get('url');
 
-  if (!videoUrl) {
-    return NextResponse.json({ error: 'URL no proporcionada.' }, { status: 400 });
-  }
+  if (!videoUrl) return NextResponse.json({ error: 'URL no proporcionada.' }, { status: 400 });
 
   try {
-    let targetUrl = videoUrl.replace('http://', 'https://').replace('.biz', '.me');
+    let targetUrl = videoUrl.replace('http://', 'https://');
     let html = '';
     let responseStatus = 200;
 
-    // --- ESTRATEGIA CAMALEÓN PARA VIDMOLY ---
+    // --- ESTRATEGIA CRAWLER PARA VIDMOLY ---
     if (videoUrl.includes('vidmoly.')) {
-      const crawlers = [
-        'WhatsApp/2.21.12.21 A', // Bot de WhatsApp (Muy efectivo)
-        'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)', // Bot de Facebook
-        'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' // Googlebot
-      ];
-
-      for (const crawlerUA of crawlers) {
-        console.log(`Intentando con identidad: ${crawlerUA}`);
-        try {
-          // Intentamos tanto con el link original como con la landing page (/v/)
-          const attemptUrls = [targetUrl];
-          if (targetUrl.includes('/e/')) {
-             const id = targetUrl.split('/e/')[1].split('?')[0];
-             attemptUrls.push(`https://vidmoly.me/v/${id}`);
-          }
-
-          for (const url of attemptUrls) {
-            const res = await fetch(url, {
-              headers: { 
-                'User-Agent': crawlerUA,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Cache-Control': 'no-cache'
-              }
-            });
-            
-            if (res.ok) {
-              const text = await res.text();
-              if (!text.includes('Security Check') && !text.includes('challenges.cloudflare.com')) {
-                html = text;
-                targetUrl = url;
-                break;
-              }
-            }
-          }
-          if (html) break;
-        } catch (e) {}
+      const ua = 'WhatsApp/2.21.12.21 A';
+      // Probamos directo al embed construido
+      const codeMatch = videoUrl.match(/\/(?:v|e|embed-)?([a-zA-Z0-9]{8,15})/);
+      if (codeMatch) {
+        targetUrl = `https://vidmoly.me/embed-${codeMatch[1]}.html`;
+        const res = await fetch(targetUrl, { headers: { 'User-Agent': ua, 'Referer': 'https://vidmoly.me/' } });
+        if (res.ok) html = await res.text();
       }
     }
 
-    // --- FALLBACK: FETCH DIRECTO MÓVIL ---
+    // --- FALLBACK DIRECTO ---
     if (!html) {
-      console.log('Todos los crawlers fallaron, intentando fetch móvil final...');
-      const res = await fetch(targetUrl, {
-        headers: { 
-          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1', 
-          'Referer': 'https://www.google.com/' 
-        }
-      });
+      const res = await fetch(targetUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1' } });
       responseStatus = res.status;
       if (res.ok) html = await res.text();
     }
 
-    if (!html) {
-      return NextResponse.json({ error: `No se pudo obtener el contenido (${responseStatus})` }, { status: responseStatus || 500 });
-    }
+    if (!html) return NextResponse.json({ error: `No se pudo obtener el contenido (${responseStatus})` }, { status: responseStatus || 500 });
 
-    // --- PROCESAMIENTO ---
     let videos = await processHtml(html, targetUrl);
 
-    // --- REINTENTO AGRESIVO PARA VIDMOLY (Si falló el anterior) ---
-    if (videos.length === 0 && videoUrl.includes('vidmoly.')) {
-      const codeMatch = videoUrl.match(/\/(?:v|e|embed-)?([a-zA-Z0-9]{8,15})/);
-      if (codeMatch) {
-        const id = codeMatch[1];
-        const directEmbedUrl = `https://vidmoly.me/embed-${id}.html`;
-        console.log('Intentando acceso directo al embed construido:', directEmbedUrl);
-        
-        const res = await fetch(directEmbedUrl, {
-          headers: { 
-            'User-Agent': 'WhatsApp/2.21.12.21 A',
-            'Referer': 'https://vidmoly.me/',
-            'Accept': '*/*'
-          }
-        });
-        
-        if (res.ok) {
-          const embedHtml = await res.text();
-          videos = await processHtml(embedHtml, directEmbedUrl);
-        }
-      }
-    }
-
-    // Si sigue fallando, intentamos una vez más con la URL original exacta
-    if (videos.length === 0 && targetUrl !== videoUrl) {
-      const res = await fetch(videoUrl);
-      if (res.ok) {
-        const fallbackHtml = await res.text();
-        videos = await processHtml(fallbackHtml, videoUrl);
-      }
-    }
-
     if (videos.length === 0) {
-      return NextResponse.json({
-        error: 'No se encontraron enlaces de video compatibles.',
-        debug: { url: targetUrl, status: responseStatus, html: html.substring(0, 500) }
-      }, { status: 404 });
+      return NextResponse.json({ error: 'No se encontraron enlaces de video.', debug: { url: targetUrl, html: html.substring(0, 500) } }, { status: 404 });
     }
 
-    // --- APLICACIÓN DE PROXY ---
     const proxyBase = process.env.NEXT_PUBLIC_VIDEO_PROXY_URL;
-    if (!proxyBase) throw new Error('Proxy URL no configurada');
-
     const qualities = videos.map((v: any) => ({
       name: v.name,
-      url: `${proxyBase}${proxyBase.includes('?') ? '&' : '?'}url=${encodeURIComponent(v.url)}`
+      url: `${proxyBase}${proxyBase?.includes('?') ? '&' : '?'}url=${encodeURIComponent(v.url)}`
     })).reverse();
 
     return NextResponse.json({ qualities });
 
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Error interno' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
