@@ -74,30 +74,46 @@ export async function GET(request: NextRequest) {
     let html = '';
     let responseStatus = 200;
 
-    // --- ESTRATEGIA CRAWLER PARA VIDMOLY ---
+    // --- ESTRATEGIA DE BYPASS MULTICAPA PARA VIDMOLY ---
     if (videoUrl.includes('vidmoly.')) {
-      const ua = 'WhatsApp/2.21.12.21 A';
-      const domains = [targetUrl, targetUrl.includes('.biz') ? targetUrl.replace('.biz', '.me') : targetUrl.replace('.me', '.biz')];
-      
-      for (const url of domains) {
+      // 1. INTENTO VÍA PROXY (AllOrigins) - Para saltar el bloqueo de IP de Cloudflare
+      try {
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+        console.log('Intentando Vidmoly vía Puente AllOrigins:', targetUrl);
+        const proxyRes = await fetch(proxyUrl);
+        if (proxyRes.ok) {
+          const data = await proxyRes.json();
+          const proxyHtml = data.contents;
+          if (proxyHtml && !proxyHtml.includes('Security Check')) {
+            html = proxyHtml;
+          }
+        }
+      } catch (e) { console.error('Fallo AllOrigins:', e); }
+
+      // 2. INTENTO VÍA IDENTIDAD TV (Si el proxy falla)
+      if (!html) {
         try {
-          console.log('Intentando Vidmoly con identidad WhatsApp:', url);
-          const res = await fetch(url, { headers: { 'User-Agent': ua, 'Referer': 'https://www.google.com/' } });
+          const tvUA = 'Mozilla/5.0 (Linux; Android 11; Sony Bravia 4K Build/RP1A.200720.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+          const res = await fetch(targetUrl, { 
+            headers: { 
+              'User-Agent': tvUA, 
+              'Referer': 'https://t.co/', // Referer de Twitter/X (Muy confiable)
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+            } 
+          });
           if (res.ok) {
             const text = await res.text();
             if (!text.includes('Security Check')) {
               html = text;
-              targetUrl = url;
-              break;
             }
           }
-        } catch (e) { }
+        } catch (e) {}
       }
     }
 
-    // --- FALLBACK DIRECTO ---
+    // --- FALLBACK FINAL ---
     if (!html) {
-      console.log('Intentando extracción directa final:', targetUrl);
+      console.log('Intentando extracción directa final...');
       const res = await fetch(targetUrl, { 
         headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1' } 
       });
