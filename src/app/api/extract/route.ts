@@ -153,14 +153,45 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Patrón 5: Búsqueda profunda de .m3u8 o .mp4 (Mejorado para master.m3u8)
     if (videos.length === 0) {
-      // Búsqueda profunda de .m3u8 o .mp4
       const deepMatch = html.match(/https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*/g);
       if (deepMatch) {
+        // Filtrar links basura y priorizar master.m3u8 o urlset
         const forbidden = ['test-videos', 'bunny', 'analytics', 'doubleclick', 'google-analytics', 'hotjar'];
         const realLinks = deepMatch.filter(l => !forbidden.some(f => l.includes(f)));
+        
         if (realLinks.length > 0) {
-          videos.push({ name: 'Directo', url: realLinks[0] });
+          // Si encontramos varios, priorizamos el que parece un master playlist
+          const master = realLinks.find(l => l.includes('master.m3u8') || l.includes('.urlset'));
+          videos.push({ name: 'HD', url: master || realLinks[0] });
+        }
+      }
+    }
+
+    // --- REINTENTO SI ES LANDING PAGE DE VIDMOLY ---
+    if (videos.length === 0 && videoUrl.includes('vidmoly.') && !videoUrl.includes('embed')) {
+      // Si estamos en la página /v/ de Vidmoly, buscamos el embed-url en el HTML (Nuxt Data)
+      const embedMatch = html.match(/["']embed_url["']\s*:\s*["'](https?:\/\/[^"']+)["']/);
+      if (embedMatch) {
+        const embedUrl = embedMatch[1];
+        console.log('Detectada Landing Page de Vidmoly, reintentando con:', embedUrl);
+        
+        const embedRes = await fetch(embedUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Referer': videoUrl
+          }
+        });
+        
+        if (embedRes.ok) {
+          const embedHtml = await embedRes.text();
+          // Buscamos m3u8 dentro del embed
+          const m3u8Match = embedHtml.match(/https?:\/\/[^"']+\.(m3u8|urlset)[^"']*/g);
+          if (m3u8Match) {
+            const master = m3u8Match.find(l => l.includes('master.m3u8') || l.includes('.urlset'));
+            videos.push({ name: 'Vidmoly HD', url: master || m3u8Match[0] });
+          }
         }
       }
     }
