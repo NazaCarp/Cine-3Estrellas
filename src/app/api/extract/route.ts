@@ -21,25 +21,22 @@ async function processHtml(html: string) {
   let videos: any[] = [];
   const cleanHtml = unPack(html);
 
-  // Patrones de búsqueda de última generación
   const patterns = [
-    // 1. Buscador de dominios específicos de Vidmoly (vmwesa, moly.io, etc)
+    // 1. Buscador de fuentes en JSON o variables JS
+    /(?:file|src|url|sources?)["']?\s*[:=]\s*["']?((?:https?:)?\/\/[^"']+\.(?:m3u8|mp4|urlset|mkv)[^"']*)["']?/gi,
+    // 2. Buscador de dominios de video de Vidmoly
     /(https?:\/\/[^"'\s<>|]+(?:vmwesa\.online|moly\.io|vidmoly\.me\/hls)[^"'\s<>|]+)/gi,
-    // 2. Buscador de objetos JSON con info de video
-    /\{(?:[^{}]*["']file["']\s*:\s*["'](https?:\/\/[^"']+)["'][^{}]*)\}/gi,
-    // 3. Buscador de links de video estándar
-    /https?:\/\/[^"'\s<>|]+\.(?:m3u8|mp4|urlset)(?:[^"'\s<>|]*)?/gi
+    // 3. Cualquier link m3u8
+    /https?:\/\/[^"'\s<>|]+\.m3u8(?:[^"'\s<>|]*)?/gi
   ];
 
   for (const p of patterns) {
     const matches = cleanHtml.matchAll(p);
     for (const match of matches) {
-      const url = match[1] || match[0];
-      if (url && url.includes('http') && !url.includes('staticmoly') && !url.includes('hotjar')) {
+      const url = (match[1] || match[0]).replace(/\\/g, '');
+      if (url.includes('http') && !url.includes('staticmoly')) {
         const isMaster = url.includes('master.m3u8') || url.includes('.urlset');
-        // Limpiamos la URL de posibles caracteres de escape de JSON
-        const cleanUrl = url.replace(/\\/g, '');
-        videos.push({ name: isMaster ? 'Vidmoly HD' : 'Video', url: cleanUrl });
+        videos.push({ name: isMaster ? 'Vidmoly HD' : 'Video', url });
       }
     }
   }
@@ -58,55 +55,55 @@ export async function GET(request: NextRequest) {
     let html = '';
     let statusLog = '';
 
-    if (id && videoUrl.includes('vidmoly')) {
-      const landingUrl = `https://vidmoly.me/v/${id}`;
-      
-      // 1. INTENTO LANDING CON IDENTIDAD IPHONE (Vidmoly a veces entrega el m3u8 directo a móviles)
-      try {
-        const iphoneUA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1';
-        const res = await fetch(landingUrl, { headers: { 'User-Agent': iphoneUA } });
-        if (res.ok) {
-          html = await res.text();
-          statusLog = 'Exito vía Landing Page (iPhone UA)';
-        }
-      } catch (e) {}
+    if (id) {
+      // PROBAMOS CON VARIOS PROXIES Y DOMINIOS
+      const targets = [
+        `https://vidmoly.to/e/${id}`,
+        `https://vidmoly.me/e/${id}`,
+        `https://vidmoly.org/e/${id}`
+      ];
 
-      // 2. FALLBACK VÍA PROXY SI EL DIRECTO NO DA RESULTADOS
-      if (!html) {
+      for (const target of targets) {
         try {
-          const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(landingUrl)}`);
+          // Intentamos con Codetabs Proxy (Muy efectivo)
+          const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`;
+          const res = await fetch(proxyUrl);
           if (res.ok) {
-            const data = await res.json();
-            html = data.contents;
-            statusLog = 'Exito vía AllOrigins Proxy';
+            const text = await res.text();
+            if (text && text.length > 1000 && !text.includes('Security Check')) {
+              html = text;
+              statusLog = `Exito vía Codetabs (${target})`;
+              break;
+            }
           }
         } catch (e) {}
+
+        if (!html) {
+           // Fallback a AllOrigins Raw
+           try {
+             const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`);
+             if (res.ok) {
+               const text = await res.text();
+               if (text && text.length > 1000 && !text.includes('Security Check')) {
+                 html = text;
+                 statusLog = `Exito vía AllOrigins (${target})`;
+                 break;
+               }
+             }
+           } catch (e) {}
+        }
       }
     }
 
-    if (!html || html.includes('Security Check')) {
-      return NextResponse.json({ error: 'Bloqueo de Cloudflare persistente.', debug: { id } }, { status: 403 });
+    if (!html) {
+      return NextResponse.json({ error: 'Todos los proxies han sido bloqueados por Vidmoly.', debug: { id } }, { status: 403 });
     }
 
     let videos = await processHtml(html);
 
-    // Búsqueda profunda en bloques de datos
-    if (videos.length === 0) {
-      // Intentamos buscar cualquier string largo que pueda ser una URL codificada
-      const anyUrlMatch = html.match(/https?%3A%2F%2F[^"'\s<>|]+/gi);
-      if (anyUrlMatch) {
-        for (const encoded of anyUrlMatch) {
-          const decoded = decodeURIComponent(encoded);
-          if (decoded.includes('m3u8') || decoded.includes('mp4')) {
-            videos.push({ name: 'Video Detectado', url: decoded });
-          }
-        }
-      }
-    }
-
     if (videos.length === 0) {
       return NextResponse.json({ 
-        error: 'Estamos dentro, pero el link está encriptado o no presente.', 
+        error: 'Estamos dentro, pero el link del video no se encuentra en el HTML.', 
         debug: { id, log: statusLog, html_size: html.length, snippet: html.substring(0, 300) } 
       }, { status: 404 });
     }
