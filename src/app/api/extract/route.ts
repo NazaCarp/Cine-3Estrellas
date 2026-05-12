@@ -21,32 +21,25 @@ async function processHtml(html: string) {
   let videos: any[] = [];
   const cleanHtml = unPack(html);
 
-  // Patrones de búsqueda ultra-amplios
+  // Patrones de búsqueda de última generación
   const patterns = [
-    /["']?(?:file|src|url|sources?)["']?\s*[:=]\s*["']?((?:https?:)?\/\/[^"']+\.(?:m3u8|mp4|urlset|mkv)[^"']*)["']?/gi,
-    /["']?sources["']?\s*:\s*(\[[^\]]+\])/gi,
-    /https?:\/\/[^"'\s<>|]+\.(m3u8|mp4|urlset)(?:[^"'\s<>|]*)?/gi
+    // 1. Buscador de dominios específicos de Vidmoly (vmwesa, moly.io, etc)
+    /(https?:\/\/[^"'\s<>|]+(?:vmwesa\.online|moly\.io|vidmoly\.me\/hls)[^"'\s<>|]+)/gi,
+    // 2. Buscador de objetos JSON con info de video
+    /\{(?:[^{}]*["']file["']\s*:\s*["'](https?:\/\/[^"']+)["'][^{}]*)\}/gi,
+    // 3. Buscador de links de video estándar
+    /https?:\/\/[^"'\s<>|]+\.(?:m3u8|mp4|urlset)(?:[^"'\s<>|]*)?/gi
   ];
 
   for (const p of patterns) {
     const matches = cleanHtml.matchAll(p);
     for (const match of matches) {
-      if (p.source.includes('sources') && match[1].includes('{')) {
-        try {
-          const sources = JSON.parse(match[1]);
-          if (Array.isArray(sources)) {
-            sources.forEach((s: any) => {
-              const url = s.file || s.src || s.url;
-              if (url && url.includes('http')) videos.push({ name: s.label || s.name || 'Video', url });
-            });
-          }
-        } catch (e) { }
-      } else {
-        const url = match[1] || match[0];
-        if (url && url.includes('http') && !url.includes('staticmoly') && !url.includes('hotjar') && !url.includes('analytics')) {
-          const isMaster = url.includes('master.m3u8') || url.includes('.urlset');
-          videos.push({ name: isMaster ? 'Vidmoly HD' : 'Video', url });
-        }
+      const url = match[1] || match[0];
+      if (url && url.includes('http') && !url.includes('staticmoly') && !url.includes('hotjar')) {
+        const isMaster = url.includes('master.m3u8') || url.includes('.urlset');
+        // Limpiamos la URL de posibles caracteres de escape de JSON
+        const cleanUrl = url.replace(/\\/g, '');
+        videos.push({ name: isMaster ? 'Vidmoly HD' : 'Video', url: cleanUrl });
       }
     }
   }
@@ -66,62 +59,55 @@ export async function GET(request: NextRequest) {
     let statusLog = '';
 
     if (id && videoUrl.includes('vidmoly')) {
-      // 1. INTENTO VÍA PÁGINA DE DESCARGA (Suele estar abierta y tener el link directo)
-      const dlUrl = `https://vidmoly.me/dl/${id}`;
+      const landingUrl = `https://vidmoly.me/v/${id}`;
+      
+      // 1. INTENTO LANDING CON IDENTIDAD IPHONE (Vidmoly a veces entrega el m3u8 directo a móviles)
       try {
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(dlUrl)}`);
+        const iphoneUA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1';
+        const res = await fetch(landingUrl, { headers: { 'User-Agent': iphoneUA } });
         if (res.ok) {
-          const data = await res.json();
-          if (data.contents && !data.contents.includes('Security Check')) {
-            html = data.contents;
-            statusLog = 'Exito vía Download Page';
-          }
+          html = await res.text();
+          statusLog = 'Exito vía Landing Page (iPhone UA)';
         }
       } catch (e) {}
 
-      // 2. FALLBACK A LA LANDING PAGE SI EL DL FALLA
+      // 2. FALLBACK VÍA PROXY SI EL DIRECTO NO DA RESULTADOS
       if (!html) {
-        const landingUrl = `https://vidmoly.me/v/${id}`;
         try {
-          const res = await fetch(landingUrl, { 
-            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' } 
-          });
+          const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(landingUrl)}`);
           if (res.ok) {
-            html = await res.text();
-            statusLog = 'Exito vía Landing Page';
+            const data = await res.json();
+            html = data.contents;
+            statusLog = 'Exito vía AllOrigins Proxy';
           }
         } catch (e) {}
       }
     }
 
-    if (!html) {
-      return NextResponse.json({ error: 'Vidmoly ha bloqueado todos los puntos de acceso.', debug: { id } }, { status: 403 });
+    if (!html || html.includes('Security Check')) {
+      return NextResponse.json({ error: 'Bloqueo de Cloudflare persistente.', debug: { id } }, { status: 403 });
     }
 
     let videos = await processHtml(html);
 
-    // Si aún no hay nada, buscamos el ID del video en cualquier string base64 (muy común en Nuxt)
+    // Búsqueda profunda en bloques de datos
     if (videos.length === 0) {
-       const b64Regex = /[A-Za-z0-9+/]{50,}/g;
-       const b64Matches = html.match(b64Regex) || [];
-       for (const b64 of b64Matches) {
-          try {
-             const decoded = atob(b64);
-             if (decoded.includes('http') && decoded.includes(id)) {
-                const moreVideos = await processHtml(decoded);
-                if (moreVideos.length > 0) {
-                   videos = [...videos, ...moreVideos];
-                   statusLog += ' + Base64 Decode Success';
-                }
-             }
-          } catch (e) {}
-       }
+      // Intentamos buscar cualquier string largo que pueda ser una URL codificada
+      const anyUrlMatch = html.match(/https?%3A%2F%2F[^"'\s<>|]+/gi);
+      if (anyUrlMatch) {
+        for (const encoded of anyUrlMatch) {
+          const decoded = decodeURIComponent(encoded);
+          if (decoded.includes('m3u8') || decoded.includes('mp4')) {
+            videos.push({ name: 'Video Detectado', url: decoded });
+          }
+        }
+      }
     }
 
     if (videos.length === 0) {
       return NextResponse.json({ 
-        error: 'Estamos dentro de la web, pero el link del video está muy bien escondido.', 
-        debug: { id, log: statusLog, html_size: html.length, snippet: html.substring(0, 500) } 
+        error: 'Estamos dentro, pero el link está encriptado o no presente.', 
+        debug: { id, log: statusLog, html_size: html.length, snippet: html.substring(0, 300) } 
       }, { status: 404 });
     }
 
@@ -131,7 +117,6 @@ export async function GET(request: NextRequest) {
       url: `${proxyBase}${proxyBase?.includes('?') ? '&' : '?'}url=${encodeURIComponent(v.url)}`
     })).reverse();
 
-    // Eliminamos duplicados
     const uniqueQualities = Array.from(new Map(qualities.map(q => [q.url, q])).values());
 
     return NextResponse.json({ qualities: uniqueQualities });
