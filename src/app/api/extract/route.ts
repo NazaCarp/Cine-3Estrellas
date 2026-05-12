@@ -93,39 +93,39 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    let targetUrl = videoUrl;
+    let targetUrl = videoUrl.replace('http://', 'https://');
     let html = '';
     let responseStatus = 200;
-
-    // --- NORMALIZACIÓN VIDMOLY ---
-    if (videoUrl.includes('vidmoly.')) {
-      targetUrl = videoUrl.replace('http://', 'https://').replace('.biz', '.me');
-      if (targetUrl.includes('/e/')) {
-        const id = targetUrl.split('/e/')[1].split('?')[0];
-        targetUrl = `https://vidmoly.me/embed-${id}.html`;
-      }
-    }
 
     // --- INTENTO 1: PUENTE ALLORIGINS (Para Vidmoly) ---
     if (videoUrl.includes('vidmoly.')) {
       try {
+        console.log('Intentando extracción Vidmoly vía Puente AllOrigins:', targetUrl);
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
         const proxyRes = await fetch(proxyUrl);
         if (proxyRes.ok) {
           const data = await proxyRes.json();
           const proxyHtml = data.contents;
-          if (proxyHtml && !proxyHtml.includes('Security Check')) {
+          // Si el puente nos devuelve el muro de seguridad, no nos sirve
+          if (proxyHtml && !proxyHtml.includes('Security Check') && !proxyHtml.includes('challenges.cloudflare.com')) {
             html = proxyHtml;
+          } else {
+            console.log('El puente AllOrigins también recibió el muro de seguridad.');
           }
         }
       } catch (e) { console.error('Error AllOrigins:', e); }
     }
 
-    // --- INTENTO 2: FETCH DIRECTO (Si no es Vidmoly o el puente falló) ---
+    // --- INTENTO 2: FETCH DIRECTO ---
     if (!html) {
+      console.log('Intentando extracción directa:', targetUrl);
       const mobileUA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1';
       const res = await fetch(targetUrl, {
-        headers: { 'User-Agent': mobileUA, 'Referer': 'https://www.google.com/' }
+        headers: { 
+          'User-Agent': mobileUA, 
+          'Referer': 'https://www.google.com/',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
       });
       responseStatus = res.status;
       if (res.ok) html = await res.text();
