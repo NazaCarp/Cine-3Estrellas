@@ -93,38 +93,58 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    let targetUrl = videoUrl.replace('http://', 'https://');
+    let targetUrl = videoUrl.replace('http://', 'https://').replace('.biz', '.me');
     let html = '';
     let responseStatus = 200;
 
-    // --- INTENTO 1: PUENTE ALLORIGINS (Para Vidmoly) ---
+    // --- ESTRATEGIA CAMALEÓN PARA VIDMOLY ---
     if (videoUrl.includes('vidmoly.')) {
-      try {
-        console.log('Intentando extracción Vidmoly vía Puente AllOrigins:', targetUrl);
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-        const proxyRes = await fetch(proxyUrl);
-        if (proxyRes.ok) {
-          const data = await proxyRes.json();
-          const proxyHtml = data.contents;
-          // Si el puente nos devuelve el muro de seguridad, no nos sirve
-          if (proxyHtml && !proxyHtml.includes('Security Check') && !proxyHtml.includes('challenges.cloudflare.com')) {
-            html = proxyHtml;
-          } else {
-            console.log('El puente AllOrigins también recibió el muro de seguridad.');
+      const crawlers = [
+        'WhatsApp/2.21.12.21 A', // Bot de WhatsApp (Muy efectivo)
+        'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)', // Bot de Facebook
+        'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' // Googlebot
+      ];
+
+      for (const crawlerUA of crawlers) {
+        console.log(`Intentando con identidad: ${crawlerUA}`);
+        try {
+          // Intentamos tanto con el link original como con la landing page (/v/)
+          const attemptUrls = [targetUrl];
+          if (targetUrl.includes('/e/')) {
+             const id = targetUrl.split('/e/')[1].split('?')[0];
+             attemptUrls.push(`https://vidmoly.me/v/${id}`);
           }
-        }
-      } catch (e) { console.error('Error AllOrigins:', e); }
+
+          for (const url of attemptUrls) {
+            const res = await fetch(url, {
+              headers: { 
+                'User-Agent': crawlerUA,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Cache-Control': 'no-cache'
+              }
+            });
+            
+            if (res.ok) {
+              const text = await res.text();
+              if (!text.includes('Security Check') && !text.includes('challenges.cloudflare.com')) {
+                html = text;
+                targetUrl = url;
+                break;
+              }
+            }
+          }
+          if (html) break;
+        } catch (e) {}
+      }
     }
 
-    // --- INTENTO 2: FETCH DIRECTO ---
+    // --- FALLBACK: FETCH DIRECTO MÓVIL ---
     if (!html) {
-      console.log('Intentando extracción directa:', targetUrl);
-      const mobileUA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1';
+      console.log('Todos los crawlers fallaron, intentando fetch móvil final...');
       const res = await fetch(targetUrl, {
         headers: { 
-          'User-Agent': mobileUA, 
-          'Referer': 'https://www.google.com/',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1', 
+          'Referer': 'https://www.google.com/' 
         }
       });
       responseStatus = res.status;
