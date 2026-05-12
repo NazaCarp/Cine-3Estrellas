@@ -159,22 +159,28 @@ export async function GET(request: NextRequest) {
     let videos = await processHtml(html, targetUrl);
 
     // --- SEGUIMIENTO DE EMBED (Para Landing Pages de Vidmoly) ---
-    if (videos.length === 0 && html.includes('embed_url')) {
-      const embedMatch = html.match(/["']embed_url["']\s*:\s*["'](https?:\/\/[^"']+)["']/);
+    // Mejoramos la detección: puede estar escapado como \"embed_url\"
+    if (videos.length === 0 && (html.includes('embed_url') || html.includes('embed-'))) {
+      const embedMatch = html.match(/["\\]+embed_url["\\]+\s*:\s*["\\]+(https?:\/\/[^"\\]+)["\\]+/i) ||
+                         html.match(/["'](https?:\/\/[^"']+\/embed-[^"']+)["']/i);
+      
       if (embedMatch) {
-        const embedUrl = embedMatch[1];
-        console.log('Siguiendo embed_url desde landing page:', embedUrl);
+        let embedUrl = embedMatch[1].replace(/\\/g, ''); // Limpiar escapes
+        console.log('Siguiendo embed_url detectado:', embedUrl);
         
-        // Usamos el mismo User-Agent que funcionó
+        // REINTENTAMOS EL EMBED CON LAS MISMAS IDENTIDADES QUE FUNCIONARON
+        const crawlerUA = 'WhatsApp/2.21.12.21 A';
         const res = await fetch(embedUrl, {
           headers: { 
-            'User-Agent': 'WhatsApp/2.21.12.21 A',
+            'User-Agent': crawlerUA,
+            'Accept': '*/*',
             'Referer': targetUrl 
           }
         });
         
         if (res.ok) {
           const embedHtml = await res.text();
+          // Si el embed también tiene seguridad, lo intentamos procesar de todos modos
           videos = await processHtml(embedHtml, embedUrl);
         }
       }
