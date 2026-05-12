@@ -77,18 +77,30 @@ export async function GET(request: NextRequest) {
     // --- ESTRATEGIA CRAWLER PARA VIDMOLY ---
     if (videoUrl.includes('vidmoly.')) {
       const ua = 'WhatsApp/2.21.12.21 A';
-      // Probamos directo al embed construido
-      const codeMatch = videoUrl.match(/\/(?:v|e|embed-)?([a-zA-Z0-9]{8,15})/);
-      if (codeMatch) {
-        targetUrl = `https://vidmoly.me/embed-${codeMatch[1]}.html`;
-        const res = await fetch(targetUrl, { headers: { 'User-Agent': ua, 'Referer': 'https://vidmoly.me/' } });
-        if (res.ok) html = await res.text();
+      const domains = [targetUrl, targetUrl.includes('.biz') ? targetUrl.replace('.biz', '.me') : targetUrl.replace('.me', '.biz')];
+      
+      for (const url of domains) {
+        try {
+          console.log('Intentando Vidmoly con identidad WhatsApp:', url);
+          const res = await fetch(url, { headers: { 'User-Agent': ua, 'Referer': 'https://www.google.com/' } });
+          if (res.ok) {
+            const text = await res.text();
+            if (!text.includes('Security Check')) {
+              html = text;
+              targetUrl = url;
+              break;
+            }
+          }
+        } catch (e) { }
       }
     }
 
     // --- FALLBACK DIRECTO ---
     if (!html) {
-      const res = await fetch(targetUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1' } });
+      console.log('Intentando extracción directa final:', targetUrl);
+      const res = await fetch(targetUrl, { 
+        headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1' } 
+      });
       responseStatus = res.status;
       if (res.ok) html = await res.text();
     }
