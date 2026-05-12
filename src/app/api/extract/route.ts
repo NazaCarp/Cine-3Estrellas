@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-// Decodificador de Packer (p,a,c,k,e,d) mejorado
+// Decodificador de Packer (p,a,c,k,e,d)
 function unPack(code: string): string {
   try {
     if (!code.includes('eval(function(p,a,c,k,e,d)')) return code;
@@ -21,7 +21,6 @@ async function processHtml(html: string) {
   let videos: any[] = [];
   const cleanHtml = unPack(html);
 
-  // Patrones de búsqueda ultra-agresivos (JWPlayer, Base64, Master M3U8, HLS1, HLS2)
   const patterns = [
     /file\s*:\s*["'](https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*)["']/i,
     /sources:\s*["']([A-Za-z0-9+/=]{20,})["']/,
@@ -64,36 +63,34 @@ export async function GET(request: NextRequest) {
     let html = '';
     let statusLog = '';
 
-    // --- ESTRATEGIA DE BYPASS NINJA (Google Translate Proxy) ---
-    if (videoUrl.includes('vidmoly.')) {
+    if (id && videoUrl.includes('vidmoly')) {
+      // 1. EL ARMA DEFINITIVA: JINA READER API
+      // Jina es un motor de lectura que Vidmoly no suele bloquear porque parece un bot de IA legítimo.
       try {
-        const target = `https://vidmoly.me/e/${id}`;
-        // Google Translate actúa como un proxy de alta autoridad que Vidmoly no bloquea
-        const googleProxy = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(target)}`;
-        console.log('Intentando Vidmoly vía Túnel Google:', target);
-        
-        const res = await fetch(googleProxy, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' }
+        const jinaUrl = `https://r.jina.ai/https://vidmoly.me/e/${id}`;
+        console.log('Intentando Túnel Jina:', jinaUrl);
+        const res = await fetch(jinaUrl, {
+           headers: { 'X-Return-Format': 'html' } // Forzamos que nos devuelva el HTML
         });
-        
         if (res.ok) {
           const text = await res.text();
-          if (text && text.includes('vidmoly')) {
+          if (text && (text.includes('vidmoly') || text.includes('file:'))) {
             html = text;
-            statusLog = 'Exito vía Google Tunnel';
+            statusLog = 'Exito vía Jina Tunnel';
           }
         }
       } catch (e) {}
 
-      // Fallback 1: AllOrigins Raw
+      // 2. FALLBACK: GOOGLE TRANSLATE (Si Jina falla)
       if (!html) {
         try {
-          const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://vidmoly.me/e/${id}`)}`);
+          const googleProxy = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(`https://vidmoly.me/e/${id}`)}`;
+          const res = await fetch(googleProxy);
           if (res.ok) {
             const text = await res.text();
-            if (text && !text.includes('Security Check')) {
+            if (text && text.includes('vidmoly')) {
               html = text;
-              statusLog = 'Exito vía AllOrigins Raw';
+              statusLog = 'Exito vía Google Tunnel';
             }
           }
         } catch (e) {}
@@ -101,15 +98,18 @@ export async function GET(request: NextRequest) {
     }
 
     if (!html) {
-      return NextResponse.json({ error: 'No se pudo saltar el bloqueo de Vidmoly.', debug: { id, status: 'Bloqueado por Cloudflare' } }, { status: 403 });
+      return NextResponse.json({ 
+        error: 'Vidmoly ha bloqueado todos los túneles de acceso.', 
+        debug: { id, status: 'Muro de Cloudflare impenetrable' } 
+      }, { status: 403 });
     }
 
     const videos = await processHtml(html);
 
     if (videos.length === 0) {
       return NextResponse.json({ 
-        error: 'No se encontraron videos en el código recibido.', 
-        debug: { id, log: statusLog, html: html.substring(0, 800) } 
+        error: 'Se saltó el bloqueo pero no se encontró el video.', 
+        debug: { id, log: statusLog, html_snippet: html.substring(0, 500) } 
       }, { status: 404 });
     }
 
