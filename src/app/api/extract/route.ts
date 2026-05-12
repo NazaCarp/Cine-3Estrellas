@@ -64,34 +64,40 @@ export async function GET(request: NextRequest) {
     let html = '';
     let statusLog = '';
 
-    // 1. INTENTO VÍA ALLORIGINS RAW (El más potente)
-    if (id) {
-      const target = `https://vidmoly.me/e/${id}`;
+    // --- ESTRATEGIA DE BYPASS NINJA (Google Translate Proxy) ---
+    if (videoUrl.includes('vidmoly.')) {
       try {
-        const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`);
+        const target = `https://vidmoly.me/e/${id}`;
+        // Google Translate actúa como un proxy de alta autoridad que Vidmoly no bloquea
+        const googleProxy = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(target)}`;
+        console.log('Intentando Vidmoly vía Túnel Google:', target);
+        
+        const res = await fetch(googleProxy, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' }
+        });
+        
         if (res.ok) {
           const text = await res.text();
-          if (text && !text.includes('Security Check')) {
+          if (text && text.includes('vidmoly')) {
             html = text;
-            statusLog = 'Exito vía AllOrigins Raw';
+            statusLog = 'Exito vía Google Tunnel';
           }
         }
       } catch (e) {}
-    }
 
-    // 2. INTENTO DIRECTO CON IDENTIDAD DE SMART TV (Fallback)
-    if (!html && id) {
-      try {
-        const tvUA = 'Mozilla/5.0 (Linux; Android 11; Sony Bravia 4K Build/RP1A.200720.011) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
-        const res = await fetch(`https://vidmoly.me/e/${id}`, { headers: { 'User-Agent': tvUA, 'Referer': 'https://t.co/' } });
-        if (res.ok) {
-          const text = await res.text();
-          if (text && !text.includes('Security Check')) {
-            html = text;
-            statusLog = 'Exito vía Sony TV Identity';
+      // Fallback 1: AllOrigins Raw
+      if (!html) {
+        try {
+          const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://vidmoly.me/e/${id}`)}`);
+          if (res.ok) {
+            const text = await res.text();
+            if (text && !text.includes('Security Check')) {
+              html = text;
+              statusLog = 'Exito vía AllOrigins Raw';
+            }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
     }
 
     if (!html) {
