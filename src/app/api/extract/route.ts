@@ -19,25 +19,26 @@ function unPack(code: string): string {
 
 async function processHtml(html: string) {
   let videos: any[] = [];
-  // Limpieza agresiva de caracteres de escape
   const cleanHtml = unPack(html).replace(/\\\/|\\/g, '/');
 
   const patterns = [
-    // 1. Buscador de dominios de video (vmwesa, moly.io)
+    // 1. Buscador de dominios específicos (vmwesa, moly.io)
     /(https?:\/\/[^"'\s<>|]+(?:vmwesa\.online|moly\.io|vidmoly\.me\/hls)[^"'\s<>|]+)/gi,
-    // 2. Buscador de archivos de video directos
+    // 2. Buscador de links de video directos
     /https?:\/\/[^"'\s<>|]+\.(?:m3u8|mp4|urlset)(?:[^"'\s<>|]*)?/gi,
-    // 3. Buscador de objetos JSON que contienen enlaces
-    /\{(?:[^{}]*["'](?:file|url|src)["']\s*:\s*["'](https?:\/\/[^"']+)["'][^{}]*)\}/gi
+    // 3. Buscador de fuentes en variables de ofuscación (_0x...)
+    /["'](https?:\/\/[^"']+)["']/gi
   ];
 
   for (const p of patterns) {
     const matches = cleanHtml.matchAll(p);
     for (const match of matches) {
       const url = match[1] || match[0];
-      if (url && url.includes('http') && !url.includes('staticmoly')) {
-        const isMaster = url.includes('master.m3u8') || url.includes('.urlset');
-        videos.push({ name: isMaster ? 'Vidmoly HD' : 'Video', url });
+      if (url && url.includes('http') && (url.includes('m3u8') || url.includes('vmwesa'))) {
+        if (!url.includes('staticmoly') && !url.includes('hotjar')) {
+          const isMaster = url.includes('master.m3u8') || url.includes('.urlset');
+          videos.push({ name: isMaster ? 'Vidmoly HD' : 'Video', url });
+        }
       }
     }
   }
@@ -50,61 +51,49 @@ export async function GET(request: NextRequest) {
 
   try {
     let id = '';
-    const idMatch = videoUrl.match(/\/(?:v|e|embed-|embed\/|dl\/)?([a-zA-Z0-9]{8,15})/);
+    const idMatch = videoUrl.match(/\/(?:v|e|embed-|embed\/|dl\/|lite-)?([a-zA-Z0-9]{8,15})/);
     if (idMatch) id = idMatch[1];
     
     let html = '';
     let statusLog = '';
 
     if (id) {
-      // ATACAMOS LA PÁGINA DE INFO (/v/) QUE NO TIENE BLOQUEO
-      const landingUrl = `https://vidmoly.me/v/${id}`;
+      // 1. INTENTO VÍA VERSIÓN LITE (Menos protección, link más directo)
+      const liteUrl = `https://vidmoly.me/lite-${id}.html`;
       try {
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(landingUrl)}`);
+        const res = await fetch(liteUrl, { 
+          headers: { 'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)' } 
+        });
         if (res.ok) {
-          const data = await res.json();
-          if (data.contents) {
-            html = data.contents;
-            statusLog = 'Exito vía AllOrigins (Landing)';
-          }
+          html = await res.text();
+          if (html.length > 500 && !html.includes('Security Check')) statusLog = 'Exito vía Lite-Version';
         }
       } catch (e) {}
 
-      if (!html) {
+      // 2. FALLBACK A LA LANDING PAGE CON FACEBOOK UA
+      if (!html || html.includes('Security Check')) {
+        const landingUrl = `https://vidmoly.me/v/${id}`;
         try {
-          const res = await fetch(landingUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' } });
+          const res = await fetch(landingUrl, { 
+            headers: { 'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)' } 
+          });
           if (res.ok) {
             html = await res.text();
-            statusLog = 'Exito vía Directo (Landing)';
+            statusLog = 'Exito vía Landing (Facebook UA)';
           }
         } catch (e) {}
       }
     }
 
     if (!html || html.includes('Security Check')) {
-      return NextResponse.json({ error: 'No se pudo acceder a Vidmoly.', debug: { id } }, { status: 403 });
+      return NextResponse.json({ error: 'Bloqueo de Vidmoly total.', debug: { id } }, { status: 403 });
     }
 
-    // Análisis forense de la página
     let videos = await processHtml(html);
-
-    // Si no hay videos, buscamos CUALQUIER Base64 y lo decodificamos
-    if (videos.length === 0) {
-      const b64Candidate = html.match(/[A-Za-z0-9+/]{100,}/g) || [];
-      for (const b64 of b64Candidate) {
-        try {
-          const decoded = atob(b64);
-          if (decoded.includes('http') && (decoded.includes('m3u8') || decoded.includes('vmwesa'))) {
-            const more = await processHtml(decoded);
-            videos = [...videos, ...more];
-          }
-        } catch (e) {}
-      }
-    }
 
     if (videos.length === 0) {
       return NextResponse.json({ 
-        error: 'Página cargada, pero el video está encriptado.', 
+        error: 'Estamos dentro, pero el video está muy bien escondido.', 
         debug: { id, log: statusLog, html_size: html.length } 
       }, { status: 404 });
     }
