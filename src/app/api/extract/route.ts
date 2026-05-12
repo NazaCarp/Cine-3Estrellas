@@ -14,30 +14,43 @@ export async function GET(request: NextRequest) {
 
   // --- MODO EXTRACCIÓN ---
   try {
+    // --- LÓGICA DE NORMALIZACIÓN PARA VIDMOLY ---
+    let targetUrl = videoUrl;
+    if (videoUrl.includes('vidmoly.')) {
+      targetUrl = videoUrl.replace('http://', 'https://');
+      // Vidmoly prefiere .me actualmente, .biz a veces falla en ciertos servidores
+      if (videoUrl.includes('.biz')) {
+        targetUrl = targetUrl.replace('.biz', '.me');
+      }
+    }
+
     let extractionReferer = '';
-    if (videoUrl.includes('vidmoly.')) extractionReferer = 'https://vidmoly.biz/';
-    if (videoUrl.includes('vidsonic.net')) extractionReferer = 'https://vidsonic.net/';
-    if (videoUrl.includes('ok.ru')) extractionReferer = 'https://ok.ru/';
+    if (targetUrl.includes('vidmoly.')) extractionReferer = 'https://vidmoly.me/';
+    if (targetUrl.includes('vidsonic.net')) extractionReferer = 'https://vidsonic.net/';
+    if (targetUrl.includes('ok.ru')) extractionReferer = 'https://ok.ru/';
     
-    const response = await fetch(videoUrl, {
+    let response = await fetch(targetUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        'Referer': extractionReferer || videoUrl,
-        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="121", "Google Chrome";v="121"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Upgrade-Insecure-Requests': '1'
+        'Referer': extractionReferer || targetUrl,
+        'Cache-Control': 'no-cache'
       }
     });
 
-    if (!response.ok && response.status !== 403 && response.status !== 401) {
-      throw new Error(`Error del servidor externo (${response.status})`);
+    // Si falla con la normalización, probamos con la URL original exacta
+    if (!response.ok && targetUrl !== videoUrl) {
+      response = await fetch(videoUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Referer': extractionReferer || videoUrl
+        }
+      });
+    }
+
+    if (!response.ok) {
+      return NextResponse.json({ error: `Error del servidor externo (${response.status})` }, { status: response.status });
     }
 
     const html = await response.text();
@@ -103,10 +116,19 @@ export async function GET(request: NextRequest) {
 
     // Patrón 3: Sources en variables de script (Vidmoly/JWPlayer) - MEJORADO
     if (videos.length === 0) {
-      // Buscamos específicamente el patrón file: "http..." que usa JWPlayer
-      const jwFileMatch = html.match(/file\s*:\s*["'](https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*)["']/);
-      if (jwFileMatch) {
-        videos.push({ name: 'Vidmoly HD', url: jwFileMatch[1] });
+      // Buscamos cualquier patrón { file: "http..." } o similar
+      const jwPatterns = [
+        /file\s*:\s*["'](https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*)["']/i,
+        /["']?file["']?\s*:\s*["'](https?:\/\/[^"']+)["']/i,
+        /source\s*:\s*["'](https?:\/\/[^"']+)["']/i
+      ];
+
+      for (const pattern of jwPatterns) {
+        const match = html.match(pattern);
+        if (match && (match[1].includes('.m3u8') || match[1].includes('.urlset') || match[1].includes('.mp4'))) {
+          videos.push({ name: 'Vidmoly HD', url: match[1] });
+          break;
+        }
       }
     }
 
