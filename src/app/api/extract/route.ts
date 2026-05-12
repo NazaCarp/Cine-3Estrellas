@@ -19,28 +19,24 @@ function unPack(code: string): string {
 
 async function processHtml(html: string) {
   let videos: any[] = [];
-  // 1. Desofuscamos Packer
-  let cleanHtml = unPack(html);
   
-  // 2. Decodificamos secuencias Hexadecimales (\x68\x74\x74\x70...)
-  cleanHtml = cleanHtml.replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-  
-  // 3. Limpiamos escapes de JSON
-  cleanHtml = cleanHtml.replace(/\\\/|\\/g, '/');
+  // 1. Desofuscamos Packer y Unicode (\u0068...) y Hex (\x68...)
+  let cleanHtml = unPack(html)
+    .replace(/\\u([0-9A-Fa-f]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/\\\/|\\/g, '/');
 
   const patterns = [
     // Buscador de dominios críticos y extensiones
-    /(https?:\/\/[^"'\s<>|]+(?:vmwesa\.online|moly\.io|vidmoly\.me\/hls|master\.m3u8)[^"'\s<>|]+)/gi,
+    /(https?:\/\/[^"'\s<>|]+(?:vmwesa\.online|moly\.io|master\.m3u8|urlset)[^"'\s<>|]*)/gi,
     // Buscador de fuentes en JSON
-    /["']?(?:file|src|url)["']?\s*[:=]\s*["']?((?:https?:)?\/\/[^"']+\.(?:m3u8|mp4|urlset))["']?/gi,
-    // Buscador "ciego" de links m3u8
-    /https?:\/\/[^"'\s<>|]+\.m3u8(?:[^"'\s<>|]*)?/gi
+    /["']?(?:file|src|url)["']?\s*[:=]\s*["']?((?:https?:)?\/\/[^"']+\.(?:m3u8|mp4|urlset))["']?/gi
   ];
 
   for (const p of patterns) {
     const matches = cleanHtml.matchAll(p);
     for (const match of matches) {
-      const url = match[1] || match[0];
+      const url = (match[1] || match[0]).trim();
       if (url && url.includes('http') && !url.includes('staticmoly') && !url.includes('hotjar')) {
         const isMaster = url.includes('master.m3u8') || url.includes('.urlset');
         videos.push({ name: isMaster ? 'Vidmoly HD' : 'Video', url });
@@ -61,30 +57,28 @@ export async function GET(request: NextRequest) {
     
     let html = '';
     let statusLog = '';
-    const fbUA = 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)';
+    const googleBot = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+    const fbBot = 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)';
 
     if (id) {
-      // 1. INTENTO DIRECTO AL EMBED CON DISFRAZ DE FACEBOOK (VIP ACCESS)
-      const embedUrl = `https://vidmoly.me/e/${id}`;
+      // 1. INTENTO LANDING CON DISFRAZ DE FACEBOOK (Lo que nos funcionó para entrar)
+      const landingUrl = `https://vidmoly.me/v/${id}`;
       try {
-        const res = await fetch(embedUrl, { headers: { 'User-Agent': fbUA, 'Referer': 'https://www.facebook.com/' } });
+        const res = await fetch(landingUrl, { headers: { 'User-Agent': fbBot } });
         if (res.ok) {
-          const text = await res.text();
-          if (text && text.length > 500 && !text.includes('Security Check')) {
-            html = text;
-            statusLog = 'Exito vía Embed (Facebook UA)';
-          }
+          html = await res.text();
+          if (html.length > 1000 && !html.includes('Security Check')) statusLog = 'Exito vía Landing (Facebook UA)';
         }
       } catch (e) {}
 
-      // 2. FALLBACK A LA LANDING PAGE CON FACEBOOK UA
-      if (!html) {
-        const landingUrl = `https://vidmoly.me/v/${id}`;
+      // 2. INTENTO EMBED CON GOOGLEBOT (Si la landing no tiene el link claro)
+      if (!html || html.includes('Security Check')) {
+        const embedUrl = `https://vidmoly.me/e/${id}`;
         try {
-          const res = await fetch(landingUrl, { headers: { 'User-Agent': fbUA } });
+          const res = await fetch(embedUrl, { headers: { 'User-Agent': googleBot } });
           if (res.ok) {
             html = await res.text();
-            statusLog = 'Exito vía Landing (Facebook UA)';
+            statusLog = 'Exito vía Embed (Googlebot UA)';
           }
         } catch (e) {}
       }
@@ -96,24 +90,20 @@ export async function GET(request: NextRequest) {
 
     let videos = await processHtml(html);
 
-    // Búsqueda profunda en strings largos (posibles codificaciones)
+    // Búsqueda de emergencia en el código crudo (Links fragmentados)
     if (videos.length === 0) {
-      const b64Matches = html.match(/[A-Za-z0-9+/]{50,}/g) || [];
-      for (const b64 of b64Matches) {
-        try {
-          const decoded = atob(b64);
-          if (decoded.includes('http')) {
-            const more = await processHtml(decoded);
-            videos = [...videos, ...more];
+       const rawLinks = html.match(/https?:\/\/[^"'\s<>|]+/gi) || [];
+       for (const link of rawLinks) {
+          if (link.includes('vmwesa') || link.includes('moly.io')) {
+             videos.push({ name: 'Video Detectado (Raw)', url: link.replace(/\\/g, '') });
           }
-        } catch (e) {}
-      }
+       }
     }
 
     if (videos.length === 0) {
       return NextResponse.json({ 
-        error: 'Estamos dentro, pero el link no aparece en el HTML.', 
-        debug: { id, log: statusLog, html_size: html.length, snippet: html.substring(0, 500) } 
+        error: 'Estamos dentro, pero el link está fragmentado.', 
+        debug: { id, log: statusLog, html_size: html.length, snippet: html.substring(0, 300) } 
       }, { status: 404 });
     }
 
