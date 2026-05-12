@@ -101,18 +101,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Patrón 3: Sources en variables de script (Vidmoly/JWPlayer)
+    // Patrón 3: Sources en variables de script (Vidmoly/JWPlayer) - MEJORADO
     if (videos.length === 0) {
-      const varSourcesMatch = html.match(/var\s+sources\s*=\s*(\[[\s\S]*?\]);/);
-      if (varSourcesMatch) {
-        try {
-          const sources = JSON.parse(varSourcesMatch[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":'));
-          if (Array.isArray(sources)) {
-            sources.forEach((s: any) => {
-              if (s.file) videos.push({ name: s.label || 'Video', url: s.file });
-            });
-          }
-        } catch (e) {}
+      // Buscamos específicamente el patrón file: "http..." que usa JWPlayer
+      const jwFileMatch = html.match(/file\s*:\s*["'](https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*)["']/);
+      if (jwFileMatch) {
+        videos.push({ name: 'Vidmoly HD', url: jwFileMatch[1] });
       }
     }
 
@@ -153,16 +147,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Patrón 5: Búsqueda profunda de .m3u8 o .mp4 (Mejorado para master.m3u8)
+    // Patrón 5: Búsqueda profunda de .m3u8 o .mp4 (Mejorado para master.m3u8 y parámetros de token)
     if (videos.length === 0) {
-      const deepMatch = html.match(/https?:\/\/[^"']+\.(m3u8|mp4|urlset)[^"']*/g);
+      // Regex mejorada para capturar URLs que contienen m3u8 incluso con tokens largos después del ?
+      const deepMatch = html.match(/https?:\/\/[^"']+\.(m3u8|mp4|urlset)(?:\?[^"']*)?/g);
       if (deepMatch) {
-        // Filtrar links basura y priorizar master.m3u8 o urlset
         const forbidden = ['test-videos', 'bunny', 'analytics', 'doubleclick', 'google-analytics', 'hotjar'];
         const realLinks = deepMatch.filter(l => !forbidden.some(f => l.includes(f)));
         
         if (realLinks.length > 0) {
-          // Si encontramos varios, priorizamos el que parece un master playlist
           const master = realLinks.find(l => l.includes('master.m3u8') || l.includes('.urlset'));
           videos.push({ name: 'HD', url: master || realLinks[0] });
         }
@@ -170,13 +163,21 @@ export async function GET(request: NextRequest) {
     }
 
     // --- REINTENTO SI ES LANDING PAGE DE VIDMOLY ---
-    if (videos.length === 0 && videoUrl.includes('vidmoly.') && !videoUrl.includes('embed')) {
-      // Si estamos en la página /v/ de Vidmoly, buscamos el embed-url en el HTML (Nuxt Data)
+    if (videos.length === 0 && videoUrl.includes('vidmoly.') && (!videoUrl.includes('embed') && !videoUrl.includes('/e/'))) {
+      // Buscamos el embed_url en el HTML (Nuxt Data) o construimos el link de embed
+      let embedUrl = '';
       const embedMatch = html.match(/["']embed_url["']\s*:\s*["'](https?:\/\/[^"']+)["']/);
+      
       if (embedMatch) {
-        const embedUrl = embedMatch[1];
-        console.log('Detectada Landing Page de Vidmoly, reintentando con:', embedUrl);
-        
+        embedUrl = embedMatch[1];
+      } else {
+        // Si no hay embed_url, intentamos convertir /v/667k... a /embed-667k...html
+        const codeMatch = videoUrl.match(/\/v\/([a-zA-Z0-9]+)/);
+        if (codeMatch) embedUrl = `https://vidmoly.biz/embed-${codeMatch[1]}.html`;
+      }
+
+      if (embedUrl) {
+        console.log('Reintentando con Embed URL:', embedUrl);
         const embedRes = await fetch(embedUrl, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
@@ -186,11 +187,17 @@ export async function GET(request: NextRequest) {
         
         if (embedRes.ok) {
           const embedHtml = await embedRes.text();
-          // Buscamos m3u8 dentro del embed
-          const m3u8Match = embedHtml.match(/https?:\/\/[^"']+\.(m3u8|urlset)[^"']*/g);
+          // Patrón directo para JWPlayer dentro del embed
+          const m3u8Match = embedHtml.match(/file\s*:\s*["'](https?:\/\/[^"']+\.(m3u8|urlset)[^"']*)["']/);
           if (m3u8Match) {
-            const master = m3u8Match.find(l => l.includes('master.m3u8') || l.includes('.urlset'));
-            videos.push({ name: 'Vidmoly HD', url: master || m3u8Match[0] });
+            videos.push({ name: 'Vidmoly HD', url: m3u8Match[1] });
+          } else {
+            // Búsqueda profunda en el embed
+            const deepEmbedMatch = embedHtml.match(/https?:\/\/[^"']+\.(m3u8|urlset)(?:\?[^"']*)?/g);
+            if (deepEmbedMatch) {
+              const master = deepEmbedMatch.find(l => l.includes('master.m3u8') || l.includes('.urlset'));
+              videos.push({ name: 'Vidmoly HD', url: master || deepEmbedMatch[0] });
+            }
           }
         }
       }
