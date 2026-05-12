@@ -158,30 +158,25 @@ export async function GET(request: NextRequest) {
     // --- PROCESAMIENTO ---
     let videos = await processHtml(html, targetUrl);
 
-    // --- SEGUIMIENTO DE EMBED (Para Landing Pages de Vidmoly) ---
-    // Mejoramos la detección: puede estar escapado como \"embed_url\"
-    if (videos.length === 0 && (html.includes('embed_url') || html.includes('embed-'))) {
-      const embedMatch = html.match(/["\\]+embed_url["\\]+\s*:\s*["\\]+(https?:\/\/[^"\\]+)["\\]+/i) ||
-                         html.match(/["'](https?:\/\/[^"']+\/embed-[^"']+)["']/i);
-      
-      if (embedMatch) {
-        let embedUrl = embedMatch[1].replace(/\\/g, ''); // Limpiar escapes
-        console.log('Siguiendo embed_url detectado:', embedUrl);
+    // --- REINTENTO AGRESIVO PARA VIDMOLY (Si falló el anterior) ---
+    if (videos.length === 0 && videoUrl.includes('vidmoly.')) {
+      const codeMatch = videoUrl.match(/\/(?:v|e|embed-)?([a-zA-Z0-9]{8,15})/);
+      if (codeMatch) {
+        const id = codeMatch[1];
+        const directEmbedUrl = `https://vidmoly.me/embed-${id}.html`;
+        console.log('Intentando acceso directo al embed construido:', directEmbedUrl);
         
-        // REINTENTAMOS EL EMBED CON LAS MISMAS IDENTIDADES QUE FUNCIONARON
-        const crawlerUA = 'WhatsApp/2.21.12.21 A';
-        const res = await fetch(embedUrl, {
+        const res = await fetch(directEmbedUrl, {
           headers: { 
-            'User-Agent': crawlerUA,
-            'Accept': '*/*',
-            'Referer': targetUrl 
+            'User-Agent': 'WhatsApp/2.21.12.21 A',
+            'Referer': 'https://vidmoly.me/',
+            'Accept': '*/*'
           }
         });
         
         if (res.ok) {
           const embedHtml = await res.text();
-          // Si el embed también tiene seguridad, lo intentamos procesar de todos modos
-          videos = await processHtml(embedHtml, embedUrl);
+          videos = await processHtml(embedHtml, directEmbedUrl);
         }
       }
     }
