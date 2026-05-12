@@ -87,14 +87,26 @@ export async function GET(request: NextRequest) {
 
     // 3. PROCESAR EL EMBED SI ESTAMOS EN LA LANDING
     let videos = await processHtml(html);
-    if (videos.length === 0 && html.includes('embed_url')) {
-      const embedMatch = html.match(/["\\]+embed_url["\\]+\s*:\s*["\\]+(https?:\/\/[^"\\]+)["\\]+/i);
+    if (videos.length === 0 && (html.includes('embed_url') || html.includes('embed-'))) {
+      const embedMatch = html.match(/["\\]+embed_url["\\]+\s*:\s*["\\]+(https?:\/\/[^"\\]+)["\\]+/i) ||
+                         html.match(/["'](https?:\/\/[^"']+\/embed-[^"']+)["']/i);
+      
       if (embedMatch) {
         const embedUrl = embedMatch[1].replace(/\\/g, '');
-        const res = await fetch(embedUrl, { headers: { 'User-Agent': 'WhatsApp/2.21.12.21 A', 'Referer': landingUrl } });
-        if (res.ok) {
-          const embedHtml = await res.text();
-          videos = await processHtml(embedHtml);
+        console.log('Siguiendo embed vía puente AllOrigins:', embedUrl);
+        
+        try {
+          const embedProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(embedUrl)}`;
+          const res = await fetch(embedProxyUrl);
+          if (res.ok) {
+            const data = await res.json();
+            const embedHtml = data.contents;
+            if (embedHtml) {
+              videos = await processHtml(embedHtml);
+            }
+          }
+        } catch (e) {
+          console.error('Fallo AllOrigins en el embed:', e);
         }
       }
     }
